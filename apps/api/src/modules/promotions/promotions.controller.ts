@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -30,6 +31,17 @@ import {
   type PromotionCheckResponse,
 } from "./promotions.service.js";
 
+const importFileMaxSizeBytes = 5 * 1024 * 1024;
+const importFileExtensions = /\.(csv|tsv|txt|xls|xlsx)$/i;
+const importFileMimeTypes = new Set([
+  "text/csv",
+  "text/plain",
+  "text/tab-separated-values",
+  "application/csv",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
 @ApiTags("promotions")
 @Controller("promotions")
 export class PromotionsController {
@@ -56,7 +68,23 @@ export class AdminEligibleCustomersController {
 
   @Post("import")
   @Roles("admin")
-  @UseInterceptors(FileInterceptor("file"))
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: importFileMaxSizeBytes },
+      fileFilter: (_request, file, callback) => {
+        const isAllowedExtension = importFileExtensions.test(file.originalname);
+        const isAllowedMimeType = importFileMimeTypes.has(file.mimetype);
+        if (!isAllowedExtension || !isAllowedMimeType) {
+          callback(
+            new BadRequestException("Only CSV, TSV, TXT, XLS, or XLSX files are supported"),
+            false,
+          );
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
   @ApiConsumes("multipart/form-data")
   @ApiBody({
     schema: {
@@ -89,4 +117,3 @@ export class AdminEligibleCustomersController {
     return this.promotions.setEligibleCustomerStatus(id, dto.isActive);
   }
 }
-

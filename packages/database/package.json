@@ -12,6 +12,7 @@
     "test": "node -e \"require('node:fs').rmSync('dist-test',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && find dist-test -name '*.test.js' -print0 | xargs -0 node --test",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "tsc -p tsconfig.build.json && node dist/prisma/seed.js"
   },
   "dependencies": {

@@ -9,12 +9,28 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - postgres-backups:/backups
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ecommerce} -d ${POSTGRES_DB:-ecommerce}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    command: ["npm", "run", "db:migrate:deploy"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["migration"]
+    restart: "no"
 
   api:
     build:
@@ -28,6 +44,36 @@ services:
       API_SWAGGER_ENABLED: ${API_SWAGGER_ENABLED:-true}
       API_DEFAULT_SHIPPING_FEE_VND: ${API_DEFAULT_SHIPPING_FEE_VND:-0}
       API_ORDER_INTEGRATIONS: ${API_ORDER_INTEGRATIONS:-sheet}
+      API_AUTH_SECRET: ${API_AUTH_SECRET:-change_me_to_a_long_random_secret}
+      API_ACCESS_TOKEN_TTL_SECONDS: ${API_ACCESS_TOKEN_TTL_SECONDS:-3600}
+      API_LOGIN_RATE_LIMIT_MAX: ${API_LOGIN_RATE_LIMIT_MAX:-5}
+      API_LOGIN_RATE_LIMIT_WINDOW_SECONDS: ${API_LOGIN_RATE_LIMIT_WINDOW_SECONDS:-900}
+      API_PROMOTION_TOKEN_TTL_SECONDS: ${API_PROMOTION_TOKEN_TTL_SECONDS:-1800}
+      API_PROMOTION_RATE_LIMIT_MAX: ${API_PROMOTION_RATE_LIMIT_MAX:-20}
+      API_PROMOTION_RATE_LIMIT_WINDOW_SECONDS: ${API_PROMOTION_RATE_LIMIT_WINDOW_SECONDS:-900}
+      API_INTEGRATION_TIMEOUT_SECONDS: ${API_INTEGRATION_TIMEOUT_SECONDS:-10}
+      API_INTEGRATION_MAX_ATTEMPTS: ${API_INTEGRATION_MAX_ATTEMPTS:-5}
+      API_INTEGRATION_BACKOFF_BASE_SECONDS: ${API_INTEGRATION_BACKOFF_BASE_SECONDS:-60}
+      API_INTEGRATION_POLL_INTERVAL_SECONDS: ${API_INTEGRATION_POLL_INTERVAL_SECONDS:-5}
+      API_INTEGRATION_BATCH_SIZE: ${API_INTEGRATION_BATCH_SIZE:-10}
+      API_INTEGRATION_SHEET_BASE_URL: ${API_INTEGRATION_SHEET_BASE_URL:-}
+      API_INTEGRATION_SHEET_CREATE_ORDER_PATH: ${API_INTEGRATION_SHEET_CREATE_ORDER_PATH:-}
+      API_INTEGRATION_SHEET_UPDATE_ORDER_PATH: ${API_INTEGRATION_SHEET_UPDATE_ORDER_PATH:-}
+      API_INTEGRATION_SHEET_GET_ORDER_STATUS_PATH: ${API_INTEGRATION_SHEET_GET_ORDER_STATUS_PATH:-}
+      API_INTEGRATION_SHEET_HEALTH_CHECK_PATH: ${API_INTEGRATION_SHEET_HEALTH_CHECK_PATH:-}
+      API_INTEGRATION_SHEET_TOKEN: ${API_INTEGRATION_SHEET_TOKEN:-}
+      API_INTEGRATION_PANCAKE_BASE_URL: ${API_INTEGRATION_PANCAKE_BASE_URL:-}
+      API_INTEGRATION_PANCAKE_CREATE_ORDER_PATH: ${API_INTEGRATION_PANCAKE_CREATE_ORDER_PATH:-}
+      API_INTEGRATION_PANCAKE_UPDATE_ORDER_PATH: ${API_INTEGRATION_PANCAKE_UPDATE_ORDER_PATH:-}
+      API_INTEGRATION_PANCAKE_GET_ORDER_STATUS_PATH: ${API_INTEGRATION_PANCAKE_GET_ORDER_STATUS_PATH:-}
+      API_INTEGRATION_PANCAKE_HEALTH_CHECK_PATH: ${API_INTEGRATION_PANCAKE_HEALTH_CHECK_PATH:-}
+      API_INTEGRATION_PANCAKE_TOKEN: ${API_INTEGRATION_PANCAKE_TOKEN:-}
+      API_INTEGRATION_BEST_BASE_URL: ${API_INTEGRATION_BEST_BASE_URL:-}
+      API_INTEGRATION_BEST_CREATE_ORDER_PATH: ${API_INTEGRATION_BEST_CREATE_ORDER_PATH:-}
+      API_INTEGRATION_BEST_UPDATE_ORDER_PATH: ${API_INTEGRATION_BEST_UPDATE_ORDER_PATH:-}
+      API_INTEGRATION_BEST_GET_ORDER_STATUS_PATH: ${API_INTEGRATION_BEST_GET_ORDER_STATUS_PATH:-}
+      API_INTEGRATION_BEST_HEALTH_CHECK_PATH: ${API_INTEGRATION_BEST_HEALTH_CHECK_PATH:-}
+      API_INTEGRATION_BEST_TOKEN: ${API_INTEGRATION_BEST_TOKEN:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}?schema=public
     ports:
       - "${API_PORT:-4000}:4000"
@@ -38,12 +84,13 @@ services:
       test:
         [
           "CMD-SHELL",
-          'node -e "fetch(''http://localhost:4000/api/v1/health/live'').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+          'node -e "fetch(''http://localhost:4000/api/v1/health/ready'').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
         ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
+    restart: unless-stopped
 
   worker:
     build:
@@ -60,10 +107,29 @@ services:
       API_INTEGRATION_BACKOFF_BASE_SECONDS: ${API_INTEGRATION_BACKOFF_BASE_SECONDS:-60}
       API_INTEGRATION_POLL_INTERVAL_SECONDS: ${API_INTEGRATION_POLL_INTERVAL_SECONDS:-5}
       API_INTEGRATION_BATCH_SIZE: ${API_INTEGRATION_BATCH_SIZE:-10}
+      API_INTEGRATION_SHEET_BASE_URL: ${API_INTEGRATION_SHEET_BASE_URL:-}
+      API_INTEGRATION_SHEET_CREATE_ORDER_PATH: ${API_INTEGRATION_SHEET_CREATE_ORDER_PATH:-}
+      API_INTEGRATION_SHEET_UPDATE_ORDER_PATH: ${API_INTEGRATION_SHEET_UPDATE_ORDER_PATH:-}
+      API_INTEGRATION_SHEET_GET_ORDER_STATUS_PATH: ${API_INTEGRATION_SHEET_GET_ORDER_STATUS_PATH:-}
+      API_INTEGRATION_SHEET_HEALTH_CHECK_PATH: ${API_INTEGRATION_SHEET_HEALTH_CHECK_PATH:-}
+      API_INTEGRATION_SHEET_TOKEN: ${API_INTEGRATION_SHEET_TOKEN:-}
+      API_INTEGRATION_PANCAKE_BASE_URL: ${API_INTEGRATION_PANCAKE_BASE_URL:-}
+      API_INTEGRATION_PANCAKE_CREATE_ORDER_PATH: ${API_INTEGRATION_PANCAKE_CREATE_ORDER_PATH:-}
+      API_INTEGRATION_PANCAKE_UPDATE_ORDER_PATH: ${API_INTEGRATION_PANCAKE_UPDATE_ORDER_PATH:-}
+      API_INTEGRATION_PANCAKE_GET_ORDER_STATUS_PATH: ${API_INTEGRATION_PANCAKE_GET_ORDER_STATUS_PATH:-}
+      API_INTEGRATION_PANCAKE_HEALTH_CHECK_PATH: ${API_INTEGRATION_PANCAKE_HEALTH_CHECK_PATH:-}
+      API_INTEGRATION_PANCAKE_TOKEN: ${API_INTEGRATION_PANCAKE_TOKEN:-}
+      API_INTEGRATION_BEST_BASE_URL: ${API_INTEGRATION_BEST_BASE_URL:-}
+      API_INTEGRATION_BEST_CREATE_ORDER_PATH: ${API_INTEGRATION_BEST_CREATE_ORDER_PATH:-}
+      API_INTEGRATION_BEST_UPDATE_ORDER_PATH: ${API_INTEGRATION_BEST_UPDATE_ORDER_PATH:-}
+      API_INTEGRATION_BEST_GET_ORDER_STATUS_PATH: ${API_INTEGRATION_BEST_GET_ORDER_STATUS_PATH:-}
+      API_INTEGRATION_BEST_HEALTH_CHECK_PATH: ${API_INTEGRATION_BEST_HEALTH_CHECK_PATH:-}
+      API_INTEGRATION_BEST_TOKEN: ${API_INTEGRATION_BEST_TOKEN:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}?schema=public
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
 
   web:
     build:
@@ -81,12 +147,53 @@ services:
       test:
         [
           "CMD-SHELL",
-          'node -e "fetch(''http://localhost:3000'').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+          'node -e "fetch(''http://localhost:3000/api/health'').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
         ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      WEB_DOMAIN: ${WEB_DOMAIN:-localhost}
+      API_DOMAIN: ${API_DOMAIN:-api.localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    profiles: ["edge"]
+    restart: unless-stopped
+
+  postgres-backup:
+    image: postgres:17-alpine
+    command:
+      [
+        "sh",
+        "-c",
+        "pg_dump --format=custom --no-owner --no-acl --file=/backups/${POSTGRES_DB:-ecommerce}-$$(date +%Y%m%dT%H%M%SZ).dump postgresql://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}",
+      ]
+    volumes:
+      - postgres-backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["backup"]
+    restart: "no"
 
 volumes:
   postgres-data:
+  postgres-backups:
+  caddy-data:
+  caddy-config:

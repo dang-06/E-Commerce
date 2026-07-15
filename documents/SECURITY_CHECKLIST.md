@@ -20,7 +20,8 @@ Ngay cap nhat: 2026-07-15
 - [x] Validate SKU, slug, price VND integer, anh va trang thai product.
 - [x] Validate phone Viet Nam va chuan hoa `+84`/`84`/`0`.
 - [x] Reject import file khong thuoc CSV/TSV/XLS/XLSX.
-- [ ] Bo sung file size limit/row limit production cho import neu chua cau hinh o reverse proxy.
+- [x] Bo sung file size limit va MIME/extension whitelist cho import.
+- [ ] Bo sung row limit production cho import neu dataset thuc te lon.
 
 ## Pricing and checkout abuse
 
