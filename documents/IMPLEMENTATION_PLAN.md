@@ -438,13 +438,13 @@ De xuat bo sung khi thiet ke chi tiet:
 
 ### Milestone 8 - Integrations va worker
 
-- [ ] Thiet ke adapter interface cho Google Sheet/Pancake/BEST.
-- [ ] Worker lay pending job va khoa tranh xu ly trung.
-- [ ] Retry backoff va `next_retry_at`.
-- [ ] Luu external ID/status/response da mask.
-- [ ] API admin xem integration status.
-- [ ] API admin retry manual.
-- [ ] Admin UI integration status/retry.
+- [x] Thiet ke adapter interface cho Google Sheet/Pancake/BEST.
+- [x] Worker lay pending job va khoa tranh xu ly trung.
+- [x] Retry backoff va `next_retry_at`.
+- [x] Luu external ID/status/response da mask.
+- [x] API admin xem integration status.
+- [x] API admin retry manual.
+- [x] Admin UI integration status/retry.
 - [ ] Implement Google Sheet adapter theo thong tin da xac nhan.
 - [ ] Implement Pancake adapter theo thong tin da xac nhan.
 - [ ] Implement BEST adapter neu nam trong MVP da xac nhan.
@@ -453,10 +453,13 @@ De xuat bo sung khi thiet ke chi tiet:
 
 - [ ] Test responsive Chrome/Safari/Android/iPhone.
 - [ ] Test Messenger/Facebook in-app browser.
-- [ ] Test rate limit va validation.
-- [ ] Test chong sua gia DevTools.
-- [ ] Test idempotency tao don trung.
-- [ ] Test integration timeout/error/retry.
+- [x] Test rate limit va validation.
+- [x] Test chong sua gia DevTools bang backend validation/price recompute.
+- [x] Test idempotency tao don trung.
+- [x] Test integration timeout/error/retry.
+- [x] Tao security checklist va test report.
+- [x] Bo sung hardening tests cho token het han, import file sai dinh dang, log redaction va XSS escape UI.
+- [x] Tao K6 smoke script cho public APIs.
 - [ ] Cau hinh monitoring/logging co request ID.
 - [ ] Backup database.
 - [ ] Staging deployment.
@@ -616,8 +619,8 @@ De xuat bo sung khi thiet ke chi tiet:
 | Pricing/Cart | In progress | [x] Quote [x] Cart UI [x] Price summary [x] Price-change handling |
 | Checkout/Orders | In progress | [x] Validation [x] Transaction [x] Idempotency [x] Order success [ ] Public order lookup pending confirmation |
 | Admin orders | In progress | [x] UI list [x] UI detail [x] UI status update [x] UI export [ ] API list/detail/status |
-| Integrations | In progress | [x] UI job/log status [x] UI retry action [ ] Worker [ ] Retry backend [ ] Adapter(s) |
-| QA/Release | Not started | [ ] Automated tests [ ] UAT [ ] Monitoring [ ] Production deploy |
+| Integrations | In progress | [x] UI job/log status [x] UI retry action [x] Worker [x] Retry backend [x] Mock/HTTP adapter interface [ ] Real partner adapters pending confirmed docs |
+| QA/Release | In progress | [x] Automated tests [x] Security checklist [x] Test report [ ] Browser device matrix [ ] UAT [ ] Monitoring [ ] Production deploy |
 
 ---
 
@@ -689,3 +692,28 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] Build admin khong con `ignoreBuildErrors`; build dung webpack de tranh Turbopack bind port trong sandbox.
 - [x] Root lint, typecheck, test va build thanh cong.
 - [x] Admin dev server chay tai `http://localhost:3001`, `/login` tra HTTP 200.
+
+### 2026-07-15 - Integration worker va adapters
+
+- [x] Xac nhan trong docs: chi tiet API/credential Google Sheet, Pancake, BEST Express van la `CẦN XÁC NHẬN`; khong implement endpoint/payload/auth production.
+- [x] Tao adapter contract chung `createOrder`, `updateOrder`, `getOrderStatus`, `healthCheck`.
+- [x] Tao `GoogleSheetsAdapter`, `PancakeAdapter`, `BestExpressAdapter`; mac dinh mock adapter neu thieu base URL/path.
+- [x] Worker claim job bang DB lock `FOR UPDATE SKIP LOCKED`, chuyen `processing`, timeout request, success/failure logging, exponential backoff.
+- [x] Job het retry hoac loi non-retryable chuyen `cancelled` de manual review.
+- [x] Admin API `GET /api/v1/admin/integrations` va `POST /api/v1/admin/integrations/:id/retry`.
+- [x] Worker entrypoint `npm run worker -w apps/api` va `worker:dev`.
+- [x] Integration tests voi mock HTTP server: success, timeout, HTTP 4xx, HTTP 5xx, response invalid, retry success, concurrent worker, partner already-created.
+- [x] Cap nhat `documents/INTEGRATIONS.md`, README, `.env.example`, Docker Compose worker service.
+
+### 2026-07-15 - QA hardening pass
+
+- [x] Doc lai acceptance criteria, test bat buoc va trang thai quyet dinh chua xac nhan.
+- [x] Bo sung unit test promotion token het han co chu ky hop le va token bi sua chu ky.
+- [x] Bo sung test import file khach uu dai sai dinh dang.
+- [x] Bo sung test redact secret, bearer token va raw SĐT trong integration logs/errors.
+- [x] Bo sung UI component test dam bao ten san pham tu API duoc React escape, khong render raw script.
+- [x] Tao K6 smoke script `tools/k6/public-smoke.js` cho `/products` va `/promotions/check`.
+- [x] Tao `documents/TEST_REPORT.md`.
+- [x] Tao `documents/SECURITY_CHECKLIST.md`.
+- [ ] Kiem thu thiet bi/trinh duyet that: Chrome, Safari, Android, iPhone, Messenger/Facebook in-app browser.
+- [ ] Kiem thu tich hop that Pancake/Google Sheet/BEST sau khi co endpoint, payload, auth va sandbox/credential da xac nhan.

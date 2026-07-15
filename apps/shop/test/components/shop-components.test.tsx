@@ -34,6 +34,22 @@ void test("ProductCard exposes accessible actions without hard-coded catalog dat
   assert.match(html, /Thêm/);
 });
 
+void test("ProductCard escapes product names rendered from API data", () => {
+  const product = sampleProduct({ name: "<script>alert('xss')</script>" });
+  const html = renderToStaticMarkup(
+    <ProductCard
+      product={product}
+      promotionUnlocked={true}
+      quantity={0}
+      onAdd={() => undefined}
+      onDetail={() => undefined}
+    />,
+  );
+
+  assert.doesNotMatch(html, /<script>/);
+  assert.match(html, /&lt;script&gt;/);
+});
+
 void test("OrderSummary renders live totals and unknown shipping state", () => {
   const product = sampleProduct();
   const totals = calculateCartTotals([product], [{ productId: product.id, quantity: 2 }], true, null);

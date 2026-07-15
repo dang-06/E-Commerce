@@ -45,6 +45,26 @@ services:
       retries: 5
       start_period: 15s
 
+  worker:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    command: ["npm", "run", "worker", "-w", "apps/api"]
+    environment:
+      NODE_ENV: production
+      API_AUTH_SECRET: ${API_AUTH_SECRET:-change_me_to_a_long_random_secret}
+      API_DEFAULT_SHIPPING_FEE_VND: ${API_DEFAULT_SHIPPING_FEE_VND:-0}
+      API_ORDER_INTEGRATIONS: ${API_ORDER_INTEGRATIONS:-sheet}
+      API_INTEGRATION_TIMEOUT_SECONDS: ${API_INTEGRATION_TIMEOUT_SECONDS:-10}
+      API_INTEGRATION_MAX_ATTEMPTS: ${API_INTEGRATION_MAX_ATTEMPTS:-5}
+      API_INTEGRATION_BACKOFF_BASE_SECONDS: ${API_INTEGRATION_BACKOFF_BASE_SECONDS:-60}
+      API_INTEGRATION_POLL_INTERVAL_SECONDS: ${API_INTEGRATION_POLL_INTERVAL_SECONDS:-5}
+      API_INTEGRATION_BATCH_SIZE: ${API_INTEGRATION_BATCH_SIZE:-10}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   web:
     build:
       context: .

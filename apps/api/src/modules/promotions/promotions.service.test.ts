@@ -205,6 +205,19 @@ void test("eligible customer import counts created, updated, duplicates and inva
   });
 });
 
+void test("eligible customer import rejects unsupported file types", async () => {
+  const service = createService(new FakePrismaForPromotions([]));
+  const file = {
+    originalname: "customers.exe",
+    buffer: Buffer.from("0901234567"),
+  } as Express.Multer.File;
+
+  await assert.rejects(
+    () => service.importEligibleCustomers(file, { source: "import", eligibilityReason: "imported" }),
+    HttpException,
+  );
+});
+
 void test("admin eligible customer list masks phone numbers", async () => {
   const service = createService(new FakePrismaForPromotions([eligible({ phoneNormalized: "0901234567" })]));
 

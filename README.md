@@ -97,3 +97,54 @@ Creates the order in a database transaction with `orders`, `order_items`, `integ
 The API does not accept frontend unit price, discount, subtotal or total fields. If the current product price no longer matches the stored quote for the same `idempotencyKey`, the API returns `409` with `status: "price_changed"` and a fresh quote for customer confirmation.
 
 `GET /orders/:code` is not exposed yet because the lookup security rule is still marked `CẦN XÁC NHẬN`.
+
+## Integrations
+
+Partner API details and credentials are not confirmed in the requirements. The API therefore defaults to mock adapters and never calls a production partner unless a base URL and explicit endpoint paths are configured.
+
+Admin integration operations:
+
+- `GET /api/v1/admin/integrations`
+- `POST /api/v1/admin/integrations/:id/retry`
+
+Worker behavior:
+
+- Claims `pending` or retryable `failed` jobs with a database lock.
+- Moves the job to `processing`.
+- Calls the configured adapter with timeout.
+- Stores `success` and `externalId` on success.
+- Stores redacted error details, increments `attemptCount`, and schedules exponential backoff on retryable failure.
+- Moves exhausted or non-retryable jobs to `cancelled` for manual review.
+
+Configuration:
+
+```bash
+API_INTEGRATION_TIMEOUT_SECONDS=10
+API_INTEGRATION_MAX_ATTEMPTS=5
+API_INTEGRATION_BACKOFF_BASE_SECONDS=60
+API_INTEGRATION_POLL_INTERVAL_SECONDS=5
+API_INTEGRATION_BATCH_SIZE=10
+
+# Disabled by default. Set only to sandbox/confirmed partner endpoints.
+API_INTEGRATION_SHEET_BASE_URL=
+API_INTEGRATION_SHEET_CREATE_ORDER_PATH=
+API_INTEGRATION_PANCAKE_BASE_URL=
+API_INTEGRATION_PANCAKE_CREATE_ORDER_PATH=
+API_INTEGRATION_BEST_BASE_URL=
+API_INTEGRATION_BEST_CREATE_ORDER_PATH=
+```
+
+`GoogleSheetsAdapter`, `PancakeAdapter`, and `BestExpressAdapter` share the same interface: `createOrder`, `updateOrder`, optional `getOrderStatus`, and optional `healthCheck`.
+
+Run the worker after building the API:
+
+```bash
+npm run build -w apps/api
+npm run worker -w apps/api
+```
+
+For local development:
+
+```bash
+npm run worker:dev -w apps/api
+```
