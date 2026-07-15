@@ -1,0 +1,12 @@
+node_modules
+.next
+dist
+dist-test
+coverage
+.turbo
+.env
+.env.*
+!.env.example
+npm-debug.log*
+package-lock.json
+*.tsbuildinfo

@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  admin
+  operator
+}
+
+enum AdminStatus {
+  active
+  locked
+}
+
+enum CustomerSource {
+  sheet
+  pancake
+  best
+  import
+  manual
+}
+
+enum EligibilityReason {
+  delivered
+  purchased
+  manual
+  imported
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  processing
+  shipped
+  delivered
+  cancelled
+  failed
+}
+
+enum PaymentMethod {
+  cod
+  bank_transfer
+  online
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+enum IntegrationName {
+  pancake
+  sheet
+  best
+}
+
+enum IntegrationAction {
+  create
+  update
+}
+
+enum IntegrationStatus {
+  pending
+  processing
+  success
+  failed
+  cancelled
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  login
+  retry
+}
+
+model Admin {
+  id           BigInt      @id @default(autoincrement()) @db.BigInt
+  email        String      @unique @db.VarChar(255)
+  passwordHash String      @map("password_hash") @db.VarChar(255)
+  fullName     String      @map("full_name") @db.VarChar(150)
+  role         AdminRole   @default(operator)
+  status       AdminStatus @default(active)
+  lastLoginAt  DateTime?   @map("last_login_at") @db.Timestamp(6)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  auditLogs AuditLog[]
+
+  @@index([role, status], map: "idx_admins_role_status")
+  @@map("admins")
+}
+
+model EligibleCustomer {
+  id                BigInt             @id @default(autoincrement()) @db.BigInt
+  phoneNormalized   String             @map("phone_normalized") @db.VarChar(20)
+  phoneHash         String             @unique @map("phone_hash") @db.VarChar(64)
+  source            CustomerSource
+  sourceCustomerId  String?            @map("source_customer_id") @db.VarChar(100)
+  eligibilityReason EligibilityReason   @map("eligibility_reason")
+  successfulOrderAt DateTime?          @map("successful_order_at") @db.Timestamp(6)
+  usageCount        Int                @default(0) @map("usage_count")
+  usageLimit        Int?               @map("usage_limit")
+  isActive          Boolean            @default(true) @map("is_active")
+  importedAt        DateTime           @default(now()) @map("imported_at") @db.Timestamp(6)
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  orders Order[]
+
+  @@index([isActive, source], map: "idx_eligible_customers_active_source")
+  @@index([phoneNormalized], map: "idx_eligible_customers_phone_normalized")
+  @@map("eligible_customers")
+}
+
+model Product {
+  id                  BigInt    @id @default(autoincrement()) @db.BigInt
+  sku                 String    @unique @db.VarChar(50)
+  name                String    @db.VarChar(255)
+  slug                String    @unique @db.VarChar(255)
+  description         String?
+  imageUrl            String?   @map("image_url")
+  listedPrice         BigInt    @map("listed_price") @db.BigInt
+  stockQuantity       Int?      @map("stock_quantity")
+  isPromotionEligible Boolean   @default(true) @map("is_promotion_eligible")
+  discountAmount      BigInt    @default(25000) @map("discount_amount") @db.BigInt
+  isActive            Boolean   @default(true) @map("is_active")
+  sortOrder           Int       @default(0) @map("sort_order")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamp(6)
+
+  images     ProductImage[]
+  orderItems OrderItem[]
+
+  @@index([isActive, sortOrder], map: "idx_products_active_sort")
+  @@index([deletedAt], map: "idx_products_deleted_at")
+  @@map("products")
+}
+
+model ProductImage {
+  id        BigInt   @id @default(autoincrement()) @db.BigInt
+  productId BigInt   @map("product_id") @db.BigInt
+  imageUrl  String   @map("image_url")
+  altText   String?  @map("alt_text") @db.VarChar(255)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder], map: "idx_product_images_product_sort")
+  @@map("product_images")
+}
+
+model PromotionRule {
+  id             BigInt    @id @default(autoincrement()) @db.BigInt
+  code           String    @unique @db.VarChar(50)
+  name           String    @db.VarChar(150)
+  discountAmount BigInt    @default(25000) @map("discount_amount") @db.BigInt
+  startsAt       DateTime? @map("starts_at") @db.Timestamp(6)
+  endsAt         DateTime? @map("ends_at") @db.Timestamp(6)
+  isActive       Boolean   @default(true) @map("is_active")
+  config         Json?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([isActive, startsAt, endsAt], map: "idx_promotion_rules_active_window")
+  @@map("promotion_rules")
+}
+
+model Order {
+  id                   BigInt         @id @default(autoincrement()) @db.BigInt
+  orderCode            String         @unique @map("order_code") @db.VarChar(30)
+  idempotencyKey       String         @unique @map("idempotency_key") @db.VarChar(100)
+  eligibleCustomerId   BigInt?        @map("eligible_customer_id") @db.BigInt
+  promotionPhone       String?        @map("promotion_phone") @db.VarChar(20)
+  promotionPhoneHash   String?        @map("promotion_phone_hash") @db.VarChar(64)
+  isPromotionApplied   Boolean        @default(false) @map("is_promotion_applied")
+  recipientName        String         @map("recipient_name") @db.VarChar(150)
+  recipientPhone       String         @map("recipient_phone") @db.VarChar(20)
+  province             String         @db.VarChar(100)
+  district             String         @db.VarChar(100)
+  ward                 String         @db.VarChar(100)
+  address              String
+  totalQuantity        Int            @map("total_quantity")
+  subtotal             BigInt         @db.BigInt
+  discountAmount       BigInt         @default(0) @map("discount_amount") @db.BigInt
+  shippingFee          BigInt         @default(0) @map("shipping_fee") @db.BigInt
+  totalAmount          BigInt         @map("total_amount") @db.BigInt
+  paymentMethod        PaymentMethod  @default(cod) @map("payment_method")
+  paymentStatus        PaymentStatus  @default(pending) @map("payment_status")
+  orderStatus          OrderStatus    @default(pending) @map("order_status")
+  pancakeOrderId       String?        @map("pancake_order_id") @db.VarChar(100)
+  shippingOrderId      String?        @map("shipping_order_id") @db.VarChar(100)
+  note                 String?
+  createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime       @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  eligibleCustomer EligibleCustomer? @relation(fields: [eligibleCustomerId], references: [id], onDelete: SetNull)
+  items            OrderItem[]
+  integrationJobs  IntegrationJob[]
+  integrationLogs  IntegrationLog[]
+
+  @@index([orderStatus, createdAt], map: "idx_orders_status_created")
+  @@index([recipientPhone], map: "idx_orders_recipient_phone")
+  @@index([promotionPhone], map: "idx_orders_promotion_phone")
+  @@index([promotionPhoneHash], map: "idx_orders_promotion_phone_hash")
+  @@index([eligibleCustomerId], map: "idx_orders_eligible_customer")
+  @@map("orders")
+}
+
+model OrderItem {
+  id              BigInt   @id @default(autoincrement()) @db.BigInt
+  orderId         BigInt   @map("order_id") @db.BigInt
+  productId       BigInt   @map("product_id") @db.BigInt
+  sku             String   @db.VarChar(50)
+  productName     String   @map("product_name") @db.VarChar(255)
+  listedPrice     BigInt   @map("listed_price") @db.BigInt
+  discountPerItem BigInt   @default(0) @map("discount_per_item") @db.BigInt
+  finalUnitPrice  BigInt   @map("final_unit_price") @db.BigInt
+  quantity        Int
+  lineSubtotal    BigInt   @map("line_subtotal") @db.BigInt
+  lineDiscount    BigInt   @default(0) @map("line_discount") @db.BigInt
+  lineTotal       BigInt   @map("line_total") @db.BigInt
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId], map: "idx_order_items_order")
+  @@index([productId], map: "idx_order_items_product")
+  @@map("order_items")
+}
+
+model PromotionCheck {
+  id           BigInt   @id @default(autoincrement()) @db.BigInt
+  phoneHash    String   @map("phone_hash") @db.VarChar(64)
+  isEligible   Boolean  @map("is_eligible")
+  tokenId      String?  @map("token_id") @db.Uuid
+  ipHash       String?  @map("ip_hash") @db.VarChar(64)
+  userAgent    String?  @map("user_agent") @db.VarChar(255)
+  checkedAt    DateTime @default(now()) @map("checked_at") @db.Timestamp(6)
+  expiresAt    DateTime? @map("expires_at") @db.Timestamp(6)
+
+  @@index([phoneHash, checkedAt], map: "idx_promotion_checks_phone_checked")
+  @@index([tokenId], map: "idx_promotion_checks_token")
+  @@index([checkedAt], map: "idx_promotion_checks_checked_at")
+  @@map("promotion_checks")
+}
+
+model IntegrationJob {
+  id            BigInt            @id @default(autoincrement()) @db.BigInt
+  orderId       BigInt            @map("order_id") @db.BigInt
+  integration   IntegrationName
+  action        IntegrationAction
+  status        IntegrationStatus @default(pending)
+  attemptCount  Int               @default(0) @map("attempt_count")
+  nextRetryAt   DateTime?         @map("next_retry_at") @db.Timestamp(6)
+  lockedAt      DateTime?         @map("locked_at") @db.Timestamp(6)
+  lockedBy      String?           @map("locked_by") @db.VarChar(100)
+  externalId    String?           @map("external_id") @db.VarChar(100)
+  requestPayload Json?            @map("request_payload")
+  lastError     String?           @map("last_error")
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  logs  IntegrationLog[]
+
+  @@index([status, nextRetryAt], map: "idx_integration_jobs_status_retry")
+  @@index([orderId, integration], map: "idx_integration_jobs_order_integration")
+  @@map("integration_jobs")
+}
+
+model IntegrationLog {
+  id              BigInt            @id @default(autoincrement()) @db.BigInt
+  orderId         BigInt            @map("order_id") @db.BigInt
+  integrationJobId BigInt?          @map("integration_job_id") @db.BigInt
+  integration     IntegrationName
+  action          IntegrationAction
+  status          IntegrationStatus @default(pending)
+  externalId      String?           @map("external_id") @db.VarChar(100)
+  attemptCount    Int               @default(0) @map("attempt_count")
+  requestPayload  Json?             @map("request_payload")
+  responsePayload Json?             @map("response_payload")
+  errorMessage    String?           @map("error_message")
+  nextRetryAt     DateTime?         @map("next_retry_at") @db.Timestamp(6)
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  job   IntegrationJob? @relation(fields: [integrationJobId], references: [id], onDelete: SetNull)
+
+  @@index([status, nextRetryAt], map: "idx_integration_logs_status_retry")
+  @@index([orderId, integration], map: "idx_integration_logs_order_integration")
+  @@index([integrationJobId], map: "idx_integration_logs_job")
+  @@map("integration_logs")
+}
+
+model AuditLog {
+  id          BigInt      @id @default(autoincrement()) @db.BigInt
+  adminId     BigInt?     @map("admin_id") @db.BigInt
+  action      AuditAction
+  entityType  String      @map("entity_type") @db.VarChar(80)
+  entityId    String?     @map("entity_id") @db.VarChar(100)
+  ipHash      String?     @map("ip_hash") @db.VarChar(64)
+  metadata    Json?
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+
+  admin Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([adminId, createdAt], map: "idx_audit_logs_admin_created")
+  @@index([entityType, entityId], map: "idx_audit_logs_entity")
+  @@map("audit_logs")
+}
+

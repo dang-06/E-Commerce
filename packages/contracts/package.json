@@ -1,0 +1,17 @@
+{
+  "name": "@ecommerce/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node -e \"require('node:fs').rmSync('dist-test',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && find dist-test -name '*.test.js' -print0 | xargs -0 node --test"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  }
+}
