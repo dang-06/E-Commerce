@@ -43,7 +43,7 @@ export type OrderStatus =
 
 export type PaymentStatus = 'unpaid' | 'paid' | 'refunded'
 
-export type SyncStatus = 'pending' | 'syncing' | 'success' | 'failed'
+export type SyncStatus = 'pending' | 'processing' | 'success' | 'failed'
 
 // Order
 export interface OrderItem {
@@ -109,8 +109,8 @@ export interface IntegrationLog {
   externalId?: string
   lastError?: string
   nextRetry?: Date
-  requestData?: Record<string, any>
-  responseData?: Record<string, any>
+  requestData?: Record<string, unknown>
+  responseData?: Record<string, unknown>
   createdAt: Date
   updatedAt: Date
 }
@@ -123,7 +123,7 @@ export interface AuditLog {
   action: string
   entityType: string
   entityId: string
-  changes?: Record<string, any>
+  changes?: Record<string, unknown>
   ipAddress?: string
   device?: string
   createdAt: Date

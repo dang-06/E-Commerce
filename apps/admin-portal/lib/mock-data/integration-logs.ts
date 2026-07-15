@@ -1,7 +1,7 @@
 import { IntegrationLog, SyncStatus } from '@/lib/types'
 
-const syncStatuses: SyncStatus[] = ['pending', 'syncing', 'success', 'failed']
-const integrations: Array<'google_sheet' | 'pancake' | 'best'> = [
+const syncStatuses: SyncStatus[] = ['pending', 'processing', 'success', 'failed']
+const integrations: ('google_sheet' | 'pancake' | 'best')[] = [
   'google_sheet',
   'pancake',
   'best',

@@ -28,7 +28,7 @@ export default function AuditLogsPage() {
       }
     }
 
-    loadLogs()
+    void loadLogs()
   }, [])
 
   const filteredLogs = logs.filter((l) =>
@@ -98,7 +98,7 @@ export default function AuditLogsPage() {
         <Input
           placeholder="Tìm kiếm theo thao tác hoặc người dùng..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => { setSearchTerm(e.target.value); }}
           className="max-w-sm"
         />
       </div>

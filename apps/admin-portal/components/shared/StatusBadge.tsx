@@ -35,14 +35,14 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
 
 const syncStatusColors: Record<SyncStatus, string> = {
   pending: 'bg-gray-100 text-gray-800',
-  syncing: 'bg-blue-100 text-blue-800',
+  processing: 'bg-blue-100 text-blue-800',
   success: 'bg-green-100 text-green-800',
   failed: 'bg-red-100 text-red-800',
 }
 
 const syncStatusLabels: Record<SyncStatus, string> = {
   pending: 'Chưa đồng bộ',
-  syncing: 'Đang đồng bộ',
+  processing: 'Đang xử lý',
   success: 'Thành công',
   failed: 'Thất bại',
 }
@@ -69,7 +69,7 @@ export function StatusBadge({ type, status, className }: StatusBadgeProps) {
   }
 
   return (
-    <Badge variant="secondary" className={`${colors} ${className || ''}`}>
+    <Badge variant="secondary" className={`${colors} ${className ?? ''}`}>
       {label}
     </Badge>
   )

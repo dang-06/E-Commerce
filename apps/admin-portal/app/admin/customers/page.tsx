@@ -8,7 +8,7 @@ import { DataTable } from '@/components/shared/DataTable'
 import { PhoneMask } from '@/components/shared/PhoneMask'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Download, FileUp } from 'lucide-react'
+import { Plus, FileUp } from 'lucide-react'
 import { EligibleCustomer } from '@/lib/types'
 import { eligibleCustomerService } from '@/lib/services/api-service'
 import { formatVietnameseDate } from '@/lib/utils/vietnamese'
@@ -30,7 +30,7 @@ export default function CustomersPage() {
       }
     }
 
-    loadCustomers()
+    void loadCustomers()
   }, [])
 
   const filteredCustomers = customers.filter((c) => c.phone.includes(searchTerm))
@@ -39,7 +39,7 @@ export default function CustomersPage() {
     {
       accessorKey: 'phone',
       header: 'Số điện thoại',
-      cell: ({ row }) => <PhoneMask phone={row.original.phone} showFull />,
+      cell: ({ row }) => <PhoneMask phone={row.original.phone} />,
     },
     {
       accessorKey: 'source',
@@ -119,7 +119,7 @@ export default function CustomersPage() {
         <Input
           placeholder="Tìm kiếm theo số điện thoại..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => { setSearchTerm(e.target.value); }}
           className="max-w-sm"
         />
       </div>

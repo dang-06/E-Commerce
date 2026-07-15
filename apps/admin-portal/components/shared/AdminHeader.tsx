@@ -4,6 +4,7 @@ import { Bell, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { User as UserType } from '@/lib/types'
+import { getStoredAuth } from '@/lib/services/auth'
 
 interface AdminHeaderProps {
   user?: UserType | null
@@ -18,15 +19,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
     if (user) {
       setCurrentUser(user)
     } else {
-      try {
-        const auth = localStorage.getItem('auth_context')
-        if (auth) {
-          const { user: storedUser } = JSON.parse(auth)
-          setCurrentUser(storedUser)
-        }
-      } catch (e) {
-        console.error('Failed to load user:', e)
-      }
+      setCurrentUser(getStoredAuth()?.user ?? null)
     }
   }, [user])
 
@@ -55,11 +48,11 @@ export function AdminHeader({ user }: AdminHeaderProps) {
           <Button variant="ghost" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
               <span className="text-sm font-semibold text-primary">
-                {currentUser?.name?.charAt(0) || 'U'}
+                {currentUser?.name.charAt(0) ?? 'U'}
               </span>
             </div>
             <div className="hidden text-left sm:block">
-              <p className="text-sm font-medium text-foreground">{currentUser?.name || 'User'}</p>
+              <p className="text-sm font-medium text-foreground">{currentUser?.name ?? 'User'}</p>
               <p className="text-xs text-muted-foreground">
                 {currentUser?.role === 'admin' ? 'Quản lý' : 'Nhân viên'}
               </p>

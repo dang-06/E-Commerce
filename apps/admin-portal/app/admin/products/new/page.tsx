@@ -29,7 +29,7 @@ export default function NewProductPage() {
     isActive: true,
   })
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
 
@@ -69,7 +69,12 @@ export default function NewProductPage() {
       {/* Form */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={(event) => {
+              void handleSubmit(event)
+            }}
+            className="space-y-6"
+          >
             {/* Basic Info */}
             <Card className="p-6">
               <h2 className="text-lg font-semibold mb-4">Thông tin cơ bản</h2>
@@ -81,7 +86,7 @@ export default function NewProductPage() {
                     placeholder="VD: Laptop Dell XPS 13"
                     value={formData.name}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      { setFormData({ ...formData, name: e.target.value }); }
                     }
                     required
                   />
@@ -95,7 +100,7 @@ export default function NewProductPage() {
                       placeholder="VD: LAP-001"
                       value={formData.sku}
                       onChange={(e) =>
-                        setFormData({ ...formData, sku: e.target.value })
+                        { setFormData({ ...formData, sku: e.target.value }); }
                       }
                       required
                     />
@@ -107,7 +112,7 @@ export default function NewProductPage() {
                       placeholder="VD: Máy tính"
                       value={formData.category}
                       onChange={(e) =>
-                        setFormData({ ...formData, category: e.target.value })
+                        { setFormData({ ...formData, category: e.target.value }); }
                       }
                     />
                   </div>
@@ -120,10 +125,10 @@ export default function NewProductPage() {
                     placeholder="Tóm tắt sản phẩm"
                     value={formData.shortDescription}
                     onChange={(e) =>
-                      setFormData({
+                      { setFormData({
                         ...formData,
                         shortDescription: e.target.value,
-                      })
+                      }); }
                     }
                   />
                 </div>
@@ -136,7 +141,7 @@ export default function NewProductPage() {
                     rows={4}
                     value={formData.description}
                     onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
+                      { setFormData({ ...formData, description: e.target.value }); }
                     }
                   />
                 </div>
@@ -155,7 +160,7 @@ export default function NewProductPage() {
                     placeholder="0"
                     value={formData.listedPrice}
                     onChange={(e) =>
-                      setFormData({ ...formData, listedPrice: e.target.value })
+                      { setFormData({ ...formData, listedPrice: e.target.value }); }
                     }
                   />
                 </div>
@@ -168,10 +173,10 @@ export default function NewProductPage() {
                     placeholder="0"
                     value={formData.discountAmount}
                     onChange={(e) =>
-                      setFormData({
+                      { setFormData({
                         ...formData,
                         discountAmount: e.target.value,
-                      })
+                      }); }
                     }
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -192,7 +197,7 @@ export default function NewProductPage() {
                   placeholder="0"
                   value={formData.stock}
                   onChange={(e) =>
-                    setFormData({ ...formData, stock: e.target.value })
+                    { setFormData({ ...formData, stock: e.target.value }); }
                   }
                 />
               </div>
@@ -222,10 +227,10 @@ export default function NewProductPage() {
                   id="isPromotionEligible"
                   checked={formData.isPromotionEligible}
                   onCheckedChange={(checked) =>
-                    setFormData({
+                    { setFormData({
                       ...formData,
-                      isPromotionEligible: Boolean(checked),
-                    })
+                      isPromotionEligible: checked,
+                    }); }
                   }
                 />
                 <Label htmlFor="isPromotionEligible" className="cursor-pointer">
@@ -238,7 +243,7 @@ export default function NewProductPage() {
                   id="isActive"
                   checked={formData.isActive}
                   onCheckedChange={(checked) =>
-                    setFormData({ ...formData, isActive: Boolean(checked) })
+                    { setFormData({ ...formData, isActive: checked }); }
                   }
                 />
                 <Label htmlFor="isActive" className="cursor-pointer">

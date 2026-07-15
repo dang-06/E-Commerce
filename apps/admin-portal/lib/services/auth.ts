@@ -19,7 +19,14 @@ export function getStoredAuth(): AuthContext | null {
 
   try {
     const stored = localStorage.getItem(AUTH_STORAGE_KEY)
-    return stored ? JSON.parse(stored) : null
+    if (!stored) {
+      return null
+    }
+    const parsed = JSON.parse(stored) as unknown
+    if (!isAuthContext(parsed)) {
+      return null
+    }
+    return parsed
   } catch {
     return null
   }
@@ -61,6 +68,7 @@ export async function mockLogin(
   email: string,
   password: string
 ): Promise<{ user: User; token: string } | null> {
+  void password
   // Simulate API delay
   await new Promise((resolve) => setTimeout(resolve, 500))
 
@@ -69,7 +77,7 @@ export async function mockLogin(
     return null
   }
 
-  const token = mockAuthTokens[email] || 'token_' + email.replace('@', '_')
+  const token = mockAuthTokens[email] ?? `token_${email.replace('@', '_')}`
 
   return { user, token }
 }
@@ -91,7 +99,7 @@ export async function validateToken(token: string): Promise<User | null> {
   // Find user by token
   for (const [email, tokenValue] of Object.entries(mockAuthTokens)) {
     if (tokenValue === token) {
-      return mockUsers.find((u) => u.email === email) || null
+      return mockUsers.find((u) => u.email === email) ?? null
     }
   }
 
@@ -114,4 +122,29 @@ export function hasRole(userRole: UserRole | null, requiredRole: UserRole): bool
  */
 export function isAdmin(userRole: UserRole | null): boolean {
   return userRole === 'admin'
+}
+
+function isAuthContext(value: unknown): value is AuthContext {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  const candidate = value as Partial<AuthContext>
+  return (
+    (candidate.token === null || typeof candidate.token === 'string') &&
+    (candidate.role === null || candidate.role === 'admin' || candidate.role === 'operator') &&
+    (candidate.user === null || isUser(candidate.user))
+  )
+}
+
+function isUser(value: unknown): value is User {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+  const candidate = value as Partial<User>
+  return (
+    typeof candidate.id === 'string' &&
+    typeof candidate.email === 'string' &&
+    typeof candidate.name === 'string' &&
+    (candidate.role === 'admin' || candidate.role === 'operator')
+  )
 }

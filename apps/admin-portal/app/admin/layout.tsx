@@ -19,7 +19,7 @@ export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps
     async function checkAuth() {
       const auth = getStoredAuth()
 
-      if (!auth || !auth.token) {
+      if (!auth?.token) {
         router.push('/login')
         return
       }
@@ -39,7 +39,7 @@ export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps
       }
     }
 
-    checkAuth()
+    void checkAuth()
   }, [router])
 
   if (loading) {

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Separator } from '@/components/ui/separator'
 import { Save, Key } from 'lucide-react'
 
 export default function SettingsPage() {
@@ -93,7 +92,14 @@ export default function SettingsPage() {
           </Card>
 
           {/* Save Button */}
-          <Button onClick={handleSave} disabled={saving} size="lg" className="gap-2">
+          <Button
+            onClick={() => {
+              void handleSave()
+            }}
+            disabled={saving}
+            size="lg"
+            className="gap-2"
+          >
             <Save className="h-4 w-4" />
             {saving ? 'Đang lưu...' : 'Lưu cài đặt'}
           </Button>
@@ -138,7 +144,14 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground mb-4">
               Những hành động trong phần này không thể hoàn tác
             </p>
-            <Button variant="destructive" size="sm" className="w-full">
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                window.confirm('Hành động này đang bị khóa trong MVP để tránh xóa nhầm dữ liệu.')
+              }}
+            >
               Xoá tất cả dữ liệu
             </Button>
           </Card>

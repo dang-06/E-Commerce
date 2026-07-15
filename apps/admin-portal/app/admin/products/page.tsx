@@ -9,7 +9,7 @@ import { MoneyDisplay } from '@/components/shared/MoneyDisplay'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, Edit, Trash2, Copy } from 'lucide-react'
+import { Plus, Edit, Trash2 } from 'lucide-react'
 import { Product } from '@/lib/types'
 import { productService } from '@/lib/services/api-service'
 
@@ -30,7 +30,7 @@ export default function ProductsPage() {
       }
     }
 
-    loadProducts()
+    void loadProducts()
   }, [])
 
   const filteredProducts = products.filter((p) =>
@@ -76,8 +76,8 @@ export default function ProductsPage() {
       accessorKey: 'stock',
       header: 'Tồn kho',
       cell: ({ row }) => (
-        <span className={row.original.stock! > 20 ? 'text-green-600' : 'text-amber-600'}>
-          {row.original.stock}
+        <span className={(row.original.stock ?? 0) > 20 ? 'text-green-600' : 'text-amber-600'}>
+          {row.original.stock ?? 'Chưa cấu hình'}
         </span>
       ),
     },
@@ -101,7 +101,16 @@ export default function ProductsPage() {
               <Edit className="h-4 w-4" />
             </Button>
           </Link>
-          <Button variant="ghost" size="sm" className="text-destructive">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-destructive"
+            onClick={() => {
+              if (window.confirm('Ẩn sản phẩm này? Sản phẩm có đơn sẽ không bị xóa cứng.')) {
+                void productService.deleteProduct(row.original.id)
+              }
+            }}
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -133,7 +142,7 @@ export default function ProductsPage() {
         <Input
           placeholder="Tìm kiếm theo tên hoặc SKU..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => { setSearchTerm(e.target.value); }}
           className="max-w-sm"
         />
       </div>

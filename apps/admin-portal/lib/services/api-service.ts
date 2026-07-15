@@ -16,7 +16,7 @@ export const productService = {
 
   async getProductById(id: string): Promise<Product | null> {
     await delay(300)
-    return mockProducts.find((p) => p.id === id) || null
+    return mockProducts.find((p) => p.id === id) ?? null
   },
 
   async createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
@@ -38,6 +38,7 @@ export const productService = {
   },
 
   async deleteProduct(id: string): Promise<boolean> {
+    void id
     await delay(500)
     return true
   },
@@ -54,12 +55,12 @@ export const orderService = {
 
   async getOrderById(id: string): Promise<Order | null> {
     await delay(300)
-    return mockOrders.find((o) => o.id === id) || null
+    return mockOrders.find((o) => o.id === id) ?? null
   },
 
   async getOrderByCode(code: string): Promise<Order | null> {
     await delay(300)
-    return mockOrders.find((o) => o.code === code) || null
+    return mockOrders.find((o) => o.code === code) ?? null
   },
 
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order | null> {
@@ -88,7 +89,7 @@ export const eligibleCustomerService = {
 
   async getCustomerByPhone(phone: string): Promise<EligibleCustomer | null> {
     await delay(300)
-    return mockEligibleCustomers.find((c) => c.phone === phone) || null
+    return mockEligibleCustomers.find((c) => c.phone === phone) ?? null
   },
 
   async addCustomer(customer: Omit<EligibleCustomer, 'id' | 'createdAt'>): Promise<EligibleCustomer> {
@@ -101,7 +102,7 @@ export const eligibleCustomerService = {
   },
 
   async importCustomers(
-    customers: Array<Omit<EligibleCustomer, 'id' | 'createdAt'>>
+    customers: Omit<EligibleCustomer, 'id' | 'createdAt'>[]
   ): Promise<{ imported: number; duplicates: number; errors: number }> {
     await delay(1500)
     return {
@@ -129,6 +130,7 @@ export const integrationService = {
   },
 
   async retrySync(logId: string): Promise<boolean> {
+    void logId
     await delay(1000)
     return true
   },
@@ -201,16 +203,16 @@ export const dashboardService = {
     }
   },
 
-  async getRecentOrders(limit: number = 10): Promise<Order[]> {
+  async getRecentOrders(limit = 10): Promise<Order[]> {
     await delay(500)
     return [...mockOrders]
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .slice(0, limit)
   },
 
-  async getTopProducts(limit: number = 5): Promise<Product[]> {
+  async getTopProducts(limit = 5): Promise<Product[]> {
     await delay(500)
-    return [...mockProducts].sort((a, b) => b.stock! - a.stock!).slice(0, limit)
+    return [...mockProducts].sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, limit)
   },
 }
 

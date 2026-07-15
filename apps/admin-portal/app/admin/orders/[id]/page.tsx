@@ -21,13 +21,14 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState('')
+  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     async function loadOrder() {
       try {
         const data = await orderService.getOrderById(orderId)
         setOrder(data)
-        setNotes(data?.notes || '')
+        setNotes(data?.notes ?? '')
       } catch (e) {
         console.error('Failed to load order:', e)
       } finally {
@@ -35,7 +36,7 @@ export default function OrderDetailPage() {
       }
     }
 
-    loadOrder()
+    void loadOrder()
   }, [orderId])
 
   if (loading) {
@@ -107,6 +108,39 @@ export default function OrderDetailPage() {
                 <StatusBadge type="sync" status={order.syncStatus} />
               </div>
             </div>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-muted-foreground">Cập nhật trạng thái</span>
+                <select
+                  className="h-9 rounded-lg border border-input bg-background px-3"
+                  value={order.status}
+                  onChange={(event) => {
+                    setOrder({ ...order, status: event.target.value as Order['status'] })
+                  }}
+                >
+                  <option value="pending">pending</option>
+                  <option value="confirmed">confirmed</option>
+                  <option value="preparing">preparing</option>
+                  <option value="shipping">shipping</option>
+                  <option value="delivered">delivered</option>
+                  <option value="cancelled">cancelled</option>
+                  <option value="returned">returned</option>
+                </select>
+              </label>
+              <Button
+                className="self-end"
+                onClick={() => {
+                  if (window.confirm('Cập nhật trạng thái đơn hàng?')) {
+                    void orderService.updateOrder(order.id, { status: order.status }).then(() => {
+                      setSuccess('Đã cập nhật trạng thái đơn.')
+                    })
+                  }
+                }}
+              >
+                Lưu trạng thái
+              </Button>
+            </div>
+            {success ? <p className="mt-3 text-sm text-green-700">{success}</p> : null}
           </Card>
 
           {/* Recipient Info */}
@@ -155,7 +189,7 @@ export default function OrderDetailPage() {
             <Textarea
               placeholder="Thêm ghi chú..."
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => { setNotes(e.target.value); }}
               rows={3}
             />
             <Button className="mt-3">Lưu ghi chú</Button>

@@ -7,13 +7,13 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Download, TrendingUp } from 'lucide-react'
 import { Order, Product } from '@/lib/types'
-import { dashboardService, orderService, productService } from '@/lib/services/api-service'
+import { orderService, productService } from '@/lib/services/api-service'
+import { buildOrdersCsv } from '@/lib/services/admin-actions'
 import { formatVND, formatPercent } from '@/lib/utils/vietnamese'
 
 export default function ReportsPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadData() {
@@ -27,11 +27,11 @@ export default function ReportsPage() {
       } catch (e) {
         console.error('Failed to load report data:', e)
       } finally {
-        setLoading(false)
+        // Keep empty report state if mock data cannot be loaded.
       }
     }
 
-    loadData()
+    void loadData()
   }, [])
 
   const totalOrders = orders.length
@@ -60,7 +60,20 @@ export default function ReportsPage() {
           <h1 className="text-3xl font-bold text-foreground">Báo cáo</h1>
           <p className="mt-1 text-muted-foreground">Thống kê và phân tích hoạt động</p>
         </div>
-        <Button variant="outline" className="gap-2">
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => {
+            const csv = buildOrdersCsv(orders)
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = 'orders-report.csv'
+            link.click()
+            URL.revokeObjectURL(url)
+          }}
+        >
           <Download className="h-4 w-4" />
           Xuất báo cáo
         </Button>

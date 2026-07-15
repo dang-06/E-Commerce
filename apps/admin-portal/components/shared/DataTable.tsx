@@ -63,7 +63,7 @@ export function DataTable<TData>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -74,7 +74,7 @@ export function DataTable<TData>({
                     <TableCell
                       key={cell.id}
                       style={{
-                        width: cell.column.columnSize,
+                        width: cell.column.getSize(),
                       }}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -102,7 +102,7 @@ export function DataTable<TData>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.previousPage()}
+              onClick={() => { table.previousPage(); }}
               disabled={!table.getCanPreviousPage()}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -111,7 +111,7 @@ export function DataTable<TData>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.nextPage()}
+              onClick={() => { table.nextPage(); }}
               disabled={!table.getCanNextPage()}
             >
               Sau

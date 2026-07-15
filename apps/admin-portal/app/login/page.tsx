@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, type SyntheticEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -75,7 +75,12 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={(event) => {
+              void handleSubmit(event)
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -83,7 +88,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="admin@store.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); }}
                 required
                 disabled={loading}
               />
@@ -97,12 +102,12 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); }}
                   disabled={loading}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => { setShowPassword(!showPassword); }}
                   className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
                   disabled={loading}
                 >

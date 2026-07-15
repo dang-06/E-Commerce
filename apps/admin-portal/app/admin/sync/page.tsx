@@ -34,7 +34,7 @@ export default function SyncPage() {
       }
     }
 
-    loadData()
+    void loadData()
   }, [])
 
   const failedCount = logs.filter((l) => l.status === 'failed').length
@@ -86,7 +86,9 @@ export default function SyncPage() {
             variant="ghost"
             size="sm"
             onClick={() => {
-              integrationService.retrySync(row.original.id)
+              if (window.confirm('Retry lỗi đồng bộ này?')) {
+                void integrationService.retrySync(row.original.id)
+              }
             }}
           >
             <RefreshCw className="h-4 w-4" />

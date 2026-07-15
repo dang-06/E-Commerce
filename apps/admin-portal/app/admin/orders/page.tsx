@@ -32,7 +32,7 @@ export default function OrdersPage() {
       }
     }
 
-    loadOrders()
+    void loadOrders()
   }, [])
 
   const filteredOrders = orders.filter((o) =>
@@ -117,7 +117,7 @@ export default function OrdersPage() {
         <Input
           placeholder="Tìm kiếm theo mã đơn, tên khách hoặc số điện thoại..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => { setSearchTerm(e.target.value); }}
           className="max-w-sm"
         />
       </div>

@@ -38,7 +38,7 @@ const phoneNumbers = [
   '0945707070',
 ]
 
-const sources: Array<'manual' | 'excel' | 'google_sheet' | 'pancake' | 'best'> = [
+const sources: ('manual' | 'excel' | 'google_sheet' | 'pancake' | 'best')[] = [
   'manual',
   'excel',
   'google_sheet',

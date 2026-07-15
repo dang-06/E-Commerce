@@ -17,7 +17,6 @@ export default function DashboardPage() {
     pendingOrders: 0,
     failedSyncs: 0,
   })
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadStats() {
@@ -27,11 +26,11 @@ export default function DashboardPage() {
       } catch (e) {
         console.error('Failed to load stats:', e)
       } finally {
-        setLoading(false)
+        // Dashboard cards keep their zero state if the mock API is unavailable.
       }
     }
 
-    loadStats()
+    void loadStats()
   }, [])
 
   return (

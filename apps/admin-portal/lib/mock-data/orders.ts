@@ -10,7 +10,7 @@ const statuses: OrderStatus[] = [
   'returned',
 ]
 const paymentStatuses: PaymentStatus[] = ['unpaid', 'paid', 'refunded']
-const syncStatuses: SyncStatus[] = ['pending', 'syncing', 'success', 'failed']
+const syncStatuses: SyncStatus[] = ['pending', 'processing', 'success', 'failed']
 
 const phoneNumbers = [
   '0901234567',

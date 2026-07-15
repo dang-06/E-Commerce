@@ -382,8 +382,8 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] API sua san pham.
 - [x] API an/hien san pham.
 - [x] API xoa mem san pham.
-- [ ] Admin UI login.
-- [ ] Admin UI product list/form/status.
+- [x] Admin UI login.
+- [x] Admin UI product list/form/status.
 - [ ] Audit log thay doi san pham.
 
 ### Milestone 4 - Eligible customers va promotion
@@ -430,10 +430,10 @@ De xuat bo sung khi thiet ke chi tiet:
 - [ ] API admin order list voi filter/search.
 - [ ] API admin order detail.
 - [ ] API cap nhat trang thai don.
-- [ ] Admin UI order list.
-- [ ] Admin UI order detail.
-- [ ] Admin UI update status.
-- [ ] Export bao cao don hang co ban.
+- [x] Admin UI order list.
+- [x] Admin UI order detail.
+- [x] Admin UI update status.
+- [x] Export bao cao don hang co ban.
 - [ ] Audit log cap nhat don hang.
 
 ### Milestone 8 - Integrations va worker
@@ -609,14 +609,14 @@ De xuat bo sung khi thiet ke chi tiet:
 | Requirement confirmation | Not started | [ ] Chot rule bat buoc [ ] Chot integration [ ] Chot hosting |
 | Monorepo foundation | In progress | [ ] Git [x] npm workspaces [x] Next [x] Nest API [ ] Worker deferred [x] CI [x] Docker |
 | Database | In progress | [x] Prisma baseline [x] Migration baseline [x] Business schemas [x] Seed [ ] Backup plan |
-| Auth/Admin | In progress | [x] Login [x] Current user [x] Role guard [x] Auth tests [ ] Admin UI shell |
-| Products | In progress | [x] CRUD [x] Status [x] Images [x] Public catalog [ ] Admin UI |
+| Auth/Admin | In progress | [x] Login [x] Current user [x] Role guard [x] Auth tests [x] Admin UI shell |
+| Products | In progress | [x] CRUD [x] Status [x] Images [x] Public catalog [x] Admin UI |
 | Eligible customers | In progress | [x] Import CSV/Excel [x] Phone hash [x] Activate/deactivate [x] Masked list |
 | Promotions | In progress | [x] Check API [x] Token [x] Rate limit [x] Logs [ ] UI |
 | Pricing/Cart | In progress | [x] Quote [x] Cart UI [x] Price summary [x] Price-change handling |
 | Checkout/Orders | In progress | [x] Validation [x] Transaction [x] Idempotency [x] Order success [ ] Public order lookup pending confirmation |
-| Admin orders | Not started | [ ] List [ ] Detail [ ] Status update [ ] Export |
-| Integrations | Not started | [ ] Job table [ ] Worker [ ] Retry [ ] Adapter(s) [ ] Admin retry |
+| Admin orders | In progress | [x] UI list [x] UI detail [x] UI status update [x] UI export [ ] API list/detail/status |
+| Integrations | In progress | [x] UI job/log status [x] UI retry action [ ] Worker [ ] Retry backend [ ] Adapter(s) |
 | QA/Release | Not started | [ ] Automated tests [ ] UAT [ ] Monitoring [ ] Production deploy |
 
 ---
@@ -677,3 +677,15 @@ De xuat bo sung khi thiet ke chi tiet:
 - [ ] Root lint/typecheck/build van bi chan boi loi ton tai trong `apps/admin-portal` (`checkbox` missing, lint strict, DataTable typing).
 - [ ] `npm run db:migrate` chua apply duoc local vi shell khong co `DATABASE_URL`; khi chay voi URL mau thi PostgreSQL local khong san sang.
 - [ ] `docker compose config` chua chay duoc vi shell hien tai khong co Docker CLI.
+
+### 2026-07-15 - Admin portal UI
+
+- [x] `apps/admin-portal` co cac man hinh: login, dashboard, products list, product create/edit, eligible customers, import, orders list/detail, status update, sync errors/retry, reports export.
+- [x] Admin routes duoc bao ve bang client guard; `/admin/login` cu duoc redirect ve `/login`.
+- [x] Phan quyen admin/operator duoc gom trong helper va test; thao tac nhay cam co confirm.
+- [x] So dien thoai duoc mask trong list/export; khong export raw secret/token/authorization header.
+- [x] Import CSV preview hien loi theo tung dong.
+- [x] Sync status dung `pending`, `processing`, `success`, `failed`.
+- [x] Build admin khong con `ignoreBuildErrors`; build dung webpack de tranh Turbopack bind port trong sandbox.
+- [x] Root lint, typecheck, test va build thanh cong.
+- [x] Admin dev server chay tai `http://localhost:3001`, `/login` tra HTTP 200.
