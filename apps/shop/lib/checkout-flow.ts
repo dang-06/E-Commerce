@@ -35,12 +35,17 @@ export async function submitCheckout(input: {
     return { ok: false, error: "Vui lòng kiểm tra lại thông tin nhận hàng." };
   }
 
-  const order = await input.createOrder({
-    cartItems: input.cartItems,
-    idempotencyKey: input.idempotencyKey,
-    recipient: input.recipient,
-    session: input.session,
-  });
+  let order: OrderResult;
+  try {
+    order = await input.createOrder({
+      cartItems: input.cartItems,
+      idempotencyKey: input.idempotencyKey,
+      recipient: input.recipient,
+      session: input.session,
+    });
+  } catch {
+    return { ok: false, error: "Không thể tạo đơn. Vui lòng tải lại báo giá và thử lại." };
+  }
 
   return { ok: true, order };
 }

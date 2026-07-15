@@ -3,9 +3,11 @@ export interface AppConfig {
   authSecret: string;
   corsOrigins: string[];
   databaseUrl: string;
+  defaultShippingFeeVnd: number;
   host: string;
   loginRateLimitMax: number;
   loginRateLimitWindowMs: number;
+  orderIntegrationNames: ("sheet" | "pancake" | "best")[];
   port: number;
   promotionRateLimitMax: number;
   promotionRateLimitWindowMs: number;
@@ -47,6 +49,36 @@ function parsePositiveInt(value: string | undefined, fallback: number, name: str
   return parsed;
 }
 
+function parseNonNegativeInt(value: string | undefined, fallback: number, name: string): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`Invalid ${name} value: ${value}`);
+  }
+
+  return parsed;
+}
+
+function parseOrderIntegrationNames(value: string | undefined): ("sheet" | "pancake" | "best")[] {
+  const raw = value ?? "sheet";
+  const allowed = new Set(["sheet", "pancake", "best"]);
+  const names = raw
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  for (const name of names) {
+    if (!allowed.has(name)) {
+      throw new Error(`Invalid API_ORDER_INTEGRATIONS value: ${name}`);
+    }
+  }
+
+  return names as ("sheet" | "pancake" | "best")[];
+}
+
 export function getConfig(): AppConfig {
   const corsOrigins =
     process.env.API_CORS_ORIGINS?.split(",")
@@ -66,6 +98,11 @@ export function getConfig(): AppConfig {
     databaseUrl:
       process.env.DATABASE_URL ??
       "postgresql://ecommerce:change_me@localhost:5432/ecommerce?schema=public",
+    defaultShippingFeeVnd: parseNonNegativeInt(
+      process.env.API_DEFAULT_SHIPPING_FEE_VND,
+      0,
+      "API_DEFAULT_SHIPPING_FEE_VND",
+    ),
     host: process.env.API_HOST ?? "0.0.0.0",
     loginRateLimitMax: parsePositiveInt(
       process.env.API_LOGIN_RATE_LIMIT_MAX,
@@ -78,6 +115,7 @@ export function getConfig(): AppConfig {
         900,
         "API_LOGIN_RATE_LIMIT_WINDOW_SECONDS",
       ) * 1000,
+    orderIntegrationNames: parseOrderIntegrationNames(process.env.API_ORDER_INTEGRATIONS),
     port: parsePort(process.env.API_PORT, 4000),
     promotionRateLimitMax: parsePositiveInt(
       process.env.API_PROMOTION_RATE_LIMIT_MAX,

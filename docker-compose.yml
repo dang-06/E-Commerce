@@ -26,6 +26,8 @@ services:
       API_PORT: 4000
       API_CORS_ORIGINS: ${API_CORS_ORIGINS:-http://localhost:3000}
       API_SWAGGER_ENABLED: ${API_SWAGGER_ENABLED:-true}
+      API_DEFAULT_SHIPPING_FEE_VND: ${API_DEFAULT_SHIPPING_FEE_VND:-0}
+      API_ORDER_INTEGRATIONS: ${API_ORDER_INTEGRATIONS:-sheet}
       DATABASE_URL: postgresql://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}?schema=public
     ports:
       - "${API_PORT:-4000}:4000"

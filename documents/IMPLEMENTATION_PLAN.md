@@ -38,6 +38,7 @@ Xay dung website ban hang rieng cho shop dang ban qua Fanpage/Messenger, cho phe
 
 - Truy cap tu Messenger/quang cao/link truc tiep.
 - Nhap so dien thoai truoc khi vao gian hang theo luong hien tai.
+- Kiem tra du/khong du dieu kien nhan uu dau qua google sheet (list uu dai).
 - Nhan ket qua du/khong du dieu kien uu dai.
 - Xem danh sach san pham voi gia niem yet hoac gia uu dai.
 - Xem gia goc, so tien giam, phi van chuyen, tong thanh toan.
@@ -402,24 +403,24 @@ De xuat bo sung khi thiet ke chi tiet:
 
 - [x] API public `GET /api/v1/products`.
 - [x] API public `GET /api/v1/products/:slug`.
-- [ ] Pricing service tinh gia tu database.
-- [ ] API `POST /api/v1/orders/quote`.
-- [x] UI danh sach san pham mobile-first.
+- [x] Pricing service tinh gia tu database.
+- [x] API `POST /api/v1/orders/quote`.
+- [x] UI danh sach san pham mobile-first trong `apps/shop`.
 - [x] UI product detail neu nam trong MVP.
 - [x] UI cart add/update/remove.
 - [x] UI hien thi subtotal, discount, shipping fee, total.
-- [ ] Xu ly gia thay doi/san pham bi an theo rule da chot.
+- [x] Xu ly gia thay doi/san pham bi an theo rule da chot.
 
 ### Milestone 6 - Checkout va order
 
-- [ ] DTO validation checkout.
-- [ ] Idempotency key flow.
-- [ ] Order code generation.
-- [ ] Tao order transaction: order + items + integration jobs.
-- [ ] Kiem tra promotion token va dieu kien SĐT khi tao don.
-- [ ] Kiem tra product active va so luong.
-- [ ] Kiem tra ton kho neu duoc xac nhan ap dung.
-- [ ] Khong cho frontend price anh huong gia chinh thuc.
+- [x] DTO validation checkout.
+- [x] Idempotency key flow.
+- [x] Order code generation.
+- [x] Tao order transaction: order + items + integration jobs.
+- [x] Kiem tra promotion token va dieu kien SĐT khi tao don.
+- [x] Kiem tra product active va so luong.
+- [x] Kiem tra ton kho khi `stockQuantity` duoc cau hinh; khong tru/giu ton kho.
+- [x] Khong cho frontend price anh huong gia chinh thuc.
 - [x] UI checkout form.
 - [x] UI order success voi ma don.
 - [ ] API/UX tra cuu don neu duoc xac nhan.
@@ -612,8 +613,8 @@ De xuat bo sung khi thiet ke chi tiet:
 | Products | In progress | [x] CRUD [x] Status [x] Images [x] Public catalog [ ] Admin UI |
 | Eligible customers | In progress | [x] Import CSV/Excel [x] Phone hash [x] Activate/deactivate [x] Masked list |
 | Promotions | In progress | [x] Check API [x] Token [x] Rate limit [x] Logs [ ] UI |
-| Pricing/Cart | In progress | [ ] Quote [x] Cart UI [x] Price summary [ ] Price-change handling |
-| Checkout/Orders | In progress | [x] Buyer checkout UI [ ] Transaction API [ ] Idempotency backend [x] Order success UI |
+| Pricing/Cart | In progress | [x] Quote [x] Cart UI [x] Price summary [x] Price-change handling |
+| Checkout/Orders | In progress | [x] Validation [x] Transaction [x] Idempotency [x] Order success [ ] Public order lookup pending confirmation |
 | Admin orders | Not started | [ ] List [ ] Detail [ ] Status update [ ] Export |
 | Integrations | Not started | [ ] Job table [ ] Worker [ ] Retry [ ] Adapter(s) [ ] Admin retry |
 | QA/Release | Not started | [ ] Automated tests [ ] UAT [ ] Monitoring [ ] Production deploy |
@@ -659,3 +660,20 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] Promotion token chi duoc gui di theo order payload; UI ghi ro gia hien thi la tam tinh, backend tinh lai gia chinh thuc.
 - [x] Component test va E2E-style flow test cho buyer journey chinh.
 - [x] `apps/shop` lint, typecheck, test va build thanh cong.
+
+### 2026-07-15 - Orders va checkout API
+
+- [x] API `POST /api/v1/orders/quote` tinh gia chinh thuc tu database va luu quote snapshot ngan han theo `idempotencyKey`.
+- [x] API `POST /api/v1/orders` khong nhan/khong tin unit price, discount, subtotal, total tu frontend.
+- [x] Tao don bang transaction gom `orders`, `order_items`, `integration_jobs`, `integration_logs`.
+- [x] Order item luu snapshot SKU, ten san pham, gia niem yet, muc giam, gia cuoi.
+- [x] Recheck promotion token, SĐT uu dai, product active/deleted, gia hien tai, so luong va `stockQuantity` neu duoc cau hinh.
+- [x] Phat hien gia thay doi so voi quote va tra `price_changed` de frontend yeu cau khach xac nhan lai.
+- [x] Idempotency key chong tao don trung; order code sinh duy nhat.
+- [x] Khong cho frontend price/tong tien anh huong gia chinh thuc; payload la bi ValidationPipe reject.
+- [x] `apps/shop` goi quote truoc man xac nhan va dung cung `idempotencyKey` khi tao don.
+- [x] API/shop lint, typecheck, test va build thanh cong cho pham vi vua thay doi.
+- [x] Root `npm test` thanh cong.
+- [ ] Root lint/typecheck/build van bi chan boi loi ton tai trong `apps/admin-portal` (`checkbox` missing, lint strict, DataTable typing).
+- [ ] `npm run db:migrate` chua apply duoc local vi shell khong co `DATABASE_URL`; khi chay voi URL mau thi PostgreSQL local khong san sang.
+- [ ] `docker compose config` chua chay duoc vi shell hien tai khong co Docker CLI.

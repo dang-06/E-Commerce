@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { OrderSummary } from "../components/OrderSummary";
 import { ProductCard } from "../components/ProductCard";
 import { RecipientFields } from "../components/RecipientFields";
-import { checkPromotion, createOrder, fetchProducts } from "../lib/api";
+import { checkPromotion, createOrder, fetchProducts, quoteOrder } from "../lib/api";
 import { normalizeVietnamesePhone } from "../lib/phone";
-import { calculateCartTotals } from "../lib/pricing";
+import { calculateCartTotals, type CartTotals } from "../lib/pricing";
 import { readCart, setCartQuantity, writeCart } from "../lib/cart";
 import { formatVnd, parseVnd } from "../lib/money";
 import { submitCheckout } from "../lib/checkout-flow";
 import { validateRecipientForm } from "../lib/validation";
-import type { CartItem, OrderResult, Product, PromotionSession, RecipientForm } from "../lib/types";
+import type { CartItem, OrderQuote, OrderResult, Product, PromotionSession, RecipientForm } from "../lib/types";
 
 type Step = "intro" | "checking" | "catalog" | "checkout" | "confirm" | "success";
 
@@ -39,6 +39,8 @@ export default function ShopPage(): React.ReactElement {
   const [recipientErrors, setRecipientErrors] = useState<Partial<Record<keyof RecipientForm, string>>>({});
   const [orderError, setOrderError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutIdempotencyKey, setCheckoutIdempotencyKey] = useState<string | null>(null);
+  const [serverQuote, setServerQuote] = useState<OrderQuote | null>(null);
   const [order, setOrder] = useState<OrderResult | null>(null);
 
   useEffect(() => {
@@ -53,6 +55,12 @@ export default function ShopPage(): React.ReactElement {
     () => calculateCartTotals(products, cartItems, promotionSession !== null, null),
     [cartItems, products, promotionSession],
   );
+  const displayTotals = serverQuote ? totalsFromQuote(serverQuote) : totals;
+
+  useEffect(() => {
+    setCheckoutIdempotencyKey(null);
+    setServerQuote(null);
+  }, [cartItems]);
 
   async function handlePromotionCheck(): Promise<void> {
     setPromotionError(null);
@@ -116,22 +124,47 @@ export default function ShopPage(): React.ReactElement {
     setStep("checkout");
   }
 
-  function reviewOrder(): void {
+  async function reviewOrder(): Promise<void> {
     const validation = validateRecipientForm(recipient);
     setRecipientErrors(validation.errors);
     if (!validation.valid) {
       return;
     }
-    setStep("confirm");
+    if (!promotionSession) {
+      setOrderError("Vui lòng kiểm tra ưu đãi trước khi đặt hàng.");
+      return;
+    }
+
+    setSubmitting(true);
+    setOrderError(null);
+    const idempotencyKey = checkoutIdempotencyKey ?? crypto.randomUUID();
+    try {
+      const quote = await quoteOrder({
+        cartItems,
+        idempotencyKey,
+        session: promotionSession,
+      });
+      setCheckoutIdempotencyKey(idempotencyKey);
+      setServerQuote(quote);
+      setStep("confirm");
+    } catch {
+      setOrderError("Không thể lấy báo giá chính thức. Vui lòng thử lại.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function placeOrder(): Promise<void> {
+    if (!checkoutIdempotencyKey) {
+      setOrderError("Vui lòng tải lại báo giá trước khi đặt hàng.");
+      return;
+    }
     setSubmitting(true);
     setOrderError(null);
     const result = await submitCheckout({
       cartItems,
       createOrder,
-      idempotencyKey: crypto.randomUUID(),
+      idempotencyKey: checkoutIdempotencyKey,
       products,
       recipient,
       session: promotionSession,
@@ -228,7 +261,7 @@ export default function ShopPage(): React.ReactElement {
             ))}
           </div>
           <CartPanel cartItems={cartItems} products={products} onCheckout={goToCheckout} onQuantityChange={updateQuantity} />
-          <OrderSummary totals={totals} />
+          <OrderSummary totals={displayTotals} />
           {orderError ? <p className="status error">{orderError}</p> : null}
         </section>
       ) : null}
@@ -253,8 +286,15 @@ export default function ShopPage(): React.ReactElement {
             >
               Quay lại
             </button>
-            <button className="primary-button" type="button" onClick={reviewOrder}>
-              Xem lại đơn
+            <button
+              className="primary-button"
+              disabled={submitting}
+              type="button"
+              onClick={() => {
+                void reviewOrder();
+              }}
+            >
+              {submitting ? "Đang lấy báo giá..." : "Xem lại đơn"}
             </button>
           </div>
         </section>
@@ -263,7 +303,7 @@ export default function ShopPage(): React.ReactElement {
       {step === "confirm" ? (
         <section className="shop-section" aria-labelledby="confirm-title">
           <h2 id="confirm-title">Xác nhận đơn</h2>
-          <OrderSummary totals={totals} />
+          <OrderSummary totals={displayTotals} />
           <div className="confirm-box">
             <p>
               <strong>Người nhận:</strong> {recipient.recipientName}
@@ -329,6 +369,17 @@ export default function ShopPage(): React.ReactElement {
       ) : null}
     </main>
   );
+}
+
+function totalsFromQuote(quote: OrderQuote): CartTotals {
+  return {
+    lines: [],
+    totalQuantity: quote.totalQuantity,
+    subtotal: parseVnd(quote.subtotal),
+    discountAmount: parseVnd(quote.discountAmount),
+    shippingFee: parseVnd(quote.shippingFee),
+    payableAmount: parseVnd(quote.totalAmount),
+  };
 }
 
 function CartPanel({

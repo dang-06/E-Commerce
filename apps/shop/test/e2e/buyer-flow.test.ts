@@ -27,8 +27,14 @@ void test("buyer flow checks phone, builds cart, validates recipient and submits
       assert.equal(payload.session.promotionToken, "signed-token");
       assert.deepEqual(payload.cartItems, [{ productId: "1", quantity: 2 }]);
       return Promise.resolve({
+        status: "created",
         orderCode: "ORD-TEST-1",
         createdAt: new Date("2026-07-15T00:00:00.000Z").toISOString(),
+        totalQuantity: 2,
+        subtotal: "198000",
+        discountAmount: "50000",
+        shippingFee: "0",
+        totalAmount: "148000",
       });
     },
     idempotencyKey: "idem-1",

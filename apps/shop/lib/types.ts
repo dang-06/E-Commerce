@@ -49,6 +49,23 @@ export interface RecipientForm {
 }
 
 export interface OrderResult {
+  status: "created" | "duplicate";
   orderCode: string;
   createdAt: string;
+  totalQuantity: number;
+  subtotal: string;
+  discountAmount: string;
+  shippingFee: string;
+  totalAmount: string;
+}
+
+export interface OrderQuote {
+  status: "quoted";
+  idempotencyKey: string;
+  expiresAt: string;
+  totalQuantity: number;
+  subtotal: string;
+  discountAmount: string;
+  shippingFee: string;
+  totalAmount: string;
 }
