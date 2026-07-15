@@ -396,7 +396,7 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] Ghi `promotion_checks` khong lo du lieu nhay cam.
 - [x] Rate limit promotion check.
 - [x] Thiet ke diem mo rong CAPTCHA qua `captchaToken`, chua bat mac dinh.
-- [ ] UI phone entry/result.
+- [x] UI phone entry/result.
 
 ### Milestone 5 - Shopping va pricing
 
@@ -404,10 +404,10 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] API public `GET /api/v1/products/:slug`.
 - [ ] Pricing service tinh gia tu database.
 - [ ] API `POST /api/v1/orders/quote`.
-- [ ] UI danh sach san pham mobile-first.
-- [ ] UI product detail neu nam trong MVP.
-- [ ] UI cart add/update/remove.
-- [ ] UI hien thi subtotal, discount, shipping fee, total.
+- [x] UI danh sach san pham mobile-first.
+- [x] UI product detail neu nam trong MVP.
+- [x] UI cart add/update/remove.
+- [x] UI hien thi subtotal, discount, shipping fee, total.
 - [ ] Xu ly gia thay doi/san pham bi an theo rule da chot.
 
 ### Milestone 6 - Checkout va order
@@ -420,8 +420,8 @@ De xuat bo sung khi thiet ke chi tiet:
 - [ ] Kiem tra product active va so luong.
 - [ ] Kiem tra ton kho neu duoc xac nhan ap dung.
 - [ ] Khong cho frontend price anh huong gia chinh thuc.
-- [ ] UI checkout form.
-- [ ] UI order success voi ma don.
+- [x] UI checkout form.
+- [x] UI order success voi ma don.
 - [ ] API/UX tra cuu don neu duoc xac nhan.
 
 ### Milestone 7 - Admin order operations
@@ -612,8 +612,8 @@ De xuat bo sung khi thiet ke chi tiet:
 | Products | In progress | [x] CRUD [x] Status [x] Images [x] Public catalog [ ] Admin UI |
 | Eligible customers | In progress | [x] Import CSV/Excel [x] Phone hash [x] Activate/deactivate [x] Masked list |
 | Promotions | In progress | [x] Check API [x] Token [x] Rate limit [x] Logs [ ] UI |
-| Pricing/Cart | Not started | [ ] Quote [ ] Cart UI [ ] Price summary [ ] Price-change handling |
-| Checkout/Orders | Not started | [ ] Validation [ ] Transaction [ ] Idempotency [ ] Order success |
+| Pricing/Cart | In progress | [ ] Quote [x] Cart UI [x] Price summary [ ] Price-change handling |
+| Checkout/Orders | In progress | [x] Buyer checkout UI [ ] Transaction API [ ] Idempotency backend [x] Order success UI |
 | Admin orders | Not started | [ ] List [ ] Detail [ ] Status update [ ] Export |
 | Integrations | Not started | [ ] Job table [ ] Worker [ ] Retry [ ] Adapter(s) [ ] Admin retry |
 | QA/Release | Not started | [ ] Automated tests [ ] UAT [ ] Monitoring [ ] Production deploy |
@@ -647,3 +647,15 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] Root `npm test` thanh cong.
 - [ ] Root lint/typecheck/build van bi chan boi `apps/shop` va `apps/admin-portal` prototype chua duoc chuan hoa.
 - [ ] Migration/seed chua apply duoc local vi PostgreSQL `localhost:5432` chua chay; Docker CLI khong co trong shell.
+
+### 2026-07-15 - Buyer shop UI
+
+- [x] `apps/shop` mobile-first buyer flow: gioi thieu chuong trinh, nhap SĐT, trang thai check uu dai, catalog, product detail, cart, receiver form, confirm order, success.
+- [x] Khach phai check SĐT truoc khi vao catalog; SĐT khong eligible duoc xu ly bang thong bao trung tinh, khong lo thong tin ca nhan.
+- [x] Catalog lay tu API `/api/v1/products`, khong hard-code san pham/gia trong frontend.
+- [x] Gia uu dai hien listed price gach ngang, final price va saving khi co promotion session hop le.
+- [x] Cart localStorage co sanitize, ho tro nhieu san pham/nhieu so luong va tinh tong realtime.
+- [x] Checkout form co validation label/focus/error state va summary tong gia goc, tong giam, phi ship, tong thanh toan.
+- [x] Promotion token chi duoc gui di theo order payload; UI ghi ro gia hien thi la tam tinh, backend tinh lai gia chinh thuc.
+- [x] Component test va E2E-style flow test cho buyer journey chinh.
+- [x] `apps/shop` lint, typecheck, test va build thanh cong.
