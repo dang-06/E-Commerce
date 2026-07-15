@@ -1,0 +1,38 @@
+{
+  "name": "@ecommerce/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node -e \"require('node:fs').rmSync('dist-test',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && find dist-test -name '*.test.js' -print0 | xargs -0 node --test"
+  },
+  "dependencies": {
+    "@ecommerce/contracts": "0.1.0",
+    "@nestjs/common": "^11.1.8",
+    "@nestjs/core": "^11.1.8",
+    "@nestjs/platform-express": "^11.1.8",
+    "@nestjs/swagger": "^11.2.1",
+    "@prisma/client": "^6.18.0",
+    "bcryptjs": "^3.0.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.1.28",
+    "@types/express": "^5.0.5",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^24.9.1",
+    "@types/pg": "^8.15.5",
+    "@types/supertest": "^7.2.1",
+    "supertest": "^7.2.2"
+  }
+}
