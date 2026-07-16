@@ -4,7 +4,7 @@ import { createHmac } from "node:crypto";
 
 const prisma = new PrismaClient();
 
-const defaultPassword = process.env.DEV_ADMIN_PASSWORD ?? "12345678";
+const defaultPassword = process.env.DEV_ADMIN_PASSWORD ?? "Admin@123456";
 const hashSecret =
   process.env.API_AUTH_SECRET ??
   "development-only-change-me-auth-secret-at-least-32-characters";
