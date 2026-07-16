@@ -23,6 +23,8 @@ services:
       context: .
       dockerfile: docker/api.Dockerfile
     command: ["npm", "run", "db:migrate:deploy"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-change_me}@postgres:5432/${POSTGRES_DB:-ecommerce}?schema=public
@@ -36,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: docker/api.Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       NODE_ENV: production
       API_HOST: 0.0.0.0
@@ -106,6 +110,8 @@ services:
       context: .
       dockerfile: docker/api.Dockerfile
     command: ["npm", "run", "worker", "-w", "apps/api"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       NODE_ENV: production
       API_AUTH_SECRET: ${API_AUTH_SECRET:-change_me_to_a_long_random_secret}
