@@ -70,6 +70,7 @@ Compose co service `caddy` voi `docker/caddy/Caddyfile`.
 - Local: `WEB_DOMAIN=localhost`, `API_DOMAIN=api.localhost`.
 - Staging/production: tro DNS cua `WEB_DOMAIN` va `API_DOMAIN` ve server, mo port 80/443.
 - Neu ha tang cloud da terminate TLS o load balancer, co the khong bat profile `edge`; dat reverse proxy/cloud LB forward vao `web:3000` va `api:4000`.
+- Neu deploy bang Nginx tren host, dung quy trinh chi tiet tai `documents/DEPLOY_DOCKER_NGINX.md`.
 
 ## Migration an toan
 

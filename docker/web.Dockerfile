@@ -9,6 +9,9 @@ RUN npm ci
 
 FROM deps AS build
 
+ARG NEXT_PUBLIC_API_BASE_URL=/api/v1
+ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+
 COPY tsconfig.base.json eslint.config.mjs .prettierrc.json ./
 COPY packages/contracts packages/contracts
 COPY apps/shop apps/shop
