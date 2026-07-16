@@ -185,7 +185,7 @@ docker compose --profile migration run --rm migrate
 Neu can seed du lieu demo/staging, chi chay tren moi truong khong phai production:
 
 ```bash
-docker compose run --rm api npm run db:seed
+docker compose run --rm --no-deps api npm run db:seed
 ```
 
 ## 5. Start app
