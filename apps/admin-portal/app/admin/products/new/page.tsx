@@ -12,7 +12,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft } from 'lucide-react'
 import { getErrorMessage, productService } from '@/lib/services/api-service'
+import type { ProductColorVariant } from '@/lib/types'
 import { slugifyVietnamese } from '@/lib/utils/vietnamese'
+
+const emptyVariant = (): ProductColorVariant => ({
+  colorCode: '#f2d4d7',
+  imageUrl: '',
+  name: '',
+  sku: '',
+  sortOrder: 0,
+})
 
 export default function NewProductPage() {
   const router = useRouter()
@@ -30,11 +39,13 @@ export default function NewProductPage() {
     stock: '',
     isPromotionEligible: true,
     isActive: true,
+    colorVariants: [] as ProductColorVariant[],
   })
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageError, setImageError] = useState('')
   const [formError, setFormError] = useState('')
   const [slugTouched, setSlugTouched] = useState(false)
+  const [uploadingVariantIndex, setUploadingVariantIndex] = useState<number | null>(null)
 
   async function handleImageUpload(file: File | undefined) {
     if (!file) {
@@ -51,6 +62,36 @@ export default function NewProductPage() {
     } finally {
       setUploadingImage(false)
     }
+  }
+
+  async function handleVariantImageUpload(index: number, file: File | undefined) {
+    if (!file) {
+      return
+    }
+    setUploadingVariantIndex(index)
+    setImageError('')
+    try {
+      const uploaded = await productService.uploadProductImage(file)
+      setFormData((current) => ({
+        ...current,
+        colorVariants: current.colorVariants.map((variant, variantIndex) =>
+          variantIndex === index ? { ...variant, imageUrl: uploaded.imageUrl } : variant,
+        ),
+      }))
+    } catch (error) {
+      setImageError(getErrorMessage(error))
+    } finally {
+      setUploadingVariantIndex(null)
+    }
+  }
+
+  function updateVariant(index: number, updates: Partial<ProductColorVariant>) {
+    setFormData((current) => ({
+      ...current,
+      colorVariants: current.colorVariants.map((variant, variantIndex) =>
+        variantIndex === index ? { ...variant, ...updates, sortOrder: index } : variant,
+      ),
+    }))
   }
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
@@ -75,6 +116,7 @@ export default function NewProductPage() {
         sortOrder: 0,
         stock: formData.stock ? Number(formData.stock) : undefined,
         visibility: formData.isActive ? 'visible' : 'hidden',
+        colorVariants: formData.colorVariants.map((variant, index) => ({ ...variant, sortOrder: index })),
       })
       router.push('/admin/products')
     } catch (error) {
@@ -251,6 +293,127 @@ export default function NewProductPage() {
                     Nhập 25000 để giảm 25,000 ₫ cho khách hàng ưu đãi
                   </p>
                 </div>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">Màu và ảnh theo màu</h2>
+                  <p className="text-sm text-muted-foreground">Mỗi màu có ảnh riêng để hiển thị ở trang chi tiết.</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData({
+                      ...formData,
+                      colorVariants: [...formData.colorVariants, { ...emptyVariant(), sortOrder: formData.colorVariants.length }],
+                    })
+                  }}
+                >
+                  Thêm màu
+                </Button>
+              </div>
+              <div className="space-y-5">
+                {formData.colorVariants.length === 0 ? (
+                  <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+                    Chưa có màu nào. Sản phẩm sẽ dùng ảnh chính.
+                  </p>
+                ) : null}
+                {formData.colorVariants.map((variant, index) => (
+                  <div key={index} className="rounded-lg border border-border p-4">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div>
+                        <Label htmlFor={`variant-name-${index}`}>Tên màu</Label>
+                        <Input
+                          id={`variant-name-${index}`}
+                          placeholder="VD: Rose Tendre"
+                          value={variant.name}
+                          onChange={(event) => {
+                            updateVariant(index, { name: event.target.value })
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`variant-color-${index}`}>Mã màu</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id={`variant-color-${index}`}
+                            value={variant.colorCode}
+                            onChange={(event) => {
+                              updateVariant(index, { colorCode: event.target.value })
+                            }}
+                          />
+                          <Input
+                            aria-label={`Chọn màu ${index + 1}`}
+                            className="w-16 p-1"
+                            type="color"
+                            value={variant.colorCode || '#ffffff'}
+                            onChange={(event) => {
+                              updateVariant(index, { colorCode: event.target.value })
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor={`variant-sku-${index}`}>SKU/Reference</Label>
+                        <Input
+                          id={`variant-sku-${index}`}
+                          value={variant.sku ?? ''}
+                          onChange={(event) => {
+                            updateVariant(index, { sku: event.target.value })
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-4 md:grid-cols-[160px_1fr]">
+                      <div className="overflow-hidden rounded-md border border-border bg-muted">
+                        {variant.imageUrl ? (
+                          <img src={variant.imageUrl} alt={variant.name || 'Ảnh màu'} className="h-36 w-full object-contain" />
+                        ) : (
+                          <div className="flex h-36 items-center justify-center text-sm text-muted-foreground">Chưa có ảnh</div>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor={`variant-upload-${index}`}>Tải ảnh màu</Label>
+                          <Input
+                            id={`variant-upload-${index}`}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/gif"
+                            disabled={uploadingVariantIndex === index}
+                            onChange={(event) => {
+                              void handleVariantImageUpload(index, event.target.files?.[0])
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor={`variant-url-${index}`}>URL ảnh màu</Label>
+                          <Input
+                            id={`variant-url-${index}`}
+                            value={variant.imageUrl}
+                            onChange={(event) => {
+                              updateVariant(index, { imageUrl: event.target.value })
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              colorVariants: formData.colorVariants.filter((_, variantIndex) => variantIndex !== index),
+                            })
+                          }}
+                        >
+                          Xóa màu
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </Card>
 

@@ -62,18 +62,21 @@ export class GoogleSheetsClientService {
       throw new IntegrationPartnerError("Google Sheet order config is not configured", true);
     }
 
-    const range = this.range(config.worksheetName, "A:Z");
+    const row = this.orderRow(job);
+    const rows = await this.readValues(config.spreadsheetId, this.range(config.worksheetName, "A:Z"), signal);
+    const nextRowNumber = rows.length + 1;
+    const writeRange = this.range(config.worksheetName, `A${nextRowNumber}:${this.columnIndexToLetter(row.length - 1)}${nextRowNumber}`);
     const body = {
       majorDimension: "ROWS",
-      values: [this.orderRow(job)],
+      values: [row],
     };
     const response = await this.request<AppendValuesResponse>(
       `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(config.spreadsheetId)}/values/${encodeURIComponent(
-        range,
-      )}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+        writeRange,
+      )}?valueInputOption=USER_ENTERED`,
       {
         body: JSON.stringify(body),
-        method: "POST",
+        method: "PUT",
         signal,
       },
     );
@@ -239,6 +242,17 @@ export class GoogleSheetsClientService {
       .toUpperCase()
       .split("")
       .reduce((sum, char) => sum * 26 + char.charCodeAt(0) - 64, 0) - 1;
+  }
+
+  private columnIndexToLetter(index: number): string {
+    let value = index + 1;
+    let column = "";
+    while (value > 0) {
+      const remainder = (value - 1) % 26;
+      column = String.fromCharCode(65 + remainder) + column;
+      value = Math.floor((value - 1) / 26);
+    }
+    return column;
   }
 
   private normalizePossibleVietnamesePhone(value: string): string | null {

@@ -20,12 +20,25 @@ interface ProductRecord {
   createdAt: Date;
   updatedAt: Date;
   images: ProductImageRecord[];
+  colorVariants: ProductColorVariantRecord[];
 }
 
 interface ProductImageRecord {
   id: bigint;
   imageUrl: string;
   altText: string | null;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+  productId: bigint;
+}
+
+interface ProductColorVariantRecord {
+  id: bigint;
+  name: string;
+  colorCode: string | null;
+  imageUrl: string;
+  sku: string | null;
   sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
@@ -51,6 +64,7 @@ function createProduct(overrides: Partial<ProductRecord>): ProductRecord {
     createdAt: now,
     updatedAt: now,
     images: [],
+    colorVariants: [],
     ...overrides,
   };
 }
@@ -86,12 +100,13 @@ class FakePrismaForProducts {
       ),
     findUnique: (args: { where: { id: bigint } }) =>
       Promise.resolve(this.records.find((product) => product.id === args.where.id) ?? null),
-    create: (args: { data: { sku: string; listedPrice: bigint; images?: { create: unknown[] } } }) => {
+    create: (args: { data: { sku: string; listedPrice: bigint; images?: { create: unknown[] }; colorVariants?: { create: unknown[] } } }) => {
       const product = createProduct({
         id: BigInt(this.records.length + 1),
         sku: args.data.sku,
         listedPrice: args.data.listedPrice,
         images: args.data.images ? [] : [],
+        colorVariants: args.data.colorVariants ? [] : [],
       });
       this.records.push(product);
       return Promise.resolve(product);

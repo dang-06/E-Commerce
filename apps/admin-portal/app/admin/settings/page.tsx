@@ -287,7 +287,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* Danger Zone */}
-          <Card className="p-6 border-destructive/50 bg-destructive/5">
+          {/* <Card className="p-6 border-destructive/50 bg-destructive/5">
             <h2 className="text-lg font-semibold mb-4 text-destructive">Vùng nguy hiểm</h2>
             <p className="text-xs text-muted-foreground mb-4">
               Những hành động trong phần này không thể hoàn tác
@@ -302,7 +302,7 @@ export default function SettingsPage() {
             >
               Xoá tất cả dữ liệu
             </Button>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </div>

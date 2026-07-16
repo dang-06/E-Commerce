@@ -5,6 +5,15 @@ export interface ProductImage {
   sortOrder: number;
 }
 
+export interface ProductColorVariant {
+  id: string;
+  name: string;
+  colorCode: string | null;
+  imageUrl: string;
+  sku: string | null;
+  sortOrder: number;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -19,6 +28,7 @@ export interface Product {
   isActive: boolean;
   sortOrder: number;
   images: ProductImage[];
+  colorVariants: ProductColorVariant[];
 }
 
 export interface PromotionCheckResult {

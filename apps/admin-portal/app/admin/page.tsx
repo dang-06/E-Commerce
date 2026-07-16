@@ -5,7 +5,7 @@ import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
 import { MetricCard } from '@/components/shared/MetricCard'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { TrendingUp, ShoppingCart, Users, AlertCircle, BarChart3 } from 'lucide-react'
+import { TrendingUp, ShoppingCart, Users, BarChart3 } from 'lucide-react'
 import { dashboardService } from '@/lib/services/api-service'
 import { formatVND } from '@/lib/utils/vietnamese'
 
@@ -70,12 +70,12 @@ export default function DashboardPage() {
           icon="⏳"
           variant={stats.pendingOrders > 0 ? 'warning' : 'default'}
         />
-        <MetricCard
+        {/* <MetricCard
           label="Đồng bộ thất bại"
           value={stats.failedSyncs}
           icon="⚠️"
           variant={stats.failedSyncs > 0 ? 'error' : 'default'}
-        />
+        /> */}
       </div>
 
       {/* Main Content Grid */}
@@ -121,8 +121,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column */}
-        <div className="space-y-6">
-          {/* System Status */}
+        {/* <div className="space-y-6">
           <Card className="p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Trạng thái hệ thống</h2>
             <div className="space-y-3">
@@ -141,7 +140,6 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          {/* Alerts */}
           {stats.failedSyncs > 0 && (
             <Card className="p-4 border-amber-200 bg-amber-50">
               <div className="flex gap-3">
@@ -153,7 +151,7 @@ export default function DashboardPage() {
               </div>
             </Card>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   )

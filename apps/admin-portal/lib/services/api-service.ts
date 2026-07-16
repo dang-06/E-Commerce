@@ -37,8 +37,18 @@ interface ApiProduct {
   discountAmount: string
   isActive: boolean
   sortOrder: number
+  colorVariants: ApiProductColorVariant[]
   createdAt: string
   updatedAt: string
+}
+
+interface ApiProductColorVariant {
+  id: string
+  name: string
+  colorCode: string | null
+  imageUrl: string
+  sku: string | null
+  sortOrder: number
 }
 
 interface ApiProductImageUpload {
@@ -414,6 +424,14 @@ function toProduct(product: ApiProduct): Product {
   const description = product.description ?? ''
   return {
     category: '',
+    colorVariants: product.colorVariants.map((variant) => ({
+      id: variant.id,
+      colorCode: variant.colorCode ?? '',
+      imageUrl: variant.imageUrl,
+      name: variant.name,
+      sku: variant.sku ?? undefined,
+      sortOrder: variant.sortOrder,
+    })),
     createdAt: new Date(product.createdAt),
     description,
     discountAmount: Number(product.discountAmount),
@@ -446,6 +464,23 @@ function toProductPayload(product: Partial<Product>): Record<string, unknown> {
     ...(product.discountAmount !== undefined ? { discountAmount: product.discountAmount } : {}),
     ...(product.isActive !== undefined ? { isActive: product.isActive } : {}),
     ...(product.sortOrder !== undefined ? { sortOrder: product.sortOrder } : {}),
+    ...(product.colorVariants !== undefined
+      ? {
+          colorVariants: product.colorVariants
+            .filter((variant) => variant.name.trim() && variant.imageUrl.trim())
+            .map((variant) => {
+              const colorCode = variant.colorCode.trim()
+              const sku = variant.sku?.trim()
+              return {
+                ...(colorCode ? { colorCode } : {}),
+                imageUrl: variant.imageUrl.trim(),
+                name: variant.name.trim(),
+                ...(sku ? { sku } : {}),
+                sortOrder: variant.sortOrder,
+              }
+            }),
+        }
+      : {}),
   }
 }
 

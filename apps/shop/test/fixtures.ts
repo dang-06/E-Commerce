@@ -15,6 +15,7 @@ export function sampleProduct(overrides: Partial<Product> = {}): Product {
     isActive: true,
     sortOrder: 1,
     images: [],
+    colorVariants: [],
     ...overrides,
   };
 }

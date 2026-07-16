@@ -1,9 +1,14 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../database/prisma.service.js";
-import type { CreateProductDto, ProductImageInputDto, UpdateProductDto } from "./dto/product.dto.js";
+import type {
+  CreateProductDto,
+  ProductColorVariantInputDto,
+  ProductImageInputDto,
+  UpdateProductDto,
+} from "./dto/product.dto.js";
 
-type ProductWithImages = Prisma.ProductGetPayload<{ include: { images: true } }>;
+type ProductWithImages = Prisma.ProductGetPayload<{ include: { images: true; colorVariants: true } }>;
 
 export interface ProductResponse {
   id: string;
@@ -20,6 +25,7 @@ export interface ProductResponse {
   sortOrder: number;
   deletedAt: Date | null;
   images: ProductImageResponse[];
+  colorVariants: ProductColorVariantResponse[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,6 +37,15 @@ export interface ProductImageResponse {
   sortOrder: number;
 }
 
+export interface ProductColorVariantResponse {
+  id: string;
+  name: string;
+  colorCode: string | null;
+  imageUrl: string;
+  sku: string | null;
+  sortOrder: number;
+}
+
 @Injectable()
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,7 +53,7 @@ export class ProductsService {
   async listPublic(): Promise<ProductResponse[]> {
     const products = await this.prisma.product.findMany({
       where: { isActive: true, deletedAt: null },
-      include: { images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] } },
+      include: this.productIncludes(),
       orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
     });
     return products.map((product) => this.toProductResponse(product));
@@ -47,7 +62,7 @@ export class ProductsService {
   async getPublicBySlug(slug: string): Promise<ProductResponse> {
     const product = await this.prisma.product.findFirst({
       where: { slug, isActive: true, deletedAt: null },
-      include: { images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] } },
+      include: this.productIncludes(),
     });
     if (!product) {
       throw new NotFoundException("Product not found");
@@ -57,7 +72,7 @@ export class ProductsService {
 
   async listAdmin(): Promise<ProductResponse[]> {
     const products = await this.prisma.product.findMany({
-      include: { images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] } },
+      include: this.productIncludes(),
       orderBy: [{ deletedAt: "asc" }, { sortOrder: "asc" }, { id: "asc" }],
     });
     return products.map((product) => this.toProductResponse(product));
@@ -80,10 +95,13 @@ export class ProductsService {
         ...(dto.images && dto.images.length > 0
           ? { images: { create: this.mapImages(dto.images) } }
           : {}),
+        ...(dto.colorVariants && dto.colorVariants.length > 0
+          ? { colorVariants: { create: this.mapColorVariants(dto.colorVariants) } }
+          : {}),
       };
       const product = await this.prisma.product.create({
         data,
-        include: { images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] } },
+        include: this.productIncludes(),
       });
       return this.toProductResponse(product);
     } catch (error) {
@@ -119,8 +137,16 @@ export class ProductsService {
                 },
               }
             : {}),
+          ...(dto.colorVariants !== undefined
+            ? {
+                colorVariants: {
+                  deleteMany: {},
+                  create: this.mapColorVariants(dto.colorVariants),
+                },
+              }
+            : {}),
         },
-        include: { images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] } },
+        include: this.productIncludes(),
       });
       return this.toProductResponse(product);
     } catch (error) {
@@ -134,7 +160,7 @@ export class ProductsService {
     const product = await this.prisma.product.update({
       where: { id: BigInt(id) },
       data: { isActive },
-      include: { images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] } },
+      include: this.productIncludes(),
     });
     return this.toProductResponse(product);
   }
@@ -144,7 +170,7 @@ export class ProductsService {
     const product = await this.prisma.product.update({
       where: { id: BigInt(id) },
       data: { isActive: false, deletedAt: new Date() },
-      include: { images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] } },
+      include: this.productIncludes(),
     });
     return this.toProductResponse(product);
   }
@@ -179,6 +205,25 @@ export class ProductsService {
     }));
   }
 
+  private mapColorVariants(
+    variants: ProductColorVariantInputDto[],
+  ): Prisma.ProductColorVariantCreateManyProductInput[] {
+    return variants.map((variant, index) => ({
+      name: variant.name.trim(),
+      colorCode: this.optionalText(variant.colorCode),
+      imageUrl: variant.imageUrl.trim(),
+      sku: this.optionalText(variant.sku),
+      sortOrder: variant.sortOrder ?? index,
+    }));
+  }
+
+  private productIncludes(): Prisma.ProductInclude {
+    return {
+      images: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] },
+      colorVariants: { orderBy: [{ sortOrder: "asc" }, { id: "asc" }] },
+    };
+  }
+
   private handleUniqueError(error: unknown): void {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       throw new ConflictException("Product SKU or slug already exists");
@@ -205,6 +250,14 @@ export class ProductsService {
         imageUrl: image.imageUrl,
         altText: image.altText,
         sortOrder: image.sortOrder,
+      })),
+      colorVariants: product.colorVariants.map((variant) => ({
+        id: variant.id.toString(),
+        name: variant.name,
+        colorCode: variant.colorCode,
+        imageUrl: variant.imageUrl,
+        sku: variant.sku,
+        sortOrder: variant.sortOrder,
       })),
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,

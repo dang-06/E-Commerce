@@ -113,9 +113,20 @@ export default function ShopPage(): React.ReactElement {
     }
   }
 
-  function addToCart(productId: string): void {
+  function addToCart(productId: string, quantity = 1): void {
     const current = cartItems.find((item) => item.productId === productId)?.quantity ?? 0;
-    setCartItems(setCartQuantity(cartItems, productId, current + 1));
+    setCartItems(setCartQuantity(cartItems, productId, current + quantity));
+  }
+
+  function buyNow(productId: string, quantity: number): void {
+    setCartItems((currentItems) => {
+      const current = currentItems.find((item) => item.productId === productId)?.quantity ?? 0;
+      return setCartQuantity(currentItems, productId, current + quantity);
+    });
+    setSelectedProduct(null);
+    setCartOpen(false);
+    setOrderError(null);
+    setStep("checkout");
   }
 
   function updateQuantity(productId: string, quantity: number): void {
@@ -253,6 +264,7 @@ export default function ShopPage(): React.ReactElement {
             setSelectedProduct(null);
           }}
           onAdd={addToCart}
+          onBuyNow={buyNow}
           promotionUnlocked={promotionSession?.eligible === true}
           quantity={cartItems.find((item) => item.productId === selectedProduct.id)?.quantity ?? 0}
         />
@@ -281,37 +293,22 @@ export default function ShopPage(): React.ReactElement {
       ) : null}
 
       {step === "checkout" ? (
-        <section className="shop-section">
-          <RecipientFields
-            errors={recipientErrors}
-            form={recipient}
-            onChange={(field, value) => {
-              setRecipient({ ...recipient, [field]: value });
-            }}
-          />
-          <OrderSummary totals={totals} />
-          <div className="sticky-actions">
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => {
-                setStep("catalog");
-              }}
-            >
-              Quay lại
-            </button>
-            <button
-              className="primary-button"
-              disabled={submitting}
-              type="button"
-              onClick={() => {
-                void reviewOrder();
-              }}
-            >
-              {submitting ? "Đang lấy báo giá..." : "Xem lại đơn"}
-            </button>
-          </div>
-        </section>
+        <CheckoutView
+          errors={recipientErrors}
+          form={recipient}
+          orderError={orderError}
+          submitting={submitting}
+          totals={totals}
+          onBack={() => {
+            setStep("catalog");
+          }}
+          onChange={(field, value) => {
+            setRecipient({ ...recipient, [field]: value });
+          }}
+          onReview={() => {
+            void reviewOrder();
+          }}
+        />
       ) : null}
 
       {step === "confirm" ? (
@@ -507,51 +504,247 @@ function CartDrawer({
   );
 }
 
+function CheckoutView({
+  errors,
+  form,
+  onBack,
+  onChange,
+  onReview,
+  orderError,
+  submitting,
+  totals,
+}: {
+  errors: Partial<Record<keyof RecipientForm, string>>;
+  form: RecipientForm;
+  onBack: () => void;
+  onChange: (field: keyof RecipientForm, value: string) => void;
+  onReview: () => void;
+  orderError: string | null;
+  submitting: boolean;
+  totals: CartTotals;
+}): React.ReactElement {
+  return (
+    <section className="checkout-shell" aria-labelledby="checkout-title">
+      <div className="checkout-main">
+        <div className="checkout-brand">ROSA PERFUME</div>
+        <nav className="checkout-steps" aria-label="Tiến trình thanh toán">
+          <span>Giỏ hàng</span>
+          <span aria-hidden="true">/</span>
+          <strong>Thông tin</strong>
+          <span aria-hidden="true">/</span>
+          <span>Hoàn tất</span>
+        </nav>
+        <h1 id="checkout-title">Thông tin giao hàng</h1>
+        <RecipientFields errors={errors} form={form} onChange={onChange} />
+        {orderError ? <p className="status error">{orderError}</p> : null}
+        <div className="checkout-actions">
+          <button className="checkout-back-button" type="button" onClick={onBack}>
+            <ArrowLeft aria-hidden="true" size={17} />
+            Tiếp tục mua hàng
+          </button>
+          <button className="checkout-primary-button" disabled={submitting} type="button" onClick={onReview}>
+            {submitting ? "Đang lấy báo giá..." : "Tiếp tục thanh toán"}
+          </button>
+        </div>
+      </div>
+
+      <aside className="checkout-sidebar" aria-label="Tóm tắt đơn hàng">
+        <div className="checkout-line-items">
+          {totals.lines.map((line) => {
+            const imageUrl = line.product.imageUrl ?? line.product.images[0]?.imageUrl;
+            return (
+              <div className="checkout-line-item" key={line.product.id}>
+                <div className="checkout-line-image">
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={line.product.name} />
+                  ) : (
+                    <span aria-hidden="true">{line.product.name.slice(0, 1).toUpperCase()}</span>
+                  )}
+                  <em>{line.quantity}</em>
+                </div>
+                <div>
+                  <strong>{line.product.name}</strong>
+                  <span>{line.product.sku}</span>
+                </div>
+                <p>{formatVnd(line.lineTotal)}</p>
+              </div>
+            );
+          })}
+        </div>
+        <OrderSummary totals={totals} />
+      </aside>
+    </section>
+  );
+}
+
 function ProductDetail({
   onAdd,
   onBack,
+  onBuyNow,
   product,
   promotionUnlocked,
   quantity,
 }: {
-  onAdd: (productId: string) => void;
+  onAdd: (productId: string, quantity?: number) => void;
   onBack: () => void;
+  onBuyNow: (productId: string, quantity: number) => void;
   product: Product;
   promotionUnlocked: boolean;
   quantity: number;
 }): React.ReactElement {
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(product.colorVariants[0]?.id ?? null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
+
+  useEffect(() => {
+    setSelectedVariantId(product.colorVariants[0]?.id ?? null);
+    setSelectedQuantity(1);
+  }, [product.id]);
+
   const listedPrice = parseVnd(product.listedPrice);
   const discount = promotionUnlocked && product.isPromotionEligible ? Math.min(parseVnd(product.discountAmount), listedPrice) : 0;
   const finalPrice = listedPrice - discount;
-  const imageUrl = product.imageUrl ?? product.images[0]?.imageUrl;
+  const selectedVariant = product.colorVariants.find((variant) => variant.id === selectedVariantId) ?? product.colorVariants[0] ?? null;
+  const galleryImages = buildProductGallery(product, selectedVariant?.id ?? null);
+  const fallbackImageUrl = selectedVariant?.imageUrl ?? product.imageUrl ?? product.images[0]?.imageUrl ?? null;
+  const imageUrl = selectedImageUrl ?? fallbackImageUrl;
+
+  useEffect(() => {
+    setSelectedImageUrl(fallbackImageUrl);
+  }, [fallbackImageUrl, product.id]);
+
   const trimmedDescription = product.description?.trim();
   const description =
     trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : "Sản phẩm đang được cập nhật mô tả.";
   const detailRows = buildProductDetailRows(description);
+
+  function addSelectedQuantityToCart(): void {
+    onAdd(product.id, selectedQuantity);
+  }
+
   return (
-    <section aria-labelledby="detail-title" className="detail-sheet">
-      <div className="detail-content">
-        <div className="detail-media">
-          {discount > 0 ? <span className="detail-discount">-{formatVnd(discount)}</span> : null}
+    <section aria-labelledby="detail-title" className="nik-product-page">
+      <div className="nik-product-gallery">
+        <button className="nik-back-button" type="button" onClick={onBack}>
+          <ArrowLeft aria-hidden="true" size={18} />
+          Cửa hàng
+        </button>
+        <div className="nik-product-media">
+          {discount > 0 ? <span className="nik-sale-badge">Sale off</span> : null}
           {imageUrl ? (
-            <img src={imageUrl} alt={product.name} />
+            <img src={imageUrl} alt={selectedVariant?.name ?? product.name} />
           ) : (
             <span className="image-placeholder" aria-hidden="true">
               {product.name.slice(0, 1).toUpperCase()}
             </span>
           )}
         </div>
-        <div className="detail-copy">
-          <nav className="detail-breadcrumb" aria-label="Điều hướng sản phẩm">
-            Trang chủ <span>/</span>  <strong>{product.name}</strong>
-          </nav>
-          <p className="sku">{product.sku}</p>
-          <h2 id="detail-title">{product.name}</h2>
-          <div className="detail-price">
-            {discount > 0 ? <span className="price-listed">{formatVnd(listedPrice)}</span> : null}
-            <strong>{formatVnd(finalPrice)}</strong>
+        {galleryImages.length > 1 ? (
+          <div className="nik-product-thumbs" aria-label="Ảnh sản phẩm">
+            {galleryImages.map((image) => (
+              <button
+                key={image.id}
+                className={image.imageUrl === imageUrl ? "nik-product-thumb selected" : "nik-product-thumb"}
+                type="button"
+                onClick={() => {
+                  setSelectedImageUrl(image.imageUrl);
+                }}
+              >
+                <img src={image.imageUrl} alt={image.altText} />
+              </button>
+            ))}
           </div>
-          <div className="detail-specs">
+        ) : null}
+      </div>
+
+      <aside className="nik-product-info">
+        <nav className="nik-breadcrumb" aria-label="Điều hướng sản phẩm">
+          Trang chủ <span>/</span> Cửa hàng <span>/</span> <strong>{product.name}</strong>
+        </nav>
+        <p className="nik-product-kicker">{selectedVariant?.name ?? product.sku}</p>
+        <h2 id="detail-title" className="nik-product-title">
+          {product.name}
+        </h2>
+
+        <div className="nik-product-price">
+          {discount > 0 ? <span>{formatVnd(listedPrice)}</span> : null}
+          <strong>{formatVnd(finalPrice)}</strong>
+        </div>
+
+        {product.colorVariants.length > 0 ? (
+          <div className="nik-option-group" aria-label="Màu sản phẩm">
+            <div className="nik-option-heading">
+              <h3>Màu khác</h3>
+              {selectedVariant ? <span>{selectedVariant.name}</span> : null}
+            </div>
+            <div className="nik-color-grid">
+              {product.colorVariants.map((variant) => (
+                <button
+                  key={variant.id}
+                  className={variant.id === selectedVariant?.id ? "nik-color-option selected" : "nik-color-option"}
+                  type="button"
+                  title={variant.name}
+                  onClick={() => {
+                    setSelectedVariantId(variant.id);
+                    setSelectedImageUrl(variant.imageUrl);
+                  }}
+                >
+                  <img src={variant.imageUrl} alt={variant.name} />
+                  <span style={{ background: variant.colorCode ?? "#f2f2f2" }} />
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <div className="nik-purchase-panel">
+          <div className="nik-quantity-row">
+            <span>Số lượng</span>
+            <div className="nik-quantity-control">
+              <button
+                type="button"
+                aria-label="Giảm số lượng"
+                onClick={() => {
+                  setSelectedQuantity((current) => Math.max(1, current - 1));
+                }}
+              >
+                -
+              </button>
+              <output aria-label="Số lượng đã chọn">{selectedQuantity}</output>
+              <button
+                type="button"
+                aria-label="Tăng số lượng"
+                onClick={() => {
+                  setSelectedQuantity((current) => Math.min(99, current + 1));
+                }}
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <button
+            className="nik-add-button"
+            type="button"
+            onClick={() => {
+              addSelectedQuantityToCart();
+            }}
+          >
+            {quantity > 0 ? `Thêm vào giỏ (${quantity} sản phẩm)` : "Thêm vào giỏ hàng"}
+          </button>
+          <button
+            className="nik-buy-button"
+            type="button"
+            onClick={() => {
+              onBuyNow(product.id, selectedQuantity);
+            }}
+          >
+            Mua ngay
+          </button>
+        </div>
+
+        <details className="nik-accordion" open>
+          <summary>Mô tả</summary>
+          <div>
             {detailRows.length > 0 ? (
               detailRows.map((row) => (
                 <p key={row.label}>
@@ -562,21 +755,43 @@ function ProductDetail({
               <p>{description}</p>
             )}
           </div>
-        </div>
-        <div className="detail-actions">
-          <button
-            className="primary-button full-width"
-            type="button"
-            onClick={() => {
-              onAdd(product.id);
-            }}
-          >
-            {quantity > 0 ? `Thêm nữa (${quantity} trong giỏ)` : "Thêm vào giỏ"}
-          </button>
-        </div>
-      </div>
+        </details>
+      </aside>
     </section>
   );
+}
+
+function buildProductGallery(
+  product: Product,
+  selectedVariantId: string | null,
+): { id: string; imageUrl: string; altText: string }[] {
+  const selectedVariant = product.colorVariants.find((variant) => variant.id === selectedVariantId);
+  const images = [
+    ...(selectedVariant
+      ? [{ id: `variant-${selectedVariant.id}`, imageUrl: selectedVariant.imageUrl, altText: selectedVariant.name }]
+      : []),
+    ...(product.imageUrl ? [{ id: "main", imageUrl: product.imageUrl, altText: product.name }] : []),
+    ...product.images.map((image) => ({
+      id: `image-${image.id}`,
+      imageUrl: image.imageUrl,
+      altText: image.altText ?? product.name,
+    })),
+    ...product.colorVariants
+      .filter((variant) => variant.id !== selectedVariantId)
+      .map((variant) => ({
+        id: `variant-${variant.id}`,
+        imageUrl: variant.imageUrl,
+        altText: variant.name,
+      })),
+  ];
+  const seen = new Set<string>();
+  return images.filter((image) => {
+    if (seen.has(image.imageUrl)) {
+      return false;
+    }
+    seen.add(image.imageUrl);
+    return true;
+  });
 }
 
 function buildProductDetailRows(description: string): { label: string; value: string }[] {

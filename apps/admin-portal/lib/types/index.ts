@@ -11,6 +11,15 @@ export interface User {
 }
 
 // Product
+export interface ProductColorVariant {
+  id?: string
+  name: string
+  colorCode: string
+  imageUrl: string
+  sku?: string
+  sortOrder: number
+}
+
 export interface Product {
   id: string
   sku: string
@@ -27,6 +36,7 @@ export interface Product {
   isActive: boolean
   visibility: 'visible' | 'hidden'
   sortOrder: number
+  colorVariants: ProductColorVariant[]
   createdAt: Date
   updatedAt: Date
 }

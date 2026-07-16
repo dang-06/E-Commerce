@@ -11,8 +11,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { getErrorMessage, productService } from '@/lib/services/api-service'
-import type { Product } from '@/lib/types'
+import type { Product, ProductColorVariant } from '@/lib/types'
 import { slugifyVietnamese } from '@/lib/utils/vietnamese'
+
+const emptyVariant = (): ProductColorVariant => ({
+  colorCode: '#f2d4d7',
+  imageUrl: '',
+  name: '',
+  sku: '',
+  sortOrder: 0,
+})
 
 export default function EditProductPage() {
   const params = useParams()
@@ -25,6 +33,7 @@ export default function EditProductPage() {
   const [message, setMessage] = useState('')
   const [formError, setFormError] = useState('')
   const [imageError, setImageError] = useState('')
+  const [uploadingVariantIndex, setUploadingVariantIndex] = useState<number | null>(null)
 
   useEffect(() => {
     async function loadProduct() {
@@ -46,7 +55,11 @@ export default function EditProductPage() {
     setMessage('')
     setFormError('')
     try {
-      const normalizedProduct = { ...product, slug: slugifyVietnamese(product.slug || product.name) }
+      const normalizedProduct = {
+        ...product,
+        slug: slugifyVietnamese(product.slug || product.name),
+        colorVariants: product.colorVariants.map((variant, index) => ({ ...variant, sortOrder: index })),
+      }
       await productService.updateProduct(product.id, normalizedProduct)
       setProduct(normalizedProduct)
       setMessage('Đã lưu sản phẩm.')
@@ -72,6 +85,39 @@ export default function EditProductPage() {
     } finally {
       setUploadingImage(false)
     }
+  }
+
+  async function handleVariantImageUpload(index: number, file: File | undefined) {
+    if (!file || !product) {
+      return
+    }
+    setUploadingVariantIndex(index)
+    setImageError('')
+    try {
+      const uploaded = await productService.uploadProductImage(file)
+      setProduct({
+        ...product,
+        colorVariants: product.colorVariants.map((variant, variantIndex) =>
+          variantIndex === index ? { ...variant, imageUrl: uploaded.imageUrl } : variant,
+        ),
+      })
+    } catch (error) {
+      setImageError(getErrorMessage(error))
+    } finally {
+      setUploadingVariantIndex(null)
+    }
+  }
+
+  function updateVariant(index: number, updates: Partial<ProductColorVariant>) {
+    if (!product) {
+      return
+    }
+    setProduct({
+      ...product,
+      colorVariants: product.colorVariants.map((variant, variantIndex) =>
+        variantIndex === index ? { ...variant, ...updates, sortOrder: index } : variant,
+      ),
+    })
   }
 
   if (loading) {
@@ -211,6 +257,123 @@ export default function EditProductPage() {
                 }}
               />
             </div>
+          </div>
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Màu và ảnh theo màu</h2>
+                <p className="text-sm text-muted-foreground">Các màu này sẽ hiển thị ở trang chi tiết sản phẩm.</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setProduct({
+                    ...product,
+                    colorVariants: [...product.colorVariants, { ...emptyVariant(), sortOrder: product.colorVariants.length }],
+                  })
+                }}
+              >
+                Thêm màu
+              </Button>
+            </div>
+            {product.colorVariants.length === 0 ? (
+              <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+                Chưa có màu nào. Sản phẩm sẽ dùng ảnh chính.
+              </p>
+            ) : null}
+            {product.colorVariants.map((variant, index) => (
+              <div key={variant.id ?? index} className="rounded-lg border border-border p-4">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <Label htmlFor={`variant-name-${index}`}>Tên màu</Label>
+                    <Input
+                      id={`variant-name-${index}`}
+                      value={variant.name}
+                      onChange={(event) => {
+                        updateVariant(index, { name: event.target.value })
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`variant-color-${index}`}>Mã màu</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id={`variant-color-${index}`}
+                        value={variant.colorCode}
+                        onChange={(event) => {
+                          updateVariant(index, { colorCode: event.target.value })
+                        }}
+                      />
+                      <Input
+                        aria-label={`Chọn màu ${index + 1}`}
+                        className="w-16 p-1"
+                        type="color"
+                        value={variant.colorCode || '#ffffff'}
+                        onChange={(event) => {
+                          updateVariant(index, { colorCode: event.target.value })
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor={`variant-sku-${index}`}>SKU/Reference</Label>
+                    <Input
+                      id={`variant-sku-${index}`}
+                      value={variant.sku ?? ''}
+                      onChange={(event) => {
+                        updateVariant(index, { sku: event.target.value })
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-[160px_1fr]">
+                  <div className="overflow-hidden rounded-md border border-border bg-muted">
+                    {variant.imageUrl ? (
+                      <img src={variant.imageUrl} alt={variant.name || 'Ảnh màu'} className="h-36 w-full object-contain" />
+                    ) : (
+                      <div className="flex h-36 items-center justify-center text-sm text-muted-foreground">Chưa có ảnh</div>
+                    )}
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor={`variant-upload-${index}`}>Tải ảnh màu</Label>
+                      <Input
+                        id={`variant-upload-${index}`}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        disabled={uploadingVariantIndex === index}
+                        onChange={(event) => {
+                          void handleVariantImageUpload(index, event.target.files?.[0])
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`variant-url-${index}`}>URL ảnh màu</Label>
+                      <Input
+                        id={`variant-url-${index}`}
+                        value={variant.imageUrl}
+                        onChange={(event) => {
+                          updateVariant(index, { imageUrl: event.target.value })
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        setProduct({
+                          ...product,
+                          colorVariants: product.colorVariants.filter((_, variantIndex) => variantIndex !== index),
+                        })
+                      }}
+                    >
+                      Xóa màu
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
 

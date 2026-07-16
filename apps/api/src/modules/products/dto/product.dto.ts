@@ -13,6 +13,7 @@ import {
 } from "class-validator";
 
 const imagePathPattern = /^(https?:\/\/[^\s]+|\/[^\s]+)$/;
+const colorCodePattern = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const skuPattern = /^[A-Z0-9][A-Z0-9._-]{1,49}$/i;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -28,6 +29,39 @@ export class ProductImageInputDto {
   @IsString()
   @MaxLength(255)
   altText?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(9999)
+  sortOrder?: number;
+}
+
+export class ProductColorVariantInputDto {
+  @IsString()
+  @MaxLength(120)
+  name!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  @Matches(colorCodePattern, {
+    message: "colorCode must be a hex color like #F4C7C3",
+  })
+  colorCode?: string;
+
+  @IsString()
+  @MaxLength(2048)
+  @Matches(imagePathPattern, {
+    message: "imageUrl must be an http(s) URL or an absolute public path",
+  })
+  imageUrl!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  sku?: string;
 
   @IsOptional()
   @Type(() => Number)
@@ -102,6 +136,12 @@ export class CreateProductDto {
   @ValidateNested({ each: true })
   @Type(() => ProductImageInputDto)
   images?: ProductImageInputDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductColorVariantInputDto)
+  colorVariants?: ProductColorVariantInputDto[];
 }
 
 export class UpdateProductDto {
@@ -173,10 +213,15 @@ export class UpdateProductDto {
   @ValidateNested({ each: true })
   @Type(() => ProductImageInputDto)
   images?: ProductImageInputDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductColorVariantInputDto)
+  colorVariants?: ProductColorVariantInputDto[];
 }
 
 export class SetProductVisibilityDto {
   @IsBoolean()
   isActive!: boolean;
 }
-

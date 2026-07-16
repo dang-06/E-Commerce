@@ -44,6 +44,17 @@ export function ProductCard({
           finalUnitPrice={listedPrice - discountPerItem}
           listedPrice={listedPrice}
         />
+        {product.colorVariants.length > 0 ? (
+          <div className="card-color-swatches" aria-label={`Màu của ${product.name}`}>
+            {product.colorVariants.slice(0, 6).map((variant) => (
+              <span
+                key={variant.id}
+                title={variant.name}
+                style={{ background: variant.colorCode ?? "#f3f3f3" }}
+              />
+            ))}
+          </div>
+        ) : null}
         {discountPerItem > 0 ? <p className="saving-inline">Giảm {formatVnd(discountPerItem)} / sản phẩm</p> : null}
         <div className="product-actions">
           <button
