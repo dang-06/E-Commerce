@@ -26,7 +26,7 @@ export default function DashboardPage() {
       } catch (e) {
         console.error('Failed to load stats:', e)
       } finally {
-        // Dashboard cards keep their zero state if the mock API is unavailable.
+        // Dashboard cards keep their zero state if the API is unavailable.
       }
     }
 

@@ -10,7 +10,7 @@ import { getConfig } from "../../config/app.config.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import { PromotionTokenService } from "../promotions/promotion-token.service.js";
 import { PromotionsService } from "../promotions/promotions.service.js";
-import type { CreateOrderDto, OrderItemInputDto, QuoteOrderDto } from "./dto/order.dto.js";
+import type { CreateOrderDto, OrderItemInputDto, OrderStatusValue, QuoteOrderDto } from "./dto/order.dto.js";
 import { OrderQuoteStore, type OrderQuoteSnapshot } from "./order-quote-store.service.js";
 
 type DbClient = PrismaService | Prisma.TransactionClient;
@@ -48,7 +48,7 @@ interface PricedLine {
 }
 
 interface PriceCalculation {
-  promotion: ValidPromotion;
+  promotion: ValidPromotion | null;
   lines: PricedLine[];
   subtotal: bigint;
   discountAmount: bigint;
@@ -94,6 +94,31 @@ export interface CreateOrderResponse {
   items: OrderLineResponse[];
 }
 
+export interface AdminOrderResponse {
+  id: string;
+  orderCode: string;
+  createdAt: Date;
+  updatedAt: Date;
+  recipientName: string;
+  recipientPhone: string;
+  address: string;
+  province: string;
+  district: string;
+  ward: string;
+  subtotal: string;
+  discountAmount: string;
+  shippingFee: string;
+  totalAmount: string;
+  isPromotionApplied: boolean;
+  orderStatus: string;
+  paymentStatus: string;
+  syncStatus: string;
+  note: string | null;
+  pancakeOrderId: string | null;
+  shippingOrderId: string | null;
+  items: OrderLineResponse[];
+}
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -130,13 +155,14 @@ export class OrdersService {
 
     try {
       const created = await this.prisma.$transaction(async (tx) => {
+        const promotionPhone = calculation.promotion?.phoneNormalized ?? this.optionalPromotionPhone(dto.promotionPhone);
         const order = await tx.order.create({
           data: {
             orderCode: await this.generateOrderCode(tx),
             idempotencyKey: dto.idempotencyKey,
-            eligibleCustomerId: calculation.promotion.customer.id,
-            promotionPhone: calculation.promotion.phoneNormalized,
-            promotionPhoneHash: calculation.promotion.phoneHash,
+            ...(calculation.promotion ? { eligibleCustomerId: calculation.promotion.customer.id } : {}),
+            ...(promotionPhone ? { promotionPhone } : {}),
+            ...(calculation.promotion ? { promotionPhoneHash: calculation.promotion.phoneHash } : {}),
             isPromotionApplied: calculation.discountAmount > 0n,
             recipientName: this.clean(dto.recipient.name),
             recipientPhone: this.promotions.normalizePhone(dto.recipient.phone),
@@ -151,22 +177,23 @@ export class OrdersService {
             totalAmount: calculation.totalAmount,
             paymentMethod: dto.paymentMethod ?? "cod",
             note: this.optionalText(dto.note),
-            items: {
-              create: calculation.lines.map((line) => ({
-                productId: BigInt(line.productId),
-                sku: line.sku,
-                productName: line.productName,
-                listedPrice: line.listedPrice,
-                discountPerItem: line.discountPerItem,
-                finalUnitPrice: line.finalUnitPrice,
-                quantity: line.quantity,
-                lineSubtotal: line.lineSubtotal,
-                lineDiscount: line.lineDiscount,
-                lineTotal: line.lineTotal,
-              })),
-            },
           },
-          include: { items: { orderBy: { id: "asc" } } },
+        });
+
+        await tx.orderItem.createMany({
+          data: calculation.lines.map((line) => ({
+            orderId: order.id,
+            productId: BigInt(line.productId),
+            sku: line.sku,
+            productName: line.productName,
+            listedPrice: line.listedPrice,
+            discountPerItem: line.discountPerItem,
+            finalUnitPrice: line.finalUnitPrice,
+            quantity: line.quantity,
+            lineSubtotal: line.lineSubtotal,
+            lineDiscount: line.lineDiscount,
+            lineTotal: line.lineTotal,
+          })),
         });
 
         for (const integration of getConfig().orderIntegrationNames) {
@@ -191,7 +218,10 @@ export class OrdersService {
           });
         }
 
-        return order;
+        return tx.order.findUniqueOrThrow({
+          where: { id: order.id },
+          include: { items: { orderBy: { id: "asc" } } },
+        });
       });
       this.quoteStore.delete(dto.idempotencyKey);
       return this.toCreateResponse(created, "created");
@@ -207,6 +237,44 @@ export class OrdersService {
       }
       throw error;
     }
+  }
+
+  async listAdmin(limit: number): Promise<AdminOrderResponse[]> {
+    const orders = await this.prisma.order.findMany({
+      include: {
+        integrationJobs: { orderBy: { updatedAt: "desc" } },
+        items: { orderBy: { id: "asc" } },
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: limit,
+    });
+    return orders.map((order) => this.toAdminOrderResponse(order));
+  }
+
+  async getAdmin(id: string): Promise<AdminOrderResponse> {
+    const order = await this.prisma.order.findUnique({
+      where: { id: BigInt(id) },
+      include: {
+        integrationJobs: { orderBy: { updatedAt: "desc" } },
+        items: { orderBy: { id: "asc" } },
+      },
+    });
+    if (!order) {
+      throw new BadRequestException("Order not found");
+    }
+    return this.toAdminOrderResponse(order);
+  }
+
+  async updateStatus(id: string, status: OrderStatusValue): Promise<AdminOrderResponse> {
+    const order = await this.prisma.order.update({
+      where: { id: BigInt(id) },
+      data: { orderStatus: status },
+      include: {
+        integrationJobs: { orderBy: { updatedAt: "desc" } },
+        items: { orderBy: { id: "asc" } },
+      },
+    });
+    return this.toAdminOrderResponse(order);
   }
 
   private async calculate(dto: QuoteOrderDto, client: DbClient): Promise<PriceCalculation> {
@@ -228,7 +296,7 @@ export class OrdersService {
         throw new BadRequestException("Requested quantity exceeds available stock");
       }
       const discountPerItem =
-        product.isPromotionEligible && product.discountAmount > 0n ? product.discountAmount : 0n;
+        promotion && product.isPromotionEligible && product.discountAmount > 0n ? product.discountAmount : 0n;
       if (discountPerItem > product.listedPrice) {
         throw new BadRequestException("Promotion discount exceeds product price and needs confirmation");
       }
@@ -262,7 +330,14 @@ export class OrdersService {
     };
   }
 
-  private async validatePromotion(token: string, phone: string, client: DbClient): Promise<ValidPromotion> {
+  private async validatePromotion(
+    token: string | undefined,
+    phone: string | undefined,
+    client: DbClient,
+  ): Promise<ValidPromotion | null> {
+    if (!token || !phone) {
+      return null;
+    }
     const phoneNormalized = this.promotions.normalizePhone(phone);
     const phoneHash = this.promotions.hashPhone(phoneNormalized);
     const payload = this.tokens.verify(token);
@@ -399,6 +474,66 @@ export class OrdersService {
     };
   }
 
+  private toAdminOrderResponse(
+    order: Prisma.OrderGetPayload<{
+      include: { integrationJobs: true; items: true };
+    }>,
+  ): AdminOrderResponse {
+    return {
+      id: order.id.toString(),
+      orderCode: order.orderCode,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      recipientName: order.recipientName,
+      recipientPhone: order.recipientPhone,
+      address: order.address,
+      province: order.province,
+      district: order.district,
+      ward: order.ward,
+      subtotal: order.subtotal.toString(),
+      discountAmount: order.discountAmount.toString(),
+      shippingFee: order.shippingFee.toString(),
+      totalAmount: order.totalAmount.toString(),
+      isPromotionApplied: order.isPromotionApplied,
+      orderStatus: order.orderStatus,
+      paymentStatus: order.paymentStatus,
+      syncStatus: this.resolveSyncStatus(order.integrationJobs.map((job) => job.status)),
+      note: order.note,
+      pancakeOrderId: order.pancakeOrderId,
+      shippingOrderId: order.shippingOrderId,
+      items: order.items.map((item) =>
+        this.toLineResponse({
+          productId: item.productId.toString(),
+          sku: item.sku,
+          productName: item.productName,
+          listedPrice: item.listedPrice,
+          discountPerItem: item.discountPerItem,
+          finalUnitPrice: item.finalUnitPrice,
+          quantity: item.quantity,
+          lineSubtotal: item.lineSubtotal,
+          lineDiscount: item.lineDiscount,
+          lineTotal: item.lineTotal,
+        }),
+      ),
+    };
+  }
+
+  private resolveSyncStatus(statuses: string[]): string {
+    if (statuses.length === 0) {
+      return "pending";
+    }
+    if (statuses.some((status) => status === "failed" || status === "cancelled")) {
+      return "failed";
+    }
+    if (statuses.some((status) => status === "processing")) {
+      return "processing";
+    }
+    if (statuses.every((status) => status === "success")) {
+      return "success";
+    }
+    return "pending";
+  }
+
   private async generateOrderCode(client: DbClient): Promise<string> {
     const date = new Date();
     const prefix = `OD${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
@@ -426,6 +561,17 @@ export class OrdersService {
       return null;
     }
     return trimmed;
+  }
+
+  private optionalPromotionPhone(value: string | undefined): string | null {
+    if (!value) {
+      return null;
+    }
+    try {
+      return this.promotions.normalizePhone(value);
+    } catch {
+      return null;
+    }
   }
 
   private isUniqueConstraintError(error: unknown): boolean {

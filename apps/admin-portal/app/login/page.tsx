@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
-import { mockLogin, setStoredAuth } from '@/lib/services/auth'
+import { login, setStoredAuth } from '@/lib/services/auth'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('admin@store.com')
+  const [email, setEmail] = useState('admin@example.local')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -24,7 +24,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const result = await mockLogin(email, password)
+      const result = await login(email, password)
 
       if (!result) {
         setError('Email hoặc mật khẩu không chính xác')
@@ -69,9 +69,9 @@ export default function LoginPage() {
           {/* Demo Credentials */}
           <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900 border border-blue-200">
             <p className="font-semibold">Tài khoản Demo:</p>
-            <p>Admin: admin@store.com</p>
-            <p>Nhân viên: operator@store.com</p>
-            <p className="text-xs mt-1">Mật khẩu: bất kỳ</p>
+            <p>Admin: admin@example.local</p>
+            <p>Nhân viên: operator@example.local</p>
+            <p className="text-xs mt-1">Mật khẩu mặc định: Admin@123456</p>
           </div>
 
           {/* Form */}
@@ -86,7 +86,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@store.com"
+                placeholder="admin@example.local"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); }}
                 required

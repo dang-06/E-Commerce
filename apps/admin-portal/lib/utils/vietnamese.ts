@@ -18,6 +18,17 @@ export function formatVND(amount: number): string {
   return formatted.replace('₫', '₫').trim()
 }
 
+export function slugifyVietnamese(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
 /**
  * Format date as Vietnamese format DD/MM/YYYY
  * @param date - Date to format

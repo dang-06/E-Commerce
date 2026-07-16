@@ -41,6 +41,7 @@ void test("buyer flow checks phone, builds cart, validates recipient and submits
     products: [product],
     recipient,
     session: {
+      eligible: true,
       phone,
       promotionToken: "signed-token",
       expiresAt: new Date("2026-07-15T00:30:00.000Z").toISOString(),
@@ -49,6 +50,43 @@ void test("buyer flow checks phone, builds cart, validates recipient and submits
 
   assert.equal(result.ok, true);
   assert.equal(result.order?.orderCode, "ORD-TEST-1");
+});
+
+void test("buyer flow allows non-eligible phone session with normal pricing", async () => {
+  const product = sampleProduct();
+  const cart = setCartQuantity([], product.id, 1);
+  const totals = calculateCartTotals([product], cart, false, null);
+
+  assert.equal(totals.discountAmount, 0);
+  assert.equal(totals.subtotal, 99000);
+
+  const result = await submitCheckout({
+    cartItems: cart,
+    createOrder: (payload) => {
+      assert.equal(payload.session.eligible, false);
+      assert.equal(payload.session.promotionToken, undefined);
+      return Promise.resolve({
+        status: "created",
+        orderCode: "ORD-NORMAL-1",
+        createdAt: new Date("2026-07-15T00:00:00.000Z").toISOString(),
+        totalQuantity: 1,
+        subtotal: "99000",
+        discountAmount: "0",
+        shippingFee: "0",
+        totalAmount: "99000",
+      });
+    },
+    idempotencyKey: "idem-normal-1",
+    products: [product],
+    recipient: validRecipient(),
+    session: {
+      eligible: false,
+      phone: "0909999999",
+    },
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.order?.totalAmount, "99000");
 });
 
 void test("buyer flow blocks checkout without promotion session or valid recipient", async () => {

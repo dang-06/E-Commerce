@@ -1,181 +1,379 @@
-import { mockProducts } from '@/lib/mock-data/products'
-import { mockOrders } from '@/lib/mock-data/orders'
-import { mockEligibleCustomers } from '@/lib/mock-data/eligible-customers'
-import { mockIntegrationLogs } from '@/lib/mock-data/integration-logs'
-import { mockAuditLogs } from '@/lib/mock-data/audit-logs'
-import { EligibleCustomer, IntegrationLog, Order, Product, AuditLog } from '@/lib/types'
+'use client'
 
-/**
- * Product Service
- */
+import { getStoredAuth } from '@/lib/services/auth'
+import {
+  AuditLog,
+  EligibleCustomer,
+  GoogleSheetConfig,
+  GoogleSheetConfigs,
+  GoogleSheetPurpose,
+  IntegrationLog,
+  Order,
+  Product,
+} from '@/lib/types'
+
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1'
+
+export class ApiRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly body: unknown,
+  ) {
+    super(message)
+  }
+}
+
+interface ApiProduct {
+  id: string
+  sku: string
+  name: string
+  slug: string
+  description: string | null
+  imageUrl: string | null
+  listedPrice: string
+  stockQuantity: number | null
+  isPromotionEligible: boolean
+  discountAmount: string
+  isActive: boolean
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+interface ApiProductImageUpload {
+  imageUrl: string
+  publicId: string
+  width: number | null
+  height: number | null
+  format: string | null
+}
+
+interface ApiOrderLine {
+  productId: string
+  sku: string
+  productName: string
+  listedPrice: string
+  discountPerItem: string
+  finalUnitPrice: string
+  quantity: number
+}
+
+interface ApiOrder {
+  id: string
+  orderCode: string
+  createdAt: string
+  updatedAt: string
+  recipientName: string
+  recipientPhone: string
+  address: string
+  province: string
+  district: string
+  ward: string
+  subtotal: string
+  discountAmount: string
+  shippingFee: string
+  totalAmount: string
+  isPromotionApplied: boolean
+  orderStatus: string
+  paymentStatus: string
+  syncStatus: string
+  note: string | null
+  pancakeOrderId: string | null
+  shippingOrderId: string | null
+  items: ApiOrderLine[]
+}
+
+interface ApiEligibleCustomer {
+  id: string
+  phoneMasked: string
+  source: string
+  eligibilityReason: string
+  successfulOrderAt: string | null
+  usageCount: number
+  usageLimit: number | null
+  isActive: boolean
+  importedAt: string
+  createdAt: string
+}
+
+interface ApiIntegrationJob {
+  id: string
+  orderCode: string
+  integration: string
+  action: string
+  status: string
+  attemptCount: number
+  nextRetryAt: string | null
+  externalId: string | null
+  lastError: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+interface ApiAuditLog {
+  id: string
+  adminId: string | null
+  adminName: string
+  action: string
+  entityType: string
+  entityId: string | null
+  metadata: Record<string, unknown> | null
+  createdAt: string
+}
+
+interface ApiGoogleSheetConfig {
+  id: string
+  purpose: GoogleSheetPurpose
+  sheetUrl: string
+  spreadsheetId: string
+  worksheetName: string | null
+  phoneColumn: string | null
+  orderMapping: Record<string, unknown> | null
+  isActive: boolean
+  lastSyncAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+interface ApiGoogleSheetConfigs {
+  eligibleCustomers: ApiGoogleSheetConfig | null
+  orders: ApiGoogleSheetConfig | null
+}
+
+async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const auth = getStoredAuth()
+  const headers = new Headers(init.headers)
+  if (!(init.body instanceof FormData)) {
+    headers.set('content-type', 'application/json')
+  }
+  if (auth?.token) {
+    headers.set('authorization', `Bearer ${auth.token}`)
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, { ...init, headers })
+  if (!response.ok) {
+    const body = await readResponseBody(response)
+    throw new ApiRequestError(extractApiErrorMessage(body, response.status), response.status, body)
+  }
+  return (await response.json()) as T
+}
+
+async function readResponseBody(response: Response): Promise<unknown> {
+  const text = await response.text()
+  if (!text) {
+    return null
+  }
+  try {
+    return JSON.parse(text) as unknown
+  } catch {
+    return text
+  }
+}
+
+function extractApiErrorMessage(body: unknown, status: number): string {
+  if (!body || typeof body !== 'object') {
+    return `API request failed: ${status}`
+  }
+  const candidate = body as { message?: unknown; error?: unknown }
+  if (Array.isArray(candidate.message)) {
+    return candidate.message.filter((item): item is string => typeof item === 'string').join('\n')
+  }
+  if (typeof candidate.message === 'string') {
+    return candidate.message
+  }
+  if (typeof candidate.error === 'string') {
+    return candidate.error
+  }
+  return `API request failed: ${status}`
+}
+
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  return 'Đã xảy ra lỗi. Vui lòng thử lại.'
+}
+
 export const productService = {
   async getProducts(): Promise<Product[]> {
-    await delay(500)
-    return [...mockProducts]
+    return (await requestJson<ApiProduct[]>('/admin/products')).map(toProduct)
   },
 
   async getProductById(id: string): Promise<Product | null> {
-    await delay(300)
-    return mockProducts.find((p) => p.id === id) ?? null
+    const products = await this.getProducts()
+    return products.find((product) => product.id === id) ?? null
   },
 
   async createProduct(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
-    await delay(500)
-    const newProduct: Product = {
-      ...product,
-      id: `prod_${Date.now()}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-    return newProduct
+    return toProduct(
+      await requestJson<ApiProduct>('/admin/products', {
+        body: JSON.stringify(toProductPayload(product)),
+        method: 'POST',
+      }),
+    )
+  },
+
+  async uploadProductImage(file: File): Promise<ApiProductImageUpload> {
+    const form = new FormData()
+    form.set('file', file)
+    return requestJson<ApiProductImageUpload>('/admin/products/images', {
+      body: form,
+      method: 'POST',
+    })
   },
 
   async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
-    await delay(500)
-    const product = mockProducts.find((p) => p.id === id)
-    if (!product) return null
-    return { ...product, ...updates, updatedAt: new Date() }
+    return toProduct(
+      await requestJson<ApiProduct>(`/admin/products/${id}`, {
+        body: JSON.stringify(toProductPayload(updates)),
+        method: 'PATCH',
+      }),
+    )
   },
 
   async deleteProduct(id: string): Promise<boolean> {
-    void id
-    await delay(500)
+    await requestJson<ApiProduct>(`/admin/products/${id}`, { method: 'DELETE' })
     return true
   },
 }
 
-/**
- * Order Service
- */
 export const orderService = {
   async getOrders(): Promise<Order[]> {
-    await delay(500)
-    return [...mockOrders].sort((a, b) => b.date.getTime() - a.date.getTime())
+    return (await requestJson<ApiOrder[]>('/admin/orders')).map(toOrder)
   },
 
   async getOrderById(id: string): Promise<Order | null> {
-    await delay(300)
-    return mockOrders.find((o) => o.id === id) ?? null
+    return toOrder(await requestJson<ApiOrder>(`/admin/orders/${id}`))
   },
 
   async getOrderByCode(code: string): Promise<Order | null> {
-    await delay(300)
-    return mockOrders.find((o) => o.code === code) ?? null
+    const orders = await this.getOrders()
+    return orders.find((order) => order.code === code) ?? null
   },
 
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order | null> {
-    await delay(500)
-    const order = mockOrders.find((o) => o.id === id)
-    if (!order) return null
-    return { ...order, ...updates, updatedAt: new Date() }
+    if (!updates.status) {
+      return this.getOrderById(id)
+    }
+    return toOrder(
+      await requestJson<ApiOrder>(`/admin/orders/${id}/status`, {
+        body: JSON.stringify({ status: toApiOrderStatus(updates.status) }),
+        method: 'PATCH',
+      }),
+    )
   },
 
-  async addOrderNote(id: string, note: string): Promise<Order | null> {
-    await delay(300)
-    const order = mockOrders.find((o) => o.id === id)
-    if (!order) return null
-    return { ...order, notes: note, updatedAt: new Date() }
+  async addOrderNote(id: string): Promise<Order | null> {
+    return this.getOrderById(id)
   },
 }
 
-/**
- * Eligible Customer Service
- */
 export const eligibleCustomerService = {
   async getCustomers(): Promise<EligibleCustomer[]> {
-    await delay(500)
-    return [...mockEligibleCustomers].sort((a, b) => b.importedAt.getTime() - a.importedAt.getTime())
+    return (await requestJson<ApiEligibleCustomer[]>('/admin/eligible-customers')).map(toEligibleCustomer)
   },
 
   async getCustomerByPhone(phone: string): Promise<EligibleCustomer | null> {
-    await delay(300)
-    return mockEligibleCustomers.find((c) => c.phone === phone) ?? null
+    const customers = await this.getCustomers()
+    return customers.find((customer) => customer.phone.includes(phone)) ?? null
   },
 
-  async addCustomer(customer: Omit<EligibleCustomer, 'id' | 'createdAt'>): Promise<EligibleCustomer> {
-    await delay(500)
+  async importFile(file: File): Promise<{ imported: number; updated: number; duplicates: number; errors: number }> {
+    const form = new FormData()
+    form.set('file', file)
+    form.set('source', 'import')
+    form.set('eligibilityReason', 'imported')
+    const result = await requestJson<{ success: number; updated: number; invalid: number; duplicate: number }>(
+      '/admin/eligible-customers/import',
+      { body: form, method: 'POST' },
+    )
     return {
-      ...customer,
-      id: `cust_${Date.now()}`,
-      createdAt: new Date(),
-    }
-  },
-
-  async importCustomers(
-    customers: Omit<EligibleCustomer, 'id' | 'createdAt'>[]
-  ): Promise<{ imported: number; duplicates: number; errors: number }> {
-    await delay(1500)
-    return {
-      imported: Math.floor(customers.length * 0.8),
-      duplicates: Math.floor(customers.length * 0.15),
-      errors: Math.floor(customers.length * 0.05),
+      imported: result.success,
+      updated: result.updated,
+      duplicates: result.duplicate,
+      errors: result.invalid,
     }
   },
 
   async updateCustomer(id: string, updates: Partial<EligibleCustomer>): Promise<EligibleCustomer | null> {
-    await delay(300)
-    const customer = mockEligibleCustomers.find((c) => c.id === id)
-    if (!customer) return null
-    return { ...customer, ...updates }
+    return toEligibleCustomer(
+      await requestJson<ApiEligibleCustomer>(`/admin/eligible-customers/${id}/status`, {
+        body: JSON.stringify({ isActive: updates.status === 'active' }),
+        method: 'PATCH',
+      }),
+    )
   },
 }
 
-/**
- * Integration Service
- */
 export const integrationService = {
   async getLogs(): Promise<IntegrationLog[]> {
-    await delay(500)
-    return [...mockIntegrationLogs]
+    return (await requestJson<ApiIntegrationJob[]>('/admin/integrations')).map(toIntegrationLog)
   },
 
   async retrySync(logId: string): Promise<boolean> {
-    void logId
-    await delay(1000)
+    await requestJson<ApiIntegrationJob>(`/admin/integrations/${logId}/retry`, { method: 'POST' })
     return true
   },
 
   async retrySyncSelected(logIds: string[]): Promise<{ succeeded: number; failed: number }> {
-    await delay(1500)
+    const results = await Promise.allSettled(logIds.map((id) => this.retrySync(id)))
     return {
-      succeeded: logIds.length,
-      failed: 0,
+      failed: results.filter((result) => result.status === 'rejected').length,
+      succeeded: results.filter((result) => result.status === 'fulfilled').length,
     }
   },
 
   async getIntegrationStatus(): Promise<Record<string, 'connected' | 'degraded' | 'disconnected'>> {
-    await delay(300)
+    const logs = await this.getLogs()
     return {
-      google_sheet: 'connected',
-      pancake: 'connected',
-      best: 'degraded',
+      best: statusForIntegration(logs, 'best'),
+      google_sheet: statusForIntegration(logs, 'google_sheet'),
+      pancake: statusForIntegration(logs, 'pancake'),
     }
+  },
+
+  async getGoogleSheetConfigs(): Promise<GoogleSheetConfigs> {
+    const configs = await requestJson<ApiGoogleSheetConfigs>('/admin/integrations/google-sheets')
+    return {
+      eligibleCustomers: configs.eligibleCustomers ? toGoogleSheetConfig(configs.eligibleCustomers) : null,
+      orders: configs.orders ? toGoogleSheetConfig(configs.orders) : null,
+    }
+  },
+
+  async saveGoogleSheetConfig(
+    purpose: GoogleSheetPurpose,
+    payload: {
+      sheetUrl: string
+      worksheetName?: string
+      phoneColumn?: string
+      orderMapping?: Record<string, unknown>
+      isActive?: boolean
+    },
+  ): Promise<GoogleSheetConfig> {
+    return toGoogleSheetConfig(
+      await requestJson<ApiGoogleSheetConfig>(`/admin/integrations/google-sheets/${purpose}`, {
+        body: JSON.stringify(payload),
+        method: 'PUT',
+      }),
+    )
   },
 }
 
-/**
- * Audit Log Service
- */
 export const auditLogService = {
   async getLogs(): Promise<AuditLog[]> {
-    await delay(500)
-    return [...mockAuditLogs]
+    return (await requestJson<ApiAuditLog[]>('/admin/audit-logs')).map(toAuditLog)
   },
 
   async getLogsByUser(userId: string): Promise<AuditLog[]> {
-    await delay(500)
-    return mockAuditLogs.filter((l) => l.userId === userId)
+    return (await this.getLogs()).filter((log) => log.userId === userId)
   },
 
   async getLogsByEntity(entityType: string, entityId: string): Promise<AuditLog[]> {
-    await delay(500)
-    return mockAuditLogs.filter((l) => l.entityType === entityType && l.entityId === entityId)
+    return (await this.getLogs()).filter((log) => log.entityType === entityType && log.entityId === entityId)
   },
 }
 
-/**
- * Dashboard Stats Service
- */
 export const dashboardService = {
   async getStats(): Promise<{
     todayOrders: number
@@ -184,41 +382,220 @@ export const dashboardService = {
     pendingOrders: number
     failedSyncs: number
   }> {
-    await delay(500)
-
+    const [orders, customers, logs] = await Promise.all([
+      orderService.getOrders(),
+      eligibleCustomerService.getCustomers(),
+      integrationService.getLogs(),
+    ])
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-
-    const todayOrders = mockOrders.filter((o) => o.date >= today).length
-    const todayRevenue = mockOrders
-      .filter((o) => o.date >= today)
-      .reduce((sum, o) => sum + o.total, 0)
-
+    const todayOrders = orders.filter((order) => order.createdAt >= today)
     return {
-      todayOrders,
-      todayRevenue,
-      eligibleUsers: mockEligibleCustomers.filter((c) => c.status === 'active').length,
-      pendingOrders: mockOrders.filter((o) => o.status === 'pending').length,
-      failedSyncs: mockIntegrationLogs.filter((l) => l.status === 'failed').length,
+      eligibleUsers: customers.filter((customer) => customer.status === 'active').length,
+      failedSyncs: logs.filter((log) => log.status === 'failed').length,
+      pendingOrders: orders.filter((order) => order.status === 'pending').length,
+      todayOrders: todayOrders.length,
+      todayRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0),
     }
   },
 
   async getRecentOrders(limit = 10): Promise<Order[]> {
-    await delay(500)
-    return [...mockOrders]
-      .sort((a, b) => b.date.getTime() - a.date.getTime())
-      .slice(0, limit)
+    return (await orderService.getOrders()).slice(0, limit)
   },
 
   async getTopProducts(limit = 5): Promise<Product[]> {
-    await delay(500)
-    return [...mockProducts].sort((a, b) => (b.stock ?? 0) - (a.stock ?? 0)).slice(0, limit)
+    return (await productService.getProducts())
+      .sort((left, right) => (right.stock ?? 0) - (left.stock ?? 0))
+      .slice(0, limit)
   },
 }
 
-/**
- * Helper function to simulate API delay
- */
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function toProduct(product: ApiProduct): Product {
+  const description = product.description ?? ''
+  return {
+    category: '',
+    createdAt: new Date(product.createdAt),
+    description,
+    discountAmount: Number(product.discountAmount),
+    id: product.id,
+    image: product.imageUrl ?? '',
+    isActive: product.isActive,
+    isPromotionEligible: product.isPromotionEligible,
+    listedPrice: Number(product.listedPrice),
+    name: product.name,
+    shortDescription: description.slice(0, 120),
+    sku: product.sku,
+    slug: product.slug,
+    sortOrder: product.sortOrder,
+    stock: product.stockQuantity ?? undefined,
+    updatedAt: new Date(product.updatedAt),
+    visibility: product.isActive ? 'visible' : 'hidden',
+  }
+}
+
+function toProductPayload(product: Partial<Product>): Record<string, unknown> {
+  return {
+    ...(product.sku !== undefined ? { sku: product.sku } : {}),
+    ...(product.name !== undefined ? { name: product.name } : {}),
+    ...(product.slug !== undefined ? { slug: product.slug } : {}),
+    ...(product.description !== undefined ? { description: product.description } : {}),
+    ...(product.image !== undefined && product.image ? { imageUrl: product.image } : {}),
+    ...(product.listedPrice !== undefined ? { listedPrice: product.listedPrice } : {}),
+    ...(product.stock !== undefined ? { stockQuantity: product.stock } : {}),
+    ...(product.isPromotionEligible !== undefined ? { isPromotionEligible: product.isPromotionEligible } : {}),
+    ...(product.discountAmount !== undefined ? { discountAmount: product.discountAmount } : {}),
+    ...(product.isActive !== undefined ? { isActive: product.isActive } : {}),
+    ...(product.sortOrder !== undefined ? { sortOrder: product.sortOrder } : {}),
+  }
+}
+
+function toOrder(order: ApiOrder): Order {
+  return {
+    address: `${order.address}, ${order.ward}, ${order.district}, ${order.province}`,
+    code: order.orderCode,
+    createdAt: new Date(order.createdAt),
+    date: new Date(order.createdAt),
+    discount: Number(order.discountAmount),
+    discountApplied: order.isPromotionApplied,
+    externalSyncId: undefined,
+    id: order.id,
+    items: order.items.map((item, index) => ({
+      discount: Number(item.discountPerItem),
+      id: `${order.id}-${index}`,
+      price: Number(item.finalUnitPrice),
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      sku: item.sku,
+    })),
+    notes: order.note ?? '',
+    pancakeOrderId: order.pancakeOrderId ?? undefined,
+    paymentStatus: toUiPaymentStatus(order.paymentStatus),
+    phone: order.recipientPhone,
+    recipientName: order.recipientName,
+    shipping: Number(order.shippingFee),
+    shippingId: order.shippingOrderId ?? undefined,
+    status: toUiOrderStatus(order.orderStatus),
+    subtotal: Number(order.subtotal),
+    syncStatus: toUiSyncStatus(order.syncStatus),
+    total: Number(order.totalAmount),
+    updatedAt: new Date(order.updatedAt),
+  }
+}
+
+function toEligibleCustomer(customer: ApiEligibleCustomer): EligibleCustomer {
+  return {
+    createdAt: new Date(customer.createdAt),
+    id: customer.id,
+    importedAt: new Date(customer.importedAt),
+    lastOrderDate: customer.successfulOrderAt ? new Date(customer.successfulOrderAt) : undefined,
+    phone: customer.phoneMasked,
+    reason: customer.eligibilityReason,
+    source: toUiCustomerSource(customer.source),
+    status: customer.isActive ? 'active' : 'inactive',
+    usageCount: customer.usageCount,
+    usageLimit: customer.usageLimit ?? 0,
+  }
+}
+
+function toIntegrationLog(job: ApiIntegrationJob): IntegrationLog {
+  return {
+    action: job.action,
+    attempts: job.attemptCount,
+    createdAt: new Date(job.createdAt),
+    externalId: job.externalId ?? undefined,
+    id: job.id,
+    integration: toUiIntegration(job.integration),
+    lastError: job.lastError ?? undefined,
+    nextRetry: job.nextRetryAt ? new Date(job.nextRetryAt) : undefined,
+    orderCode: job.orderCode,
+    status: toUiSyncStatus(job.status),
+    updatedAt: new Date(job.updatedAt),
+  }
+}
+
+function toAuditLog(log: ApiAuditLog): AuditLog {
+  return {
+    action: log.action,
+    changes: log.metadata ?? undefined,
+    createdAt: new Date(log.createdAt),
+    entityId: log.entityId ?? '',
+    entityType: log.entityType,
+    id: log.id,
+    userId: log.adminId ?? 'system',
+    userName: log.adminName,
+  }
+}
+
+function toGoogleSheetConfig(config: ApiGoogleSheetConfig): GoogleSheetConfig {
+  return {
+    ...config,
+    createdAt: new Date(config.createdAt),
+    lastSyncAt: config.lastSyncAt ? new Date(config.lastSyncAt) : null,
+    updatedAt: new Date(config.updatedAt),
+  }
+}
+
+function toUiOrderStatus(status: string): Order['status'] {
+  const map: Record<string, Order['status']> = {
+    cancelled: 'cancelled',
+    confirmed: 'confirmed',
+    delivered: 'delivered',
+    failed: 'cancelled',
+    pending: 'pending',
+    processing: 'preparing',
+    shipped: 'shipping',
+  }
+  return map[status] ?? 'pending'
+}
+
+function toApiOrderStatus(status: Order['status']): string {
+  const map: Record<Order['status'], string> = {
+    cancelled: 'cancelled',
+    confirmed: 'confirmed',
+    delivered: 'delivered',
+    pending: 'pending',
+    preparing: 'processing',
+    returned: 'cancelled',
+    shipping: 'shipped',
+  }
+  return map[status]
+}
+
+function toUiPaymentStatus(status: string): Order['paymentStatus'] {
+  if (status === 'paid') return 'paid'
+  if (status === 'refunded') return 'refunded'
+  return 'unpaid'
+}
+
+function toUiSyncStatus(status: string): Order['syncStatus'] {
+  if (status === 'success' || status === 'processing' || status === 'pending') return status
+  return 'failed'
+}
+
+function toUiCustomerSource(source: string): EligibleCustomer['source'] {
+  const map: Record<string, EligibleCustomer['source']> = {
+    best: 'best',
+    import: 'excel',
+    manual: 'manual',
+    pancake: 'pancake',
+    sheet: 'google_sheet',
+  }
+  return map[source] ?? 'manual'
+}
+
+function toUiIntegration(integration: string): IntegrationLog['integration'] {
+  if (integration === 'sheet') return 'google_sheet'
+  if (integration === 'best') return 'best'
+  return 'pancake'
+}
+
+function statusForIntegration(
+  logs: IntegrationLog[],
+  integration: IntegrationLog['integration'],
+): 'connected' | 'degraded' | 'disconnected' {
+  const scoped = logs.filter((log) => log.integration === integration)
+  if (scoped.length === 0) return 'disconnected'
+  if (scoped.some((log) => log.status === 'failed')) return 'degraded'
+  return 'connected'
 }

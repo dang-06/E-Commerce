@@ -41,6 +41,7 @@ class InMemoryStore implements IntegrationJobStore {
         order: {
           orderCode: "OD001",
           recipientName: "Nguyen Van A",
+          recipientPhone: "0901234567",
           recipientPhoneMasked: "090****567",
           address: "1 Le Loi",
           province: "HCM",

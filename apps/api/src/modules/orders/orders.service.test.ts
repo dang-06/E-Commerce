@@ -15,6 +15,7 @@ interface SeedData {
   failIntegrationLog: boolean;
   jobs: Record<string, unknown>[];
   logs: Record<string, unknown>[];
+  orderItems: Record<string, unknown>[];
   orders: Record<string, unknown>[];
   products: Record<string, unknown>[];
   rules: Record<string, unknown>[];
@@ -45,13 +46,20 @@ class FakePrisma {
   order = {
     findUnique: ({ where }: { where: { idempotencyKey?: string; orderCode?: string } }) =>
       Promise.resolve(
-        this.seed.orders.find(
+        this.withItems(this.seed.orders.find(
           (order) =>
             (where.idempotencyKey !== undefined && order.idempotencyKey === where.idempotencyKey) ||
             (where.orderCode !== undefined && order.orderCode === where.orderCode),
-        ) ?? null,
+        ) ?? null),
       ),
-    create: ({ data }: { data: Record<string, unknown> & { items: { create: Record<string, unknown>[] } } }) => {
+    findUniqueOrThrow: ({ where }: { where: { id: bigint } }) => {
+      const order = this.seed.orders.find((candidate) => candidate.id === where.id);
+      if (!order) {
+        throw new Error("Order not found");
+      }
+      return Promise.resolve(this.withItems(order));
+    },
+    create: ({ data }: { data: Record<string, unknown> }) => {
       const order = {
         ...data,
         id: this.ids.order,
@@ -61,16 +69,23 @@ class FakePrisma {
         paymentStatus: "pending",
         pancakeOrderId: null,
         shippingOrderId: null,
-        items: data.items.create.map((item) => ({
-          ...item,
-          id: this.ids.orderItem++,
-          orderId: this.ids.order,
-          createdAt: new Date("2026-07-15T00:00:00.000Z"),
-        })),
       };
       this.ids.order += 1n;
       this.seed.orders.push(order);
       return Promise.resolve(order);
+    },
+  };
+
+  orderItem = {
+    createMany: ({ data }: { data: Record<string, unknown>[] }) => {
+      for (const item of data) {
+        this.seed.orderItems.push({
+          ...item,
+          id: this.ids.orderItem++,
+          createdAt: new Date("2026-07-15T00:00:00.000Z"),
+        });
+      }
+      return Promise.resolve({ count: data.length });
     },
   };
 
@@ -109,6 +124,7 @@ class FakePrisma {
     const snapshot = {
       jobs: [...this.seed.jobs],
       logs: [...this.seed.logs],
+      orderItems: [...this.seed.orderItems],
       orders: [...this.seed.orders],
     };
     try {
@@ -116,9 +132,20 @@ class FakePrisma {
     } catch (error) {
       this.seed.jobs.splice(0, this.seed.jobs.length, ...snapshot.jobs);
       this.seed.logs.splice(0, this.seed.logs.length, ...snapshot.logs);
+      this.seed.orderItems.splice(0, this.seed.orderItems.length, ...snapshot.orderItems);
       this.seed.orders.splice(0, this.seed.orders.length, ...snapshot.orders);
       throw error;
     }
+  }
+
+  private withItems(order: Record<string, unknown> | null): Record<string, unknown> | null {
+    if (!order) {
+      return null;
+    }
+    return {
+      ...order,
+      items: this.seed.orderItems.filter((item) => item.orderId === order.id),
+    };
   }
 }
 
@@ -143,6 +170,7 @@ function buildHarness(overrides: { products?: Record<string, unknown>[]; failInt
     failIntegrationLog: overrides.failIntegrationLog ?? false,
     jobs: [],
     logs: [],
+    orderItems: [],
     orders: [],
     products: overrides.products ?? [product()],
     rules: [
@@ -162,7 +190,12 @@ function buildHarness(overrides: { products?: Record<string, unknown>[]; failInt
   };
   const prisma = new FakePrisma(seed);
   const tokenService = new PromotionTokenService();
-  const promotions = new PromotionsService(prisma as never, tokenService, {} as never);
+  const promotions = new PromotionsService(
+    prisma as never,
+    tokenService,
+    {} as never,
+    { isPhoneEligible: () => Promise.resolve(null) } as never,
+  );
   const phoneHash = promotions.hashPhone("0901234567");
   seed.customers.push({
     id: 1n,

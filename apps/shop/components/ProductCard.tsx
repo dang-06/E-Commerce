@@ -1,24 +1,21 @@
-import { parseVnd } from "../lib/money";
+import { formatVnd, parseVnd } from "../lib/money";
 import type { Product } from "../lib/types";
 import { PriceBlock } from "./PriceBlock";
 
 export function ProductCard({
-  onAdd,
   onDetail,
   product,
   promotionUnlocked,
-  quantity,
 }: {
-  onAdd: (productId: string) => void;
   onDetail: (product: Product) => void;
   product: Product;
   promotionUnlocked: boolean;
-  quantity: number;
 }): React.ReactElement {
   const listedPrice = parseVnd(product.listedPrice);
   const discountPerItem =
     promotionUnlocked && product.isPromotionEligible ? Math.min(parseVnd(product.discountAmount), listedPrice) : 0;
   const imageUrl = product.imageUrl ?? product.images[0]?.imageUrl;
+  const discountLabel = discountPerItem > 0 ? `-${formatVnd(discountPerItem)}` : null;
 
   return (
     <article className="product-card">
@@ -30,6 +27,7 @@ export function ProductCard({
           onDetail(product);
         }}
       >
+        {discountLabel ? <span className="discount-badge">{discountLabel}</span> : null}
         {imageUrl ? (
           <img src={imageUrl} alt={product.name} loading="lazy" />
         ) : (
@@ -46,6 +44,7 @@ export function ProductCard({
           finalUnitPrice={listedPrice - discountPerItem}
           listedPrice={listedPrice}
         />
+        {discountPerItem > 0 ? <p className="saving-inline">Giảm {formatVnd(discountPerItem)} / sản phẩm</p> : null}
         <div className="product-actions">
           <button
             className="secondary-button"
@@ -55,15 +54,6 @@ export function ProductCard({
             }}
           >
             Chi tiết
-          </button>
-          <button
-            className="primary-button"
-            type="button"
-            onClick={() => {
-              onAdd(product.id);
-            }}
-          >
-            {quantity > 0 ? `Đã chọn ${quantity}` : "Thêm"}
           </button>
         </div>
       </div>

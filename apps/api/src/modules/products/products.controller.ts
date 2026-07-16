@@ -1,17 +1,22 @@
 import {
   Body,
+  BadRequestException,
   Controller,
   Delete,
   Get,
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
 import { Roles } from "../auth/decorators/roles.decorator.js";
 import { AuthGuard } from "../auth/guards/auth.guard.js";
 import { RolesGuard } from "../auth/guards/roles.guard.js";
+import { CloudinaryImageService, type UploadedProductImage } from "./cloudinary-image.service.js";
 import {
   CreateProductDto,
   SetProductVisibilityDto,
@@ -40,7 +45,10 @@ export class PublicProductsController {
 @UseGuards(AuthGuard, RolesGuard)
 @Controller("admin/products")
 export class AdminProductsController {
-  constructor(private readonly products: ProductsService) {}
+  constructor(
+    private readonly products: ProductsService,
+    private readonly images: CloudinaryImageService,
+  ) {}
 
   @Get()
   @Roles("operator", "admin")
@@ -52,6 +60,34 @@ export class AdminProductsController {
   @Roles("admin")
   create(@Body() dto: CreateProductDto): Promise<ProductResponse> {
     return this.products.create(dto);
+  }
+
+  @Post("images")
+  @Roles("admin")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.mimetype)) {
+          callback(new BadRequestException("Only JPG, PNG, WEBP, or GIF images are supported"), false);
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["file"],
+      properties: {
+        file: { type: "string", format: "binary" },
+      },
+    },
+  })
+  uploadImage(@UploadedFile() file: Express.Multer.File | undefined): Promise<UploadedProductImage> {
+    return this.images.uploadProductImage(file);
   }
 
   @Patch(":id")

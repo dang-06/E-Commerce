@@ -168,6 +168,27 @@ export interface IntegrationSettings {
   }
 }
 
+export type GoogleSheetPurpose = 'eligible_customers' | 'orders'
+
+export interface GoogleSheetConfig {
+  id: string
+  purpose: GoogleSheetPurpose
+  sheetUrl: string
+  spreadsheetId: string
+  worksheetName: string | null
+  phoneColumn: string | null
+  orderMapping: Record<string, unknown> | null
+  isActive: boolean
+  lastSyncAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface GoogleSheetConfigs {
+  eligibleCustomers: GoogleSheetConfig | null
+  orders: GoogleSheetConfig | null
+}
+
 export interface AppSettings {
   promotion: PromotionSettings
   shipping: ShippingSettings

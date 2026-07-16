@@ -3,6 +3,7 @@ import type { EligibleCustomer, PromotionRule } from "@prisma/client";
 import * as XLSX from "xlsx";
 import { getConfig } from "../../config/app.config.js";
 import { PrismaService } from "../../database/prisma.service.js";
+import { GoogleSheetsClientService } from "../integrations/google-sheets-client.service.js";
 import type { ImportEligibleCustomersDto, ListEligibleCustomersQueryDto } from "./dto/promotion.dto.js";
 import { PromotionRateLimiterService } from "./promotion-rate-limiter.service.js";
 import { PromotionTokenService } from "./promotion-token.service.js";
@@ -55,6 +56,7 @@ export class PromotionsService {
     private readonly prisma: PrismaService,
     private readonly tokens: PromotionTokenService,
     private readonly rateLimiter: PromotionRateLimiterService,
+    private readonly sheets: GoogleSheetsClientService,
   ) {}
 
   async check(phone: string, ip: string, userAgent: string | undefined): Promise<PromotionCheckResponse> {
@@ -63,11 +65,16 @@ export class PromotionsService {
     const ipHash = this.hash(ip);
     this.rateLimiter.assertAllowed(ipHash, phoneHash);
 
-    const [eligibleCustomer, rule] = await Promise.all([
+    const [sheetEligible, storedEligibleCustomer, rule] = await Promise.all([
+      this.sheets.isPhoneEligible(normalizedPhone),
       this.prisma.eligibleCustomer.findUnique({ where: { phoneHash } }),
       this.findActivePromotionRule(),
     ]);
 
+    const eligibleCustomer =
+      sheetEligible === null
+        ? storedEligibleCustomer
+        : await this.syncSheetEligibleCustomer(normalizedPhone, phoneHash, sheetEligible, storedEligibleCustomer);
     const isEligible = Boolean(eligibleCustomer?.isActive);
     if (!isEligible || !rule) {
       await this.recordPromotionCheck(phoneHash, false, ipHash, userAgent, null, null);
@@ -217,6 +224,36 @@ export class PromotionsService {
         userAgent: userAgent?.slice(0, 255) ?? null,
         tokenId,
         expiresAt,
+      },
+    });
+  }
+
+  private async syncSheetEligibleCustomer(
+    normalizedPhone: string,
+    phoneHash: string,
+    isEligible: boolean,
+    existing: EligibleCustomer | null,
+  ): Promise<EligibleCustomer | null> {
+    if (existing) {
+      return this.prisma.eligibleCustomer.update({
+        where: { phoneHash },
+        data: {
+          isActive: isEligible,
+          phoneNormalized: normalizedPhone,
+          source: "sheet",
+        },
+      });
+    }
+    if (!isEligible) {
+      return null;
+    }
+    return this.prisma.eligibleCustomer.create({
+      data: {
+        eligibilityReason: "imported",
+        isActive: true,
+        phoneHash,
+        phoneNormalized: normalizedPhone,
+        source: "sheet",
       },
     });
   }

@@ -130,6 +130,7 @@ function createService(prisma: FakePrismaForPromotions): PromotionsService {
     prisma as never,
     new PromotionTokenService(),
     new PromotionRateLimiterService(),
+    { isPhoneEligible: () => Promise.resolve(null) } as never,
   );
 }
 

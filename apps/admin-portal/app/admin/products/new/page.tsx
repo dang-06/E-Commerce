@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ArrowLeft } from 'lucide-react'
+import { getErrorMessage, productService } from '@/lib/services/api-service'
+import { slugifyVietnamese } from '@/lib/utils/vietnamese'
 
 export default function NewProductPage() {
   const router = useRouter()
@@ -24,19 +26,59 @@ export default function NewProductPage() {
     listedPrice: '',
     discountAmount: '',
     category: '',
+    image: '',
     stock: '',
     isPromotionEligible: true,
     isActive: true,
   })
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageError, setImageError] = useState('')
+  const [formError, setFormError] = useState('')
+  const [slugTouched, setSlugTouched] = useState(false)
+
+  async function handleImageUpload(file: File | undefined) {
+    if (!file) {
+      return
+    }
+    setUploadingImage(true)
+    setImageError('')
+    try {
+      const uploaded = await productService.uploadProductImage(file)
+      setFormData((current) => ({ ...current, image: uploaded.imageUrl }))
+    } catch (error) {
+      console.error(error)
+      setImageError('Không thể tải ảnh lên Cloudinary. Vui lòng thử lại.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
 
   async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
+    setFormError('')
 
     try {
-      // Mock submit
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      const slug = formData.slug.trim() || slugifyVietnamese(formData.name)
+      await productService.createProduct({
+        category: formData.category.trim(),
+        description: formData.description.trim(),
+        discountAmount: Number(formData.discountAmount || 0),
+        image: formData.image,
+        isActive: formData.isActive,
+        isPromotionEligible: formData.isPromotionEligible,
+        listedPrice: Number(formData.listedPrice || 0),
+        name: formData.name.trim(),
+        shortDescription: formData.shortDescription.trim(),
+        sku: formData.sku.trim(),
+        slug,
+        sortOrder: 0,
+        stock: formData.stock ? Number(formData.stock) : undefined,
+        visibility: formData.isActive ? 'visible' : 'hidden',
+      })
       router.push('/admin/products')
+    } catch (error) {
+      setFormError(getErrorMessage(error))
     } finally {
       setLoading(false)
     }
@@ -66,6 +108,12 @@ export default function NewProductPage() {
         </div>
       </div>
 
+      {formError ? (
+        <div className="whitespace-pre-line rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          {formError}
+        </div>
+      ) : null}
+
       {/* Form */}
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
@@ -85,9 +133,14 @@ export default function NewProductPage() {
                     id="name"
                     placeholder="VD: Laptop Dell XPS 13"
                     value={formData.name}
-                    onChange={(e) =>
-                      { setFormData({ ...formData, name: e.target.value }); }
-                    }
+                    onChange={(e) => {
+                      const nextName = e.target.value
+                      setFormData({
+                        ...formData,
+                        name: nextName,
+                        slug: slugTouched ? formData.slug : slugifyVietnamese(nextName),
+                      })
+                    }}
                     required
                   />
                 </div>
@@ -106,16 +159,31 @@ export default function NewProductPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="category">Danh mục</Label>
+                    <Label htmlFor="slug">Slug</Label>
                     <Input
-                      id="category"
-                      placeholder="VD: Máy tính"
-                      value={formData.category}
-                      onChange={(e) =>
-                        { setFormData({ ...formData, category: e.target.value }); }
-                      }
+                      id="slug"
+                      placeholder="vd: dior-jadore-intense"
+                      value={formData.slug}
+                      onChange={(e) => {
+                        setSlugTouched(true)
+                        setFormData({ ...formData, slug: slugifyVietnamese(e.target.value) })
+                      }}
+                      required
                     />
+                    <p className="mt-1 text-xs text-muted-foreground">Chỉ dùng chữ thường, số và dấu gạch ngang.</p>
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Danh mục</Label>
+                  <Input
+                    id="category"
+                    placeholder="VD: Nước hoa"
+                    value={formData.category}
+                    onChange={(e) =>
+                      { setFormData({ ...formData, category: e.target.value }); }
+                    }
+                  />
                 </div>
 
                 <div>
@@ -131,7 +199,7 @@ export default function NewProductPage() {
                       }); }
                     }
                   />
-                </div>
+                  </div>
 
                 <div>
                   <Label htmlFor="description">Mô tả chi tiết</Label>
@@ -182,6 +250,44 @@ export default function NewProductPage() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Nhập 25000 để giảm 25,000 ₫ cho khách hàng ưu đãi
                   </p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Stock */}
+            <Card className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Ảnh sản phẩm</h2>
+              <div className="space-y-4">
+                {formData.image ? (
+                  <div className="overflow-hidden rounded-md border border-border bg-muted">
+                    <img src={formData.image} alt="Ảnh sản phẩm đã tải lên" className="h-56 w-full object-contain" />
+                  </div>
+                ) : null}
+                <div>
+                  <Label htmlFor="product-image">Tải ảnh lên Cloudinary</Label>
+                  <Input
+                    id="product-image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    disabled={uploadingImage}
+                    onChange={(event) => {
+                      void handleImageUpload(event.target.files?.[0])
+                    }}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">Hỗ trợ JPG, PNG, WEBP, GIF. Tối đa 5MB.</p>
+                  {uploadingImage ? <p className="mt-2 text-sm text-muted-foreground">Đang tải ảnh...</p> : null}
+                  {imageError ? <p className="mt-2 text-sm text-destructive">{imageError}</p> : null}
+                </div>
+                <div>
+                  <Label htmlFor="image-url">URL ảnh</Label>
+                  <Input
+                    id="image-url"
+                    placeholder="https://res.cloudinary.com/..."
+                    value={formData.image}
+                    onChange={(event) => {
+                      setFormData({ ...formData, image: event.target.value })
+                    }}
+                  />
                 </div>
               </div>
             </Card>

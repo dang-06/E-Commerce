@@ -27,7 +27,7 @@ export default function ReportsPage() {
       } catch (e) {
         console.error('Failed to load report data:', e)
       } finally {
-        // Keep empty report state if mock data cannot be loaded.
+        // Keep empty report state if API data cannot be loaded.
       }
     }
 

@@ -17,6 +17,7 @@ export interface IntegrationOrderItemSnapshot {
 export interface IntegrationOrderSnapshot {
   orderCode: string;
   recipientName: string;
+  recipientPhone: string;
   recipientPhoneMasked: string;
   address: string;
   province: string;

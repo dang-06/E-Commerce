@@ -22,10 +22,10 @@ export async function submitCheckout(input: {
   session: PromotionSession | null;
 }): Promise<CheckoutFlowResult> {
   if (!input.session) {
-    return { ok: false, error: "Vui lòng kiểm tra ưu đãi trước khi đặt hàng." };
+    return { ok: false, error: "Vui lòng nhập số điện thoại trước khi đặt hàng." };
   }
 
-  const totals = calculateCartTotals(input.products, input.cartItems, true, null);
+  const totals = calculateCartTotals(input.products, input.cartItems, input.session.eligible, null);
   if (totals.totalQuantity <= 0) {
     return { ok: false, error: "Giỏ hàng đang trống." };
   }

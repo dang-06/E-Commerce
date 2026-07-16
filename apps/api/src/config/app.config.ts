@@ -2,6 +2,7 @@ export interface AppConfig {
   accessTokenTtlSeconds: number;
   authSecret: string;
   corsOrigins: string[];
+  cloudinary: CloudinaryConfig;
   databaseUrl: string;
   defaultShippingFeeVnd: number;
   host: string;
@@ -18,11 +19,19 @@ export interface AppConfig {
     pancake: IntegrationEndpointConfig;
     sheet: IntegrationEndpointConfig;
   };
+  googleSheets: GoogleSheetsConfig;
   port: number;
   promotionRateLimitMax: number;
   promotionRateLimitWindowMs: number;
   promotionTokenTtlSeconds: number;
   swaggerEnabled: boolean;
+}
+
+export interface CloudinaryConfig {
+  apiKey: string | undefined;
+  apiSecret: string | undefined;
+  cloudName: string | undefined;
+  productImageFolder: string;
 }
 
 export interface IntegrationEndpointConfig {
@@ -32,6 +41,12 @@ export interface IntegrationEndpointConfig {
   getOrderStatusPath?: string;
   healthCheckPath?: string;
   token?: string;
+}
+
+export interface GoogleSheetsConfig {
+  cacheTtlSeconds: number;
+  serviceAccountJson?: string;
+  serviceAccountKeyFile?: string;
 }
 
 function parseBoolean(value: string | undefined, fallback: boolean): boolean {
@@ -114,6 +129,12 @@ export function getConfig(): AppConfig {
       process.env.API_AUTH_SECRET ??
       "development-only-change-me-auth-secret-at-least-32-characters",
     corsOrigins,
+    cloudinary: {
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      apiSecret: process.env.CLOUDINARY_API_SECRET,
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      productImageFolder: process.env.CLOUDINARY_PRODUCT_IMAGE_FOLDER ?? "ecommerce-products",
+    },
     databaseUrl:
       process.env.DATABASE_URL ??
       "postgresql://ecommerce:change_me@localhost:5432/ecommerce?schema=public",
@@ -164,6 +185,19 @@ export function getConfig(): AppConfig {
       best: readIntegrationEndpoint("BEST"),
       pancake: readIntegrationEndpoint("PANCAKE"),
       sheet: readIntegrationEndpoint("SHEET"),
+    },
+    googleSheets: {
+      cacheTtlSeconds: parsePositiveInt(
+        process.env.GOOGLE_SHEETS_CACHE_TTL_SECONDS,
+        60,
+        "GOOGLE_SHEETS_CACHE_TTL_SECONDS",
+      ),
+      ...(process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+        ? { serviceAccountJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON }
+        : {}),
+      ...(process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE
+        ? { serviceAccountKeyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE }
+        : {}),
     },
     port: parsePort(process.env.API_PORT, 4000),
     promotionRateLimitMax: parsePositiveInt(

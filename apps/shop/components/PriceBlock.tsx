@@ -17,7 +17,6 @@ export function PriceBlock({
     <div className="price-block">
       <span className="price-listed">{formatVnd(listedPrice)}</span>
       <strong className="price-current">{formatVnd(finalUnitPrice)}</strong>
-      <span className="saving">Tiết kiệm {formatVnd(discountPerItem)}</span>
     </div>
   );
 }

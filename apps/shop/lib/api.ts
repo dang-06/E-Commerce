@@ -62,7 +62,7 @@ export function quoteOrder(input: {
       items: input.cartItems,
       paymentMethod: "cod",
       promotionPhone: input.session.phone,
-      promotionToken: input.session.promotionToken,
+      ...(input.session.promotionToken ? { promotionToken: input.session.promotionToken } : {}),
     }),
     method: "POST",
   });
@@ -81,7 +81,7 @@ export function createOrder(input: {
       note: input.recipient.note || undefined,
       paymentMethod: "cod",
       promotionPhone: input.session.phone,
-      promotionToken: input.session.promotionToken,
+      ...(input.session.promotionToken ? { promotionToken: input.session.promotionToken } : {}),
       recipient: {
         address: input.recipient.address,
         district: input.recipient.district,

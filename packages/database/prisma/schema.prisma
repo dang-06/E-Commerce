@@ -82,6 +82,11 @@ enum AuditAction {
   retry
 }
 
+enum GoogleSheetPurpose {
+  eligible_customers
+  orders
+}
+
 model Admin {
   id           BigInt      @id @default(autoincrement()) @db.BigInt
   email        String      @unique @db.VarChar(255)
@@ -306,6 +311,23 @@ model IntegrationLog {
   @@map("integration_logs")
 }
 
+model GoogleSheetConfig {
+  id            BigInt             @id @default(autoincrement()) @db.BigInt
+  purpose       GoogleSheetPurpose @unique
+  sheetUrl      String             @map("sheet_url")
+  spreadsheetId String             @map("spreadsheet_id") @db.VarChar(120)
+  worksheetName String?            @map("worksheet_name") @db.VarChar(120)
+  phoneColumn   String?            @map("phone_column") @db.VarChar(50)
+  orderMapping  Json?              @map("order_mapping")
+  isActive      Boolean            @default(true) @map("is_active")
+  lastSyncAt    DateTime?          @map("last_sync_at") @db.Timestamp(6)
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt     DateTime           @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([purpose, isActive], map: "idx_google_sheet_configs_purpose_active")
+  @@map("google_sheet_configs")
+}
+
 model AuditLog {
   id          BigInt      @id @default(autoincrement()) @db.BigInt
   adminId     BigInt?     @map("admin_id") @db.BigInt
@@ -322,4 +344,3 @@ model AuditLog {
   @@index([entityType, entityId], map: "idx_audit_logs_entity")
   @@map("audit_logs")
 }
-

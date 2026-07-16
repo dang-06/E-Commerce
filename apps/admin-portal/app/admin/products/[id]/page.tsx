@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { productService } from '@/lib/services/api-service'
+import { getErrorMessage, productService } from '@/lib/services/api-service'
 import type { Product } from '@/lib/types'
+import { slugifyVietnamese } from '@/lib/utils/vietnamese'
 
 export default function EditProductPage() {
   const params = useParams()
@@ -20,7 +21,10 @@ export default function EditProductPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [message, setMessage] = useState('')
+  const [formError, setFormError] = useState('')
+  const [imageError, setImageError] = useState('')
 
   useEffect(() => {
     async function loadProduct() {
@@ -39,11 +43,34 @@ export default function EditProductPage() {
       return
     }
     setSaving(true)
+    setMessage('')
+    setFormError('')
     try {
-      await productService.updateProduct(product.id, product)
+      const normalizedProduct = { ...product, slug: slugifyVietnamese(product.slug || product.name) }
+      await productService.updateProduct(product.id, normalizedProduct)
+      setProduct(normalizedProduct)
       setMessage('Đã lưu sản phẩm.')
+    } catch (error) {
+      setFormError(getErrorMessage(error))
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleImageUpload(file: File | undefined) {
+    if (!file || !product) {
+      return
+    }
+    setUploadingImage(true)
+    setImageError('')
+    try {
+      const uploaded = await productService.uploadProductImage(file)
+      setProduct({ ...product, image: uploaded.imageUrl })
+    } catch (error) {
+      console.error(error)
+      setImageError(getErrorMessage(error))
+    } finally {
+      setUploadingImage(false)
     }
   }
 
@@ -85,6 +112,11 @@ export default function EditProductPage() {
       </div>
 
       {message ? <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{message}</div> : null}
+      {formError ? (
+        <div className="whitespace-pre-line rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          {formError}
+        </div>
+      ) : null}
 
       <form
         onSubmit={(event) => {
@@ -120,9 +152,10 @@ export default function EditProductPage() {
                 id="slug"
                 value={product.slug}
                 onChange={(event) => {
-                  setProduct({ ...product, slug: event.target.value })
+                  setProduct({ ...product, slug: slugifyVietnamese(event.target.value) })
                 }}
               />
+              <p className="mt-1 text-xs text-muted-foreground">Chỉ dùng chữ thường, số và dấu gạch ngang.</p>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -145,6 +178,36 @@ export default function EditProductPage() {
                 value={product.discountAmount}
                 onChange={(event) => {
                   setProduct({ ...product, discountAmount: Number(event.target.value) })
+                }}
+              />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Label htmlFor="product-image">Ảnh sản phẩm</Label>
+            {product.image ? (
+              <div className="overflow-hidden rounded-md border border-border bg-muted">
+                <img src={product.image} alt={product.name} className="h-64 w-full object-contain" />
+              </div>
+            ) : null}
+            <Input
+              id="product-image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={uploadingImage}
+              onChange={(event) => {
+                void handleImageUpload(event.target.files?.[0])
+              }}
+            />
+            <p className="text-xs text-muted-foreground">Hỗ trợ JPG, PNG, WEBP, GIF. Tối đa 5MB.</p>
+            {uploadingImage ? <p className="text-sm text-muted-foreground">Đang tải ảnh...</p> : null}
+            {imageError ? <p className="text-sm text-destructive">{imageError}</p> : null}
+            <div>
+              <Label htmlFor="image-url">URL ảnh</Label>
+              <Input
+                id="image-url"
+                value={product.image}
+                onChange={(event) => {
+                  setProduct({ ...product, image: event.target.value })
                 }}
               />
             </div>

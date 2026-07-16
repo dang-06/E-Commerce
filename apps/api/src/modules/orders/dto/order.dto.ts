@@ -13,10 +13,12 @@ import {
 } from "class-validator";
 
 const paymentMethods = ["cod", "bank_transfer", "online"] as const;
+const orderStatuses = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "failed"] as const;
 const numericIdPattern = /^\d+$/;
 const idempotencyKeyPattern = /^[A-Za-z0-9._:-]{12,100}$/;
 
 export type PaymentMethodValue = (typeof paymentMethods)[number];
+export type OrderStatusValue = (typeof orderStatuses)[number];
 
 export class OrderItemInputDto {
   @IsString()
@@ -61,13 +63,15 @@ export class QuoteOrderDto {
   @Matches(idempotencyKeyPattern)
   idempotencyKey!: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(2048)
-  promotionToken!: string;
+  promotionToken?: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(32)
-  promotionPhone!: string;
+  promotionPhone?: string;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -89,4 +93,10 @@ export class CreateOrderDto extends QuoteOrderDto {
   @IsString()
   @MaxLength(1000)
   note?: string;
+}
+
+export class UpdateOrderStatusDto {
+  @IsString()
+  @IsIn(orderStatuses)
+  status!: OrderStatusValue;
 }

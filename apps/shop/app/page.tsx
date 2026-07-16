@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, Search, ShoppingBag } from "lucide-react";
 import { OrderSummary } from "../components/OrderSummary";
 import { ProductCard } from "../components/ProductCard";
 import { RecipientFields } from "../components/RecipientFields";
@@ -42,6 +43,8 @@ export default function ShopPage(): React.ReactElement {
   const [checkoutIdempotencyKey, setCheckoutIdempotencyKey] = useState<string | null>(null);
   const [serverQuote, setServerQuote] = useState<OrderQuote | null>(null);
   const [order, setOrder] = useState<OrderResult | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     setCartItems(readCart(globalThis.localStorage));
@@ -52,10 +55,19 @@ export default function ShopPage(): React.ReactElement {
   }, [cartItems]);
 
   const totals = useMemo(
-    () => calculateCartTotals(products, cartItems, promotionSession !== null, null),
+    () => calculateCartTotals(products, cartItems, promotionSession?.eligible === true, null),
     [cartItems, products, promotionSession],
   );
   const displayTotals = serverQuote ? totalsFromQuote(serverQuote) : totals;
+  const filteredProducts = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+    if (!keyword) {
+      return products;
+    }
+    return products.filter((product) =>
+      `${product.name} ${product.sku} ${product.slug}`.toLowerCase().includes(keyword),
+    );
+  }, [products, searchTerm]);
 
   useEffect(() => {
     setCheckoutIdempotencyKey(null);
@@ -75,16 +87,11 @@ export default function ShopPage(): React.ReactElement {
     setStep("checking");
     try {
       const result = await checkPromotion(normalizedPhone);
-      if (!result.eligible || !result.promotionToken || !result.expiresAt) {
-        setPromotionError("Hiện số điện thoại này chưa mở được ưu đãi trên website.");
-        setStep("intro");
-        return;
-      }
-
       setPromotionSession({
+        eligible: result.eligible && Boolean(result.promotionToken && result.expiresAt),
         phone: normalizedPhone,
-        promotionToken: result.promotionToken,
-        expiresAt: result.expiresAt,
+        ...(result.expiresAt ? { expiresAt: result.expiresAt } : {}),
+        ...(result.promotionToken ? { promotionToken: result.promotionToken } : {}),
       });
       setStep("catalog");
       await loadProducts();
@@ -118,9 +125,11 @@ export default function ShopPage(): React.ReactElement {
   function goToCheckout(): void {
     if (totals.totalQuantity === 0) {
       setOrderError("Vui lòng chọn ít nhất một sản phẩm.");
+      setCartOpen(true);
       return;
     }
     setOrderError(null);
+    setCartOpen(false);
     setStep("checkout");
   }
 
@@ -131,7 +140,7 @@ export default function ShopPage(): React.ReactElement {
       return;
     }
     if (!promotionSession) {
-      setOrderError("Vui lòng kiểm tra ưu đãi trước khi đặt hàng.");
+      setOrderError("Vui lòng nhập số điện thoại trước khi đặt hàng.");
       return;
     }
 
@@ -183,20 +192,26 @@ export default function ShopPage(): React.ReactElement {
 
   return (
     <main className="app-shell">
-      <section className="hero" aria-labelledby="program-title">
-        <p className="eyebrow">Ưu đãi khách hàng thân thiết</p>
-        <h1 id="program-title">Kiểm tra số điện thoại để mở giá ưu đãi</h1>
-        <p>
-          Nhập số điện thoại trước khi vào gian hàng. Website chỉ hiển thị trạng thái ưu đãi cần thiết và không tiết lộ
-          thông tin mua hàng của bất kỳ cá nhân nào.
-        </p>
-      </section>
+      <ShopHeader
+        cartQuantity={totals.totalQuantity}
+        cartTotal={totals.payableAmount ?? totals.subtotal - totals.discountAmount}
+        searchTerm={searchTerm}
+        onCartClick={() => {
+          setCartOpen(true);
+        }}
+        onSearchChange={setSearchTerm}
+      />
 
       {step === "intro" || step === "checking" ? (
         <section className="phone-panel" aria-labelledby="phone-title">
-          <h2 id="phone-title">Nhập số điện thoại</h2>
+          <p className="eyebrow">ROSA PERFUME</p>
+          <h1 id="phone-title">Nhập số điện thoại để vào cửa hàng</h1>
+          <p className="intro-copy">
+            Nếu số điện thoại có ưu đãi, sản phẩm sẽ tự hiện giá giảm. Nếu chưa có ưu đãi, bạn vẫn xem và đặt hàng với
+            giá gốc.
+          </p>
           <label className="field" htmlFor="promotion-phone">
-            <span>Số điện thoại dùng để kiểm tra ưu đãi</span>
+            <span>Số điện thoại</span>
             <input
               autoComplete="tel"
               id="promotion-phone"
@@ -218,50 +233,49 @@ export default function ShopPage(): React.ReactElement {
               void handlePromotionCheck();
             }}
           >
-            Kiểm tra và vào gian hàng
+            Vào cửa hàng
           </button>
         </section>
       ) : null}
 
       {promotionSession ? (
-        <section className="status success">
-          Ưu đãi đã được mở cho phiên này. Giá cuối cùng vẫn sẽ được hệ thống xác nhận khi đặt hàng.
+        <section className={promotionSession.eligible ? "promotion-banner eligible" : "promotion-banner"}>
+          {promotionSession.eligible
+            ? "Số điện thoại có ưu đãi. Giá giảm đã được áp dụng trên sản phẩm đủ điều kiện."
+            : "Bạn đang xem giá gốc. Giá cuối cùng vẫn sẽ được hệ thống xác nhận khi đặt hàng."}
         </section>
       ) : null}
 
-      {step === "catalog" ? (
+      {step === "catalog" && selectedProduct ? (
+        <ProductDetail
+          product={selectedProduct}
+          onBack={() => {
+            setSelectedProduct(null);
+          }}
+          onAdd={addToCart}
+          promotionUnlocked={promotionSession?.eligible === true}
+          quantity={cartItems.find((item) => item.productId === selectedProduct.id)?.quantity ?? 0}
+        />
+      ) : null}
+
+      {step === "catalog" && !selectedProduct ? (
         <section className="shop-section" aria-labelledby="catalog-title">
-          <div className="section-heading">
-            <h2 id="catalog-title">Danh sách sản phẩm</h2>
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => {
-                void loadProducts();
-              }}
-            >
-              Tải lại
-            </button>
-          </div>
+          <h2 className="sr-only" id="catalog-title">Danh sách sản phẩm</h2>
           {productsLoading ? <p className="status">Đang tải sản phẩm...</p> : null}
           {productsError ? <p className="status error">{productsError}</p> : null}
           {!productsLoading && !productsError && products.length === 0 ? (
             <p className="empty-state">Hiện chưa có sản phẩm khả dụng.</p>
           ) : null}
           <div className="product-list">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                promotionUnlocked={promotionSession !== null}
-                quantity={cartItems.find((item) => item.productId === product.id)?.quantity ?? 0}
-                onAdd={addToCart}
+                promotionUnlocked={promotionSession?.eligible === true}
                 onDetail={setSelectedProduct}
               />
             ))}
           </div>
-          <CartPanel cartItems={cartItems} products={products} onCheckout={goToCheckout} onQuantityChange={updateQuantity} />
-          <OrderSummary totals={displayTotals} />
           {orderError ? <p className="status error">{orderError}</p> : null}
         </section>
       ) : null}
@@ -358,16 +372,60 @@ export default function ShopPage(): React.ReactElement {
         </section>
       ) : null}
 
-      {selectedProduct ? (
-        <ProductDetail
-          product={selectedProduct}
+      {cartOpen ? (
+        <CartDrawer
+          cartItems={cartItems}
+          onCheckout={goToCheckout}
           onClose={() => {
-            setSelectedProduct(null);
+            setCartOpen(false);
           }}
-          promotionUnlocked={promotionSession !== null}
+          onQuantityChange={updateQuantity}
+          products={products}
+          totals={displayTotals}
         />
       ) : null}
     </main>
+  );
+}
+
+function ShopHeader({
+  cartQuantity,
+  cartTotal,
+  onCartClick,
+  onSearchChange,
+  searchTerm,
+}: {
+  cartQuantity: number;
+  cartTotal: number;
+  onCartClick: () => void;
+  onSearchChange: (value: string) => void;
+  searchTerm: string;
+}): React.ReactElement {
+  return (
+    <header className="shop-header">
+      <div className="brand-lockup" aria-label="Rosa Perfume">
+        <img src="/placeholder-logo.png" alt="" />
+        <span>ROSA PERFUME</span>
+      </div>
+      <label className="search-box">
+        <span className="sr-only">Tìm sản phẩm</span>
+        <input
+          placeholder="Tìm sản phẩm của bạn"
+          value={searchTerm}
+          onChange={(event) => {
+            onSearchChange(event.target.value);
+          }}
+        />
+        <Search aria-hidden="true" size={25} />
+      </label>
+      <button className="cart-status" type="button" onClick={onCartClick} aria-label={`${cartQuantity} sản phẩm trong giỏ`}>
+        <ShoppingBag aria-hidden="true" size={31} />
+        <div>
+          <strong>{formatVnd(cartTotal)}</strong>
+          <span>{cartQuantity} sản phẩm</span>
+        </div>
+      </button>
+    </header>
   );
 }
 
@@ -382,87 +440,162 @@ function totalsFromQuote(quote: OrderQuote): CartTotals {
   };
 }
 
-function CartPanel({
+function CartDrawer({
   cartItems,
   onCheckout,
+  onClose,
   onQuantityChange,
   products,
+  totals,
 }: {
   cartItems: CartItem[];
   onCheckout: () => void;
+  onClose: () => void;
   onQuantityChange: (productId: string, quantity: number) => void;
   products: Product[];
+  totals: CartTotals;
 }): React.ReactElement {
   return (
-    <section className="cart-panel" aria-labelledby="cart-title">
-      <div className="section-heading">
-        <h2 id="cart-title">Giỏ hàng</h2>
-        <button className="primary-button" type="button" onClick={onCheckout}>
+    <div className="cart-backdrop" role="presentation" onClick={onClose}>
+      <aside
+        aria-labelledby="cart-title"
+        aria-modal="true"
+        className="cart-drawer"
+        role="dialog"
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <div className="section-heading">
+          <h2 id="cart-title">Giỏ hàng</h2>
+          <button className="close-button" type="button" onClick={onClose} aria-label="Đóng giỏ hàng">
+            ×
+          </button>
+        </div>
+        {cartItems.length === 0 ? <p className="empty-state">Giỏ hàng đang trống.</p> : null}
+        {cartItems.map((item) => {
+          const product = products.find((candidate) => candidate.id === item.productId);
+          if (!product) {
+            return null;
+          }
+          return (
+            <div className="cart-row" key={item.productId}>
+              <div>
+                <strong>{product.name}</strong>
+                <p>{formatVnd(parseVnd(product.listedPrice))}</p>
+              </div>
+              <label>
+                <span className="sr-only">Số lượng {product.name}</span>
+                <input
+                  min={0}
+                  type="number"
+                  value={item.quantity}
+                  onChange={(event) => {
+                    onQuantityChange(item.productId, Number(event.target.value));
+                  }}
+                />
+              </label>
+            </div>
+          );
+        })}
+        <OrderSummary totals={totals} />
+        <button className="primary-button full-width" type="button" onClick={onCheckout}>
           Nhận hàng
         </button>
-      </div>
-      {cartItems.length === 0 ? <p className="empty-state">Giỏ hàng đang trống.</p> : null}
-      {cartItems.map((item) => {
-        const product = products.find((candidate) => candidate.id === item.productId);
-        if (!product) {
-          return null;
-        }
-        return (
-          <div className="cart-row" key={item.productId}>
-            <div>
-              <strong>{product.name}</strong>
-              <p>{formatVnd(parseVnd(product.listedPrice))}</p>
-            </div>
-            <label>
-              <span className="sr-only">Số lượng {product.name}</span>
-              <input
-                min={0}
-                type="number"
-                value={item.quantity}
-                onChange={(event) => {
-                  onQuantityChange(item.productId, Number(event.target.value));
-                }}
-              />
-            </label>
-          </div>
-        );
-      })}
-    </section>
+      </aside>
+    </div>
   );
 }
 
 function ProductDetail({
-  onClose,
+  onAdd,
+  onBack,
   product,
   promotionUnlocked,
+  quantity,
 }: {
-  onClose: () => void;
+  onAdd: (productId: string) => void;
+  onBack: () => void;
   product: Product;
   promotionUnlocked: boolean;
+  quantity: number;
 }): React.ReactElement {
   const listedPrice = parseVnd(product.listedPrice);
   const discount = promotionUnlocked && product.isPromotionEligible ? Math.min(parseVnd(product.discountAmount), listedPrice) : 0;
+  const finalPrice = listedPrice - discount;
+  const imageUrl = product.imageUrl ?? product.images[0]?.imageUrl;
+  const trimmedDescription = product.description?.trim();
+  const description =
+    trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : "Sản phẩm đang được cập nhật mô tả.";
+  const detailRows = buildProductDetailRows(description);
   return (
-    <div className="modal-backdrop" role="presentation">
-      <section aria-labelledby="detail-title" aria-modal="true" className="detail-sheet" role="dialog">
-        <button className="close-button" type="button" onClick={onClose} aria-label="Đóng chi tiết sản phẩm">
-          ×
-        </button>
-        <p className="sku">{product.sku}</p>
-        <h2 id="detail-title">{product.name}</h2>
-        <p>{product.description ?? "Sản phẩm đang được cập nhật mô tả."}</p>
-        <p className="detail-price">
-          {discount > 0 ? (
-            <>
-              <span className="price-listed">{formatVnd(listedPrice)}</span>
-              <strong>{formatVnd(listedPrice - discount)}</strong>
-              <span className="saving">Tiết kiệm {formatVnd(discount)}</span>
-            </>
+    <section aria-labelledby="detail-title" className="detail-sheet">
+      <div className="detail-content">
+        <div className="detail-media">
+          {discount > 0 ? <span className="detail-discount">-{formatVnd(discount)}</span> : null}
+          {imageUrl ? (
+            <img src={imageUrl} alt={product.name} />
           ) : (
-            <strong>{formatVnd(listedPrice)}</strong>
+            <span className="image-placeholder" aria-hidden="true">
+              {product.name.slice(0, 1).toUpperCase()}
+            </span>
           )}
-        </p>
-      </section>
-    </div>
+        </div>
+        <div className="detail-copy">
+          <nav className="detail-breadcrumb" aria-label="Điều hướng sản phẩm">
+            Trang chủ <span>/</span>  <strong>{product.name}</strong>
+          </nav>
+          <p className="sku">{product.sku}</p>
+          <h2 id="detail-title">{product.name}</h2>
+          <div className="detail-price">
+            {discount > 0 ? <span className="price-listed">{formatVnd(listedPrice)}</span> : null}
+            <strong>{formatVnd(finalPrice)}</strong>
+          </div>
+          <div className="detail-specs">
+            {detailRows.length > 0 ? (
+              detailRows.map((row) => (
+                <p key={row.label}>
+                  <strong>{row.label}:</strong> {row.value}
+                </p>
+              ))
+            ) : (
+              <p>{description}</p>
+            )}
+          </div>
+        </div>
+        <div className="detail-actions">
+          <button
+            className="primary-button full-width"
+            type="button"
+            onClick={() => {
+              onAdd(product.id);
+            }}
+          >
+            {quantity > 0 ? `Thêm nữa (${quantity} trong giỏ)` : "Thêm vào giỏ"}
+          </button>
+        </div>
+      </div>
+    </section>
   );
+}
+
+function buildProductDetailRows(description: string): { label: string; value: string }[] {
+  const lines = description
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const parsedRows = lines.flatMap((line) => {
+    const separatorIndex = line.indexOf(":");
+    if (separatorIndex <= 0) {
+      return [];
+    }
+    return [
+      {
+        label: line.slice(0, separatorIndex).trim(),
+        value: line.slice(separatorIndex + 1).trim(),
+      },
+    ];
+  });
+
+  return parsedRows;
 }

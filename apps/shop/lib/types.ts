@@ -29,8 +29,9 @@ export interface PromotionCheckResult {
 
 export interface PromotionSession {
   phone: string;
-  promotionToken: string;
-  expiresAt: string;
+  eligible: boolean;
+  promotionToken?: string;
+  expiresAt?: string;
 }
 
 export interface CartItem {

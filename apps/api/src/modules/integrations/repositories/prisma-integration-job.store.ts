@@ -181,6 +181,7 @@ export class PrismaIntegrationJobStore implements IntegrationJobStore {
       order: {
         orderCode: job.order.orderCode,
         recipientName: job.order.recipientName,
+        recipientPhone: job.order.recipientPhone,
         recipientPhoneMasked: maskPhone(job.order.recipientPhone),
         address: job.order.address,
         province: job.order.province,

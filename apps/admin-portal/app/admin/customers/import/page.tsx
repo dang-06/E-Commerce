@@ -7,28 +7,54 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Upload, CheckCircle } from 'lucide-react'
 import { parseCustomerImportPreview, type ImportPreviewRow } from '@/lib/services/admin-actions'
+import { eligibleCustomerService } from '@/lib/services/api-service'
 
 type ImportStep = 'upload' | 'preview' | 'confirm' | 'result'
 
 export default function ImportWizardPage() {
   const [step, setStep] = useState<ImportStep>('upload')
   const [fileName, setFileName] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const [rows, setRows] = useState<ImportPreviewRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<{ imported: number; updated: number; duplicates: number; errors: number } | null>(
+    null,
+  )
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setFileName(file.name)
-      void file.text().then((content) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      setFile(selectedFile)
+      setFileName(selectedFile.name)
+      setError('')
+      void selectedFile.text().then((content) => {
         const parsedRows = parseCustomerImportPreview(content)
-        setRows(parsedRows.length > 0 ? parsedRows : sampleRows)
+        setRows(parsedRows)
         setStep('preview')
       })
     }
   }
 
-  const handleConfirm = () => {
-    setStep('result')
+  const handleConfirm = async () => {
+    if (!file) {
+      setError('Vui lòng chọn file CSV/Excel trước khi nhập.')
+      setStep('upload')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    try {
+      const imported = await eligibleCustomerService.importFile(file)
+      setResult(imported)
+      setStep('result')
+    } catch (e) {
+      console.error(e)
+      setError('Không thể nhập danh sách. Vui lòng kiểm tra file và thử lại.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -98,9 +124,7 @@ export default function ImportWizardPage() {
               </label>
             </div>
 
-            <Button onClick={() => { setRows(sampleRows); setStep('preview'); }} className="w-full">
-              Tiếp tục
-            </Button>
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
         )}
 
@@ -141,7 +165,7 @@ export default function ImportWizardPage() {
               <Button variant="outline" onClick={() => { setStep('upload'); }} className="flex-1">
                 Quay lại
               </Button>
-              <Button onClick={() => { setStep('confirm'); }} className="flex-1">
+              <Button onClick={() => { setStep('confirm'); }} className="flex-1" disabled={rows.length === 0}>
                 Xác nhân
               </Button>
             </div>
@@ -164,10 +188,17 @@ export default function ImportWizardPage() {
               <Button variant="outline" onClick={() => { setStep('preview'); }} className="flex-1">
                 Quay lại
               </Button>
-              <Button onClick={handleConfirm} className="flex-1">
-                Nhập ngay
+              <Button
+                onClick={() => {
+                  void handleConfirm()
+                }}
+                className="flex-1"
+                disabled={loading}
+              >
+                {loading ? 'Đang nhập...' : 'Nhập ngay'}
               </Button>
             </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
         )}
 
@@ -183,15 +214,19 @@ export default function ImportWizardPage() {
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-green-900">Đã thêm mới:</span>
-                <span className="font-semibold text-green-900">{rows.filter((row) => row.valid).length}</span>
+                <span className="font-semibold text-green-900">{result?.imported ?? 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-green-900">Đã cập nhật:</span>
-                <span className="font-semibold text-green-900">0</span>
+                <span className="font-semibold text-green-900">{result?.updated ?? 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-green-900">Trùng lặp (bỏ qua):</span>
-                <span className="font-semibold text-green-900">{rows.filter((row) => !row.valid).length}</span>
+                <span className="font-semibold text-green-900">{result?.duplicates ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-green-900">Không hợp lệ:</span>
+                <span className="font-semibold text-green-900">{result?.errors ?? 0}</span>
               </div>
             </div>
 
@@ -204,9 +239,3 @@ export default function ImportWizardPage() {
     </div>
   )
 }
-
-const sampleRows: ImportPreviewRow[] = [
-  { line: 1, phone: '0901234567', reason: 'Khách VIP', valid: true },
-  { line: 2, phone: '0912345678', reason: 'Đã mua hàng', valid: true },
-  { line: 3, phone: '12345', reason: 'Sai định dạng', valid: false, error: 'Số điện thoại không hợp lệ' },
-]

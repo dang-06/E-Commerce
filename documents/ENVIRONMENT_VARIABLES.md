@@ -34,6 +34,10 @@ Khong commit secret that. File `.env.example` chi dung placeholder; moi truong s
 | `API_PROMOTION_RATE_LIMIT_WINDOW_SECONDS` | Khong | `900` | Cua so rate limit check uu dai |
 | `API_DEFAULT_SHIPPING_FEE_VND` | Can xac nhan | `0` | Tam thoi theo business rule da chot/cau hinh |
 | `API_ORDER_INTEGRATIONS` | Khong | `sheet,pancake` | Danh sach adapter tao job khi co don |
+| `CLOUDINARY_CLOUD_NAME` | Khi upload anh | `your_cloud_name` | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Khi upload anh | `your_api_key` | Chi dung server-side |
+| `CLOUDINARY_API_SECRET` | Khi upload anh | secret manager | Khong log, khong dua xuong frontend |
+| `CLOUDINARY_PRODUCT_IMAGE_FOLDER` | Khong | `ecommerce-products` | Folder upload anh san pham |
 
 ## Integration worker
 
@@ -44,9 +48,9 @@ Khong commit secret that. File `.env.example` chi dung placeholder; moi truong s
 | `API_INTEGRATION_BACKOFF_BASE_SECONDS` | Khong | `60` | Base exponential backoff |
 | `API_INTEGRATION_POLL_INTERVAL_SECONDS` | Khong | `5` | Worker polling |
 | `API_INTEGRATION_BATCH_SIZE` | Khong | `10` | So job xu ly moi vong |
-| `API_INTEGRATION_SHEET_BASE_URL` | Khi dung Sheet API | sandbox URL | Khong doan endpoint khi chua co docs |
-| `API_INTEGRATION_SHEET_CREATE_ORDER_PATH` | Khi dung Sheet API | `/orders` | Tuong tu update/status/health |
-| `API_INTEGRATION_SHEET_TOKEN` | Khi dung Sheet API | secret manager | Khong commit |
+| `GOOGLE_SERVICE_ACCOUNT_KEY_FILE` | Khi dung Google Sheets | `/run/secrets/google-service-account.json` | Duong dan file key service account, mount read-only |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Tuy chon | secret manager | Thay the file key bang JSON mot dong, khong commit |
+| `GOOGLE_SHEETS_CACHE_TTL_SECONDS` | Khong | `60` | Cache danh sach SĐT uu dai de giam request Google |
 | `API_INTEGRATION_PANCAKE_*` | Khi dung Pancake | secret manager | Can API docs/credential xac nhan |
 | `API_INTEGRATION_BEST_*` | Khi dung BEST | secret manager | Chi bat neu nam trong MVP |
 

@@ -14,7 +14,6 @@ void test("PriceBlock renders listed price, promotion price and saving", () => {
 
   assert.match(html, /99\.000/);
   assert.match(html, /74\.000/);
-  assert.match(html, /Tiết kiệm/);
 });
 
 void test("ProductCard exposes accessible actions without hard-coded catalog data", () => {
@@ -23,15 +22,13 @@ void test("ProductCard exposes accessible actions without hard-coded catalog dat
     <ProductCard
       product={product}
       promotionUnlocked={true}
-      quantity={0}
-      onAdd={() => undefined}
       onDetail={() => undefined}
     />,
   );
 
   assert.match(html, /Nước hoa thử nghiệm/);
   assert.match(html, /aria-label="Xem chi tiết/);
-  assert.match(html, /Thêm/);
+  assert.match(html, /Chi tiết/);
 });
 
 void test("ProductCard escapes product names rendered from API data", () => {
@@ -40,8 +37,6 @@ void test("ProductCard escapes product names rendered from API data", () => {
     <ProductCard
       product={product}
       promotionUnlocked={true}
-      quantity={0}
-      onAdd={() => undefined}
       onDetail={() => undefined}
     />,
   );

@@ -1,7 +1,6 @@
 'use client'
 
 import { User, UserRole } from '@/lib/types'
-import { mockAuthTokens, mockUsers } from '@/lib/mock-data/users'
 
 export interface AuthContext {
   user: User | null
@@ -10,10 +9,27 @@ export interface AuthContext {
 }
 
 const AUTH_STORAGE_KEY = 'auth_context'
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1'
 
-/**
- * Get stored auth context from localStorage
- */
+interface LoginResponse {
+  accessToken: string
+  admin: {
+    id: string
+    email: string
+    fullName: string
+    role: UserRole
+    createdAt: string
+  }
+}
+
+interface MeResponse {
+  id: string
+  email: string
+  fullName: string
+  role: UserRole
+  createdAt: string
+}
+
 export function getStoredAuth(): AuthContext | null {
   if (typeof window === 'undefined') return null
 
@@ -26,102 +42,84 @@ export function getStoredAuth(): AuthContext | null {
     if (!isAuthContext(parsed)) {
       return null
     }
-    return parsed
+    return {
+      ...parsed,
+      user: parsed.user ? { ...parsed.user, createdAt: new Date(parsed.user.createdAt) } : null,
+    }
   } catch {
     return null
   }
 }
 
-/**
- * Store auth context to localStorage
- */
 export function setStoredAuth(auth: AuthContext): void {
   if (typeof window === 'undefined') return
 
-  try {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth))
-  } catch (e) {
-    console.error('Failed to store auth:', e)
-  }
+  localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth))
 }
 
-/**
- * Clear stored auth context
- */
 export function clearStoredAuth(): void {
   if (typeof window === 'undefined') return
 
-  try {
-    localStorage.removeItem(AUTH_STORAGE_KEY)
-  } catch (e) {
-    console.error('Failed to clear auth:', e)
-  }
+  localStorage.removeItem(AUTH_STORAGE_KEY)
 }
 
-/**
- * Mock login function
- * Accepted credentials:
- * - admin@store.com / any password (admin role)
- * - operator@store.com / any password (operator role)
- */
-export async function mockLogin(
+export async function login(
   email: string,
-  password: string
+  password: string,
 ): Promise<{ user: User; token: string } | null> {
-  void password
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  const response = await fetch(`${apiBaseUrl}/admin/auth/login`, {
+    body: JSON.stringify({ email, password }),
+    headers: { 'content-type': 'application/json' },
+    method: 'POST',
+  })
 
-  const user = mockUsers.find((u) => u.email === email)
-  if (!user) {
+  if (!response.ok) {
     return null
   }
 
-  const token = mockAuthTokens[email] ?? `token_${email.replace('@', '_')}`
-
-  return { user, token }
+  const result = (await response.json()) as LoginResponse
+  return {
+    token: result.accessToken,
+    user: toUser(result.admin),
+  }
 }
 
-/**
- * Mock logout function
- */
-export async function mockLogout(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 300))
+export function logout(): void {
   clearStoredAuth()
 }
 
-/**
- * Validate token and get user
- */
 export async function validateToken(token: string): Promise<User | null> {
-  await new Promise((resolve) => setTimeout(resolve, 300))
+  const response = await fetch(`${apiBaseUrl}/admin/auth/me`, {
+    headers: { authorization: `Bearer ${token}` },
+  })
 
-  // Find user by token
-  for (const [email, tokenValue] of Object.entries(mockAuthTokens)) {
-    if (tokenValue === token) {
-      return mockUsers.find((u) => u.email === email) ?? null
-    }
+  if (!response.ok) {
+    return null
   }
 
-  return null
+  return toUser((await response.json()) as MeResponse)
 }
 
-/**
- * Check if user has required role
- */
 export function hasRole(userRole: UserRole | null, requiredRole: UserRole): boolean {
   if (!userRole) return false
   if (requiredRole === 'admin') {
     return userRole === 'admin'
   }
-  return true // operators can access operator features
+  return true
 }
 
-/**
- * Check if user is admin
- */
 export function isAdmin(userRole: UserRole | null): boolean {
   return userRole === 'admin'
+}
+
+function toUser(admin: LoginResponse['admin'] | MeResponse): User {
+  return {
+    id: admin.id,
+    email: admin.email,
+    name: admin.fullName,
+    role: admin.role,
+    createdAt: new Date(admin.createdAt),
+  }
 }
 
 function isAuthContext(value: unknown): value is AuthContext {
