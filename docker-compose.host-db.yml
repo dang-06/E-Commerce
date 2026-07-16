@@ -1,4 +1,7 @@
 services:
+  postgres:
+    ports: []
+
   migrate:
     environment:
       DATABASE_URL: ${DATABASE_URL}

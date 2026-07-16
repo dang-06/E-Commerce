@@ -151,8 +151,8 @@ Neu server da co PostgreSQL host dang chay tren port `5432`, dung file override 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.host-db.yml config
 docker compose -f docker-compose.yml -f docker-compose.host-db.yml build api worker web admin-portal
-docker compose -f docker-compose.yml -f docker-compose.host-db.yml --profile migration run --rm migrate
-docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d api worker web admin-portal
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml --profile migration run --rm --no-deps migrate
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps api worker web admin-portal
 ```
 
 Voi che do nay, `.env` can co:
