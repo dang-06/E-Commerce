@@ -9,7 +9,8 @@ Khong commit secret that. File `.env.example` chi dung placeholder; moi truong s
 | Bien | Bat buoc | Vi du | Ghi chu |
 |---|---:|---|---|
 | `NODE_ENV` | Co | `production` | `development`, `staging`, `production` |
-| `WEB_PORT` | Khong | `3000` | Port container web expose ra host local |
+| `WEB_PORT` | Khong | `31080` | Port web expose ra host local |
+| `ADMIN_PORT` | Khong | `31081` | Port admin portal expose ra host local |
 | `NEXT_PUBLIC_API_BASE_URL` | Co | `https://shop.example.com/api/v1` | Bien public, khong dat secret |
 | `HTTP_PORT` | Khong | `80` | Caddy HTTP |
 | `HTTPS_PORT` | Khong | `443` | Caddy HTTPS |
@@ -21,7 +22,7 @@ Khong commit secret that. File `.env.example` chi dung placeholder; moi truong s
 
 | Bien | Bat buoc | Vi du | Ghi chu |
 |---|---:|---|---|
-| `API_PORT` | Khong | `4000` | Port NestJS |
+| `API_PORT` | Khong | `31082` | Port API expose ra host local; trong container van la `4000` |
 | `API_HOST` | Khong | `0.0.0.0` | Trong container nen dung `0.0.0.0` |
 | `API_CORS_ORIGINS` | Co | `https://shop.example.com,https://admin.example.com` | Khong dung wildcard production |
 | `API_SWAGGER_ENABLED` | Khong | `false` | Nen tat tren production public |

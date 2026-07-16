@@ -56,9 +56,10 @@ docker compose --profile edge up -d caddy
 Check health:
 
 ```bash
-curl -fsS http://localhost:4000/api/v1/health/live
-curl -fsS http://localhost:4000/api/v1/health/ready
-curl -fsS http://localhost:3000/api/health
+curl -fsS http://localhost:31082/api/v1/health/live
+curl -fsS http://localhost:31082/api/v1/health/ready
+curl -fsS http://localhost:31080/api/health
+curl -fsS http://localhost:31081/api/health
 docker compose ps
 ```
 

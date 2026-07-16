@@ -144,6 +144,13 @@ export default function ShopPage(): React.ReactElement {
     setStep("checkout");
   }
 
+  function goHome(): void {
+    setSelectedProduct(null);
+    setCartOpen(false);
+    setOrderError(null);
+    setStep(promotionSession ? "catalog" : "intro");
+  }
+
   async function reviewOrder(): Promise<void> {
     const validation = validateRecipientForm(recipient);
     setRecipientErrors(validation.errors);
@@ -203,6 +210,7 @@ export default function ShopPage(): React.ReactElement {
 
   return (
     <main className="app-shell">
+      <AnnouncementBar />
       <ShopHeader
         cartQuantity={totals.totalQuantity}
         cartTotal={totals.payableAmount ?? totals.subtotal - totals.discountAmount}
@@ -210,6 +218,7 @@ export default function ShopPage(): React.ReactElement {
         onCartClick={() => {
           setCartOpen(true);
         }}
+        onHome={goHome}
         onSearchChange={setSearchTerm}
       />
 
@@ -265,31 +274,22 @@ export default function ShopPage(): React.ReactElement {
           }}
           onAdd={addToCart}
           onBuyNow={buyNow}
+          onHome={goHome}
           promotionUnlocked={promotionSession?.eligible === true}
           quantity={cartItems.find((item) => item.productId === selectedProduct.id)?.quantity ?? 0}
         />
       ) : null}
 
       {step === "catalog" && !selectedProduct ? (
-        <section className="shop-section" aria-labelledby="catalog-title">
-          <h2 className="sr-only" id="catalog-title">Danh sách sản phẩm</h2>
-          {productsLoading ? <p className="status">Đang tải sản phẩm...</p> : null}
-          {productsError ? <p className="status error">{productsError}</p> : null}
-          {!productsLoading && !productsError && products.length === 0 ? (
-            <p className="empty-state">Hiện chưa có sản phẩm khả dụng.</p>
-          ) : null}
-          <div className="product-list">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                promotionUnlocked={promotionSession?.eligible === true}
-                onDetail={setSelectedProduct}
-              />
-            ))}
-          </div>
-          {orderError ? <p className="status error">{orderError}</p> : null}
-        </section>
+        <ShopHome
+          filteredProducts={filteredProducts}
+          orderError={orderError}
+          products={products}
+          productsError={productsError}
+          productsLoading={productsLoading}
+          promotionUnlocked={promotionSession?.eligible === true}
+          onDetail={setSelectedProduct}
+        />
       ) : null}
 
       {step === "checkout" ? (
@@ -385,25 +385,41 @@ export default function ShopPage(): React.ReactElement {
   );
 }
 
+function AnnouncementBar(): React.ReactElement {
+  return (
+    <div className="announcement-bar" aria-label="Ưu đãi cửa hàng">
+      <div>
+        {Array.from({ length: 5 }).map((_, index) => (
+          <span key={index}>
+            Giảm ngay cho khách có ưu đãi <em>FreeShip theo xác nhận đơn hàng</em>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ShopHeader({
   cartQuantity,
   cartTotal,
   onCartClick,
+  onHome,
   onSearchChange,
   searchTerm,
 }: {
   cartQuantity: number;
   cartTotal: number;
   onCartClick: () => void;
+  onHome: () => void;
   onSearchChange: (value: string) => void;
   searchTerm: string;
 }): React.ReactElement {
   return (
     <header className="shop-header">
-      <div className="brand-lockup" aria-label="Rosa Perfume">
+      <button className="brand-lockup" type="button" aria-label="Về trang chính" onClick={onHome}>
         <img src="/placeholder-logo.png" alt="" />
         <span>ROSA PERFUME</span>
-      </div>
+      </button>
       <label className="search-box">
         <span className="sr-only">Tìm sản phẩm</span>
         <input
@@ -426,6 +442,99 @@ function ShopHeader({
   );
 }
 
+function ShopHome({
+  filteredProducts,
+  onDetail,
+  orderError,
+  products,
+  productsError,
+  productsLoading,
+  promotionUnlocked,
+}: {
+  filteredProducts: Product[];
+  onDetail: (product: Product) => void;
+  orderError: string | null;
+  products: Product[];
+  productsError: string | null;
+  productsLoading: boolean;
+  promotionUnlocked: boolean;
+}): React.ReactElement {
+  const heroProduct = products[0] ?? null;
+  const heroImage = heroProduct ? productImage(heroProduct) : null;
+  const storyImages = products.slice(0, 8).flatMap((product) => {
+    const image = productImage(product);
+    return image ? [{ image, name: product.name, product }] : [];
+  });
+  const categories = buildHomeCategories(products);
+  const showCatalog = !productsLoading && !productsError && products.length > 0;
+
+  return (
+    <>
+      <section className="home-hero" aria-labelledby="home-hero-title">
+        <div className="home-hero-media">
+          {heroImage ? (
+            <img src={heroImage} alt={heroProduct?.name ?? "Sản phẩm nổi bật"} />
+          ) : (
+            <span className="image-placeholder" aria-hidden="true">
+              R
+            </span>
+          )}
+        </div>
+        <div className="home-hero-copy">
+          <p>ROSA PERFUME</p>
+          <h1 id="home-hero-title">Wear the Story of Every Moment with Distinction</h1>
+          <span>Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.</span>
+          <button
+            type="button"
+            onClick={() => {
+              document.getElementById("catalog-title")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          >
+            Xem thêm
+          </button>
+        </div>
+      </section>
+
+      {storyImages.length > 0 ? (
+        <section className="home-story-strip" aria-label="Bộ sưu tập nổi bật">
+          {storyImages.map((item) => (
+            <button
+              key={item.product.id}
+              type="button"
+              onClick={() => {
+                onDetail(item.product);
+              }}
+            >
+              <img src={item.image} alt={item.name} />
+            </button>
+          ))}
+        </section>
+      ) : null}
+
+      <section className="shop-section home-trending" aria-labelledby="catalog-title">
+        <div className="home-section-heading">
+          <h2 id="catalog-title">⚡Trending now</h2>
+          <span>{filteredProducts.length} sản phẩm</span>
+        </div>
+        {productsLoading ? <p className="status">Đang tải sản phẩm...</p> : null}
+        {productsError ? <p className="status error">{productsError}</p> : null}
+        {!productsLoading && !productsError && products.length === 0 ? (
+          <p className="empty-state">Hiện chưa có sản phẩm khả dụng.</p>
+        ) : null}
+        {!productsLoading && !productsError && products.length > 0 && filteredProducts.length === 0 ? (
+          <p className="empty-state">Không tìm thấy sản phẩm phù hợp.</p>
+        ) : null}
+        <div className="product-list">
+          {filteredProducts.map((product) => (
+            <ProductCard key={product.id} product={product} promotionUnlocked={promotionUnlocked} onDetail={onDetail} />
+          ))}
+        </div>
+        {orderError ? <p className="status error">{orderError}</p> : null}
+      </section>
+    </>
+  );
+}
+
 function totalsFromQuote(quote: OrderQuote): CartTotals {
   return {
     lines: [],
@@ -435,6 +544,30 @@ function totalsFromQuote(quote: OrderQuote): CartTotals {
     shippingFee: parseVnd(quote.shippingFee),
     payableAmount: parseVnd(quote.totalAmount),
   };
+}
+
+function productImage(product: Product): string | null {
+  return product.imageUrl ?? product.images[0]?.imageUrl ?? product.colorVariants[0]?.imageUrl ?? null;
+}
+
+function buildHomeCategories(products: Product[]): { count: number; image: string | null; label: string; product: Product }[] {
+  const available = products.filter((product) => productImage(product));
+  const source = available.length > 0 ? available : products;
+  return source.slice(0, 6).map((product, index) => ({
+    count: Math.max(1, Math.round(products.length / Math.min(products.length, 6))),
+    image: productImage(product),
+    label: categoryLabel(product, index),
+    product,
+  }));
+}
+
+function categoryLabel(product: Product, index: number): string {
+  const firstWord = product.name.trim().split(/\s+/)[0];
+  if (firstWord && firstWord.length > 2) {
+    return firstWord.toUpperCase();
+  }
+  const fallbackLabels = ["Sản phẩm mới", "Bán chạy", "Ưu đãi", "Bộ sưu tập", "Nổi bật", "Tất cả"];
+  return fallbackLabels[index] ?? "Bộ sưu tập";
 }
 
 function CartDrawer({
@@ -581,6 +714,7 @@ function ProductDetail({
   onAdd,
   onBack,
   onBuyNow,
+  onHome,
   product,
   promotionUnlocked,
   quantity,
@@ -588,6 +722,7 @@ function ProductDetail({
   onAdd: (productId: string, quantity?: number) => void;
   onBack: () => void;
   onBuyNow: (productId: string, quantity: number) => void;
+  onHome: () => void;
   product: Product;
   promotionUnlocked: boolean;
   quantity: number;
@@ -659,7 +794,10 @@ function ProductDetail({
 
       <aside className="nik-product-info">
         <nav className="nik-breadcrumb" aria-label="Điều hướng sản phẩm">
-          Trang chủ <span>/</span> Cửa hàng <span>/</span> <strong>{product.name}</strong>
+          <button type="button" onClick={onHome}>
+            Trang chủ
+          </button>
+          <span>/</span> Cửa hàng <span>/</span> <strong>{product.name}</strong>
         </nav>
         <p className="nik-product-kicker">{selectedVariant?.name ?? product.sku}</p>
         <h2 id="detail-title" className="nik-product-title">

@@ -45,8 +45,9 @@ docker compose up --build
 
 Docker Compose starts:
 
-- `web` on port `3000`
-- `api` on port `4000`
+- `web` on port `31080`
+- `admin-portal` on port `31081`
+- `api` on port `31082`
 - `postgres` on port `5432`
 
 ## Validation
