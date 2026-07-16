@@ -70,7 +70,7 @@ export default function LoginPage() {
           <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900 border border-blue-200">
             <p className="font-semibold">Tài khoản Demo:</p>
             <p>Admin: admin@example.local</p>
-            <p className="text-xs mt-1">Mật khẩu mặc định: 12345678</p>
+            <p className="text-xs mt-1">Mật khẩu mặc định: Admin@123456</p>
           </div>
 
           {/* Form */}
