@@ -123,6 +123,21 @@ chmod 600 secrets/google-service-account.json
 
 Khong commit `.env` hoac file trong `secrets/`.
 
+Kiem tra lockfile phu thuoc co trong source truoc khi build:
+
+```bash
+test -f package-lock.json
+git ls-files package-lock.json
+```
+
+Dockerfile dang dung `npm ci`, vi vay `package-lock.json` bat buoc phai duoc commit len repo. Neu lenh `git ls-files package-lock.json` khong in ra gi, chay tren may dev:
+
+```bash
+git add package-lock.json .gitignore
+git commit -m "chore: commit npm lockfile for docker builds"
+git push
+```
+
 ## 4. Build image va khoi dong database
 
 Kiem tra compose:

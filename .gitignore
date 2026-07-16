@@ -9,5 +9,4 @@ coverage
 !.env.example
 secrets/
 npm-debug.log*
-package-lock.json
 *.tsbuildinfo
