@@ -146,6 +146,23 @@ Kiem tra compose:
 docker compose config
 ```
 
+Neu server da co PostgreSQL host dang chay tren port `5432`, dung file override `docker-compose.host-db.yml` va khong start container `postgres`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml config
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml build api worker web admin-portal
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml --profile migration run --rm migrate
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d api worker web admin-portal
+```
+
+Voi che do nay, `.env` can co:
+
+```env
+DATABASE_URL=postgresql://ecommerce:<password>@host.docker.internal:5432/ecommerce?schema=public
+```
+
+Neu PostgreSQL host chi listen `127.0.0.1:5432`, container co the chua ket noi duoc. Khi do can cau hinh PostgreSQL listen them Docker bridge va mo `pg_hba.conf` cho subnet Docker.
+
 Build image:
 
 ```bash
