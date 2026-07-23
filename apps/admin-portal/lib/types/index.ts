@@ -41,6 +41,15 @@ export interface Product {
   updatedAt: Date
 }
 
+export interface SiteSettings {
+  bannerButtonText: string
+  bannerEyebrow: string
+  bannerImageUrl: string | null
+  bannerSubtitle: string
+  bannerTitle: string
+  updatedAt: Date
+}
+
 // Order Status
 export type OrderStatus =
   | 'pending'

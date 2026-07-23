@@ -346,6 +346,20 @@ model GoogleSheetConfig {
   @@map("google_sheet_configs")
 }
 
+model SiteSettings {
+  id               BigInt   @id @default(autoincrement()) @db.BigInt
+  key              String   @unique @db.VarChar(50)
+  bannerEyebrow    String   @default("ROSA PERFUME") @map("banner_eyebrow") @db.VarChar(120)
+  bannerTitle      String   @default("Wear the Story of Every Moment with Distinction") @map("banner_title") @db.VarChar(255)
+  bannerSubtitle   String   @default("Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.") @map("banner_subtitle") @db.VarChar(500)
+  bannerButtonText String   @default("Xem thêm") @map("banner_button_text") @db.VarChar(80)
+  bannerImageUrl   String?  @map("banner_image_url")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@map("site_settings")
+}
+
 model AuditLog {
   id          BigInt      @id @default(autoincrement()) @db.BigInt
   adminId     BigInt?     @map("admin_id") @db.BigInt

@@ -1,4 +1,13 @@
-import type { CartItem, OrderQuote, OrderResult, Product, PromotionCheckResult, PromotionSession, RecipientForm } from "./types";
+import type {
+  CartItem,
+  OrderQuote,
+  OrderResult,
+  Product,
+  PromotionCheckResult,
+  PromotionSession,
+  RecipientForm,
+  SiteSettings,
+} from "./types";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
 
@@ -42,6 +51,10 @@ async function readResponseBody(response: Response): Promise<unknown> {
 
 export function fetchProducts(): Promise<Product[]> {
   return requestJson<Product[]>("/products", { cache: "no-store" });
+}
+
+export function fetchSiteSettings(): Promise<SiteSettings> {
+  return requestJson<SiteSettings>("/site-settings", { cache: "no-store" });
 }
 
 export function checkPromotion(phone: string): Promise<PromotionCheckResult> {

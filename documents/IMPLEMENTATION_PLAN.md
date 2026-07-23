@@ -614,6 +614,7 @@ De xuat bo sung khi thiet ke chi tiet:
 | Database | In progress | [x] Prisma baseline [x] Migration baseline [x] Business schemas [x] Seed [ ] Backup plan |
 | Auth/Admin | In progress | [x] Login [x] Current user [x] Role guard [x] Auth tests [x] Admin UI shell |
 | Products | In progress | [x] CRUD [x] Status [x] Images [x] Public catalog [x] Admin UI |
+| Site settings | In progress | [x] Homepage banner text/image API [x] Admin settings form [x] Public shop rendering |
 | Eligible customers | In progress | [x] Import CSV/Excel [x] Phone hash [x] Activate/deactivate [x] Masked list |
 | Promotions | In progress | [x] Check API [x] Token [x] Rate limit [x] Logs [ ] UI |
 | Pricing/Cart | In progress | [x] Quote [x] Cart UI [x] Price summary [x] Price-change handling |
@@ -631,7 +632,14 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] Swagger UI enabled at `/api/v1/docs` when `API_SWAGGER_ENABLED=true`.
 - [x] Added request examples and response schemas for public shop APIs, admin auth, products, eligible customers, orders, integrations, audit logs, and health checks.
 - [x] API typecheck, API lint, and full workspace build pass with Node.js 24.
-- [ ] Full workspace lint is blocked by pre-existing unused variables in `apps/shop/app/page.tsx`.
+- [x] Full workspace lint passes after removing unused homepage variables in `apps/shop/app/page.tsx`.
+
+### 2026-07-23 - Homepage banner settings
+
+- [x] Added persisted `site_settings` config for homepage banner text and image URL.
+- [x] Added public API for shop rendering and admin API for editing banner settings.
+- [x] Added admin settings form with image upload/URL and banner text controls.
+- [x] Workspace typecheck, lint, and build pass with Node.js 24.
 
 ### 2026-07-15 - Database schema va admin auth
 

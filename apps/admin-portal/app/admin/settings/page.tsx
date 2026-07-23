@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
-import { Key, Link2, Save, Table2 } from 'lucide-react'
-import { getErrorMessage, integrationService } from '@/lib/services/api-service'
+import { ImageIcon, Key, Link2, Save, Table2, Upload } from 'lucide-react'
+import { getErrorMessage, integrationService, productService, siteSettingsService } from '@/lib/services/api-service'
 import { GoogleSheetConfig } from '@/lib/types'
 
 interface SheetFormState {
@@ -20,12 +20,28 @@ interface SheetFormState {
   isActive: boolean
 }
 
+interface BannerFormState {
+  bannerButtonText: string
+  bannerEyebrow: string
+  bannerImageUrl: string
+  bannerSubtitle: string
+  bannerTitle: string
+}
+
 const emptySheetForm: SheetFormState = {
   isActive: true,
   orderMappingText: '',
   phoneColumn: '',
   sheetUrl: '',
   worksheetName: '',
+}
+
+const defaultBannerForm: BannerFormState = {
+  bannerButtonText: 'Xem thêm',
+  bannerEyebrow: 'ROSA PERFUME',
+  bannerImageUrl: '',
+  bannerSubtitle: 'Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.',
+  bannerTitle: 'Wear the Story of Every Moment with Distinction',
 }
 
 export default function SettingsPage() {
@@ -36,6 +52,12 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<'eligible_customers' | 'orders' | null>(null)
   const [sheetMessage, setSheetMessage] = useState<string | null>(null)
   const [sheetError, setSheetError] = useState<string | null>(null)
+  const [bannerForm, setBannerForm] = useState<BannerFormState>(defaultBannerForm)
+  const [loadingBanner, setLoadingBanner] = useState(true)
+  const [savingBanner, setSavingBanner] = useState(false)
+  const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [bannerMessage, setBannerMessage] = useState<string | null>(null)
+  const [bannerError, setBannerError] = useState<string | null>(null)
   const googleSheetConfigured =
     (eligibleSheet.isActive && eligibleSheet.sheetUrl.trim().length > 0) ||
     (orderSheet.isActive && orderSheet.sheetUrl.trim().length > 0)
@@ -68,12 +90,81 @@ export default function SettingsPage() {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    async function loadBanner() {
+      try {
+        const settings = await siteSettingsService.getSettings()
+        if (cancelled) return
+        setBannerForm({
+          bannerButtonText: settings.bannerButtonText,
+          bannerEyebrow: settings.bannerEyebrow,
+          bannerImageUrl: settings.bannerImageUrl ?? '',
+          bannerSubtitle: settings.bannerSubtitle,
+          bannerTitle: settings.bannerTitle,
+        })
+      } catch (error) {
+        if (!cancelled) {
+          setBannerError(getErrorMessage(error))
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingBanner(false)
+        }
+      }
+    }
+    void loadBanner()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   async function saveEligibleSheet(): Promise<void> {
     await saveSheet('eligible_customers', eligibleSheet)
   }
 
   async function saveOrderSheet(): Promise<void> {
     await saveSheet('orders', orderSheet)
+  }
+
+  async function saveBanner(): Promise<void> {
+    setSavingBanner(true)
+    setBannerError(null)
+    setBannerMessage(null)
+    try {
+      const saved = await siteSettingsService.updateSettings({
+        ...bannerForm,
+        bannerImageUrl: bannerForm.bannerImageUrl.trim() || null,
+      })
+      setBannerForm({
+        bannerButtonText: saved.bannerButtonText,
+        bannerEyebrow: saved.bannerEyebrow,
+        bannerImageUrl: saved.bannerImageUrl ?? '',
+        bannerSubtitle: saved.bannerSubtitle,
+        bannerTitle: saved.bannerTitle,
+      })
+      setBannerMessage('Đã lưu banner trang chủ.')
+    } catch (error) {
+      setBannerError(getErrorMessage(error))
+    } finally {
+      setSavingBanner(false)
+    }
+  }
+
+  async function uploadBannerImage(file: File | undefined): Promise<void> {
+    if (!file) return
+    setUploadingBanner(true)
+    setBannerError(null)
+    setBannerMessage(null)
+    try {
+      const uploaded = await productService.uploadProductImage(file)
+      setBannerForm((current) => ({ ...current, bannerImageUrl: uploaded.imageUrl }))
+      setBannerMessage('Đã tải ảnh banner lên. Bấm lưu để áp dụng.')
+    } catch (error) {
+      setBannerError(getErrorMessage(error))
+    } finally {
+      setUploadingBanner(false)
+    }
   }
 
   async function saveSheet(purpose: 'eligible_customers' | 'orders', form: SheetFormState): Promise<void> {
@@ -114,6 +205,100 @@ export default function SettingsPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <ImageIcon className="h-5 w-5" />
+              Banner trang chủ
+            </h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Thay đổi ảnh và nội dung hero banner đang hiển thị trên website người mua.
+            </p>
+            <div className="space-y-4">
+              {bannerForm.bannerImageUrl ? (
+                <div className="overflow-hidden rounded-md border bg-muted">
+                  <img src={bannerForm.bannerImageUrl} alt="Banner trang chủ" className="h-64 w-full object-cover" />
+                </div>
+              ) : null}
+              <div>
+                <Label htmlFor="banner-image-file">Tải ảnh banner</Label>
+                <Input
+                  id="banner-image-file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  disabled={uploadingBanner}
+                  type="file"
+                  onChange={(event) => {
+                    void uploadBannerImage(event.target.files?.[0])
+                    event.target.value = ''
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="banner-image-url">URL ảnh banner</Label>
+                <Input
+                  id="banner-image-url"
+                  placeholder="/products/perfume-1.png hoặc https://..."
+                  value={bannerForm.bannerImageUrl}
+                  onChange={(event) => {
+                    setBannerForm({ ...bannerForm, bannerImageUrl: event.target.value })
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="banner-eyebrow">Dòng nhãn nhỏ</Label>
+                <Input
+                  id="banner-eyebrow"
+                  value={bannerForm.bannerEyebrow}
+                  onChange={(event) => {
+                    setBannerForm({ ...bannerForm, bannerEyebrow: event.target.value })
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="banner-title">Tiêu đề banner</Label>
+                <Input
+                  id="banner-title"
+                  value={bannerForm.bannerTitle}
+                  onChange={(event) => {
+                    setBannerForm({ ...bannerForm, bannerTitle: event.target.value })
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="banner-subtitle">Mô tả banner</Label>
+                <Textarea
+                  id="banner-subtitle"
+                  rows={3}
+                  value={bannerForm.bannerSubtitle}
+                  onChange={(event) => {
+                    setBannerForm({ ...bannerForm, bannerSubtitle: event.target.value })
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="banner-button">Text nút</Label>
+                <Input
+                  id="banner-button"
+                  value={bannerForm.bannerButtonText}
+                  onChange={(event) => {
+                    setBannerForm({ ...bannerForm, bannerButtonText: event.target.value })
+                  }}
+                />
+              </div>
+              <Button
+                className="gap-2"
+                disabled={loadingBanner || savingBanner || uploadingBanner}
+                onClick={() => {
+                  void saveBanner()
+                }}
+              >
+                {uploadingBanner ? <Upload className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+                {savingBanner ? 'Đang lưu...' : uploadingBanner ? 'Đang tải ảnh...' : 'Lưu banner'}
+              </Button>
+              {bannerMessage ? <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">{bannerMessage}</p> : null}
+              {bannerError ? <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{bannerError}</p> : null}
+            </div>
+          </Card>
+
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Table2 className="h-5 w-5" />

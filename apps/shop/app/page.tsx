@@ -5,14 +5,22 @@ import { ArrowLeft, Search, ShoppingBag } from "lucide-react";
 import { OrderSummary } from "../components/OrderSummary";
 import { ProductCard } from "../components/ProductCard";
 import { RecipientFields } from "../components/RecipientFields";
-import { checkPromotion, createOrder, fetchProducts, quoteOrder } from "../lib/api";
+import { checkPromotion, createOrder, fetchProducts, fetchSiteSettings, quoteOrder } from "../lib/api";
 import { normalizeVietnamesePhone } from "../lib/phone";
 import { calculateCartTotals, type CartTotals } from "../lib/pricing";
 import { readCart, setCartQuantity, writeCart } from "../lib/cart";
 import { formatVnd, parseVnd } from "../lib/money";
 import { submitCheckout } from "../lib/checkout-flow";
 import { validateRecipientForm } from "../lib/validation";
-import type { CartItem, OrderQuote, OrderResult, Product, PromotionSession, RecipientForm } from "../lib/types";
+import type {
+  CartItem,
+  OrderQuote,
+  OrderResult,
+  Product,
+  PromotionSession,
+  RecipientForm,
+  SiteSettings,
+} from "../lib/types";
 
 type Step = "intro" | "checking" | "catalog" | "checkout" | "confirm" | "success";
 
@@ -24,6 +32,15 @@ const emptyRecipient: RecipientForm = {
   ward: "",
   address: "",
   note: "",
+};
+
+const defaultSiteSettings: SiteSettings = {
+  bannerButtonText: "Xem thêm",
+  bannerEyebrow: "ROSA PERFUME",
+  bannerImageUrl: null,
+  bannerSubtitle: "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
+  bannerTitle: "Wear the Story of Every Moment with Distinction",
+  updatedAt: "",
 };
 
 export default function ShopPage(): React.ReactElement {
@@ -45,9 +62,30 @@ export default function ShopPage(): React.ReactElement {
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
 
   useEffect(() => {
     setCartItems(readCart(globalThis.localStorage));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSiteSettings(): Promise<void> {
+      try {
+        const settings = await fetchSiteSettings();
+        if (!cancelled) {
+          setSiteSettings(settings);
+        }
+      } catch {
+        if (!cancelled) {
+          setSiteSettings(defaultSiteSettings);
+        }
+      }
+    }
+    void loadSiteSettings();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -288,6 +326,7 @@ export default function ShopPage(): React.ReactElement {
           productsError={productsError}
           productsLoading={productsLoading}
           promotionUnlocked={promotionSession?.eligible === true}
+          siteSettings={siteSettings}
           onDetail={setSelectedProduct}
         />
       ) : null}
@@ -450,6 +489,7 @@ function ShopHome({
   productsError,
   productsLoading,
   promotionUnlocked,
+  siteSettings,
 }: {
   filteredProducts: Product[];
   onDetail: (product: Product) => void;
@@ -458,22 +498,20 @@ function ShopHome({
   productsError: string | null;
   productsLoading: boolean;
   promotionUnlocked: boolean;
+  siteSettings: SiteSettings;
 }): React.ReactElement {
   const heroProduct = products[0] ?? null;
-  const heroImage = heroProduct ? productImage(heroProduct) : null;
+  const heroImage = siteSettings.bannerImageUrl ?? (heroProduct ? productImage(heroProduct) : null);
   const storyImages = products.slice(0, 8).flatMap((product) => {
     const image = productImage(product);
     return image ? [{ image, name: product.name, product }] : [];
   });
-  const categories = buildHomeCategories(products);
-  const showCatalog = !productsLoading && !productsError && products.length > 0;
-
   return (
     <>
       <section className="home-hero" aria-labelledby="home-hero-title">
         <div className="home-hero-media">
           {heroImage ? (
-            <img src={heroImage} alt={heroProduct?.name ?? "Sản phẩm nổi bật"} />
+            <img src={heroImage} alt={siteSettings.bannerTitle} />
           ) : (
             <span className="image-placeholder" aria-hidden="true">
               R
@@ -481,16 +519,16 @@ function ShopHome({
           )}
         </div>
         <div className="home-hero-copy">
-          <p>ROSA PERFUME</p>
-          <h1 id="home-hero-title">Wear the Story of Every Moment with Distinction</h1>
-          <span>Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.</span>
+          <p>{siteSettings.bannerEyebrow}</p>
+          <h1 id="home-hero-title">{siteSettings.bannerTitle}</h1>
+          <span>{siteSettings.bannerSubtitle}</span>
           <button
             type="button"
             onClick={() => {
               document.getElementById("catalog-title")?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
-            Xem thêm
+            {siteSettings.bannerButtonText}
           </button>
         </div>
       </section>
@@ -548,26 +586,6 @@ function totalsFromQuote(quote: OrderQuote): CartTotals {
 
 function productImage(product: Product): string | null {
   return product.imageUrl ?? product.images[0]?.imageUrl ?? product.colorVariants[0]?.imageUrl ?? null;
-}
-
-function buildHomeCategories(products: Product[]): { count: number; image: string | null; label: string; product: Product }[] {
-  const available = products.filter((product) => productImage(product));
-  const source = available.length > 0 ? available : products;
-  return source.slice(0, 6).map((product, index) => ({
-    count: Math.max(1, Math.round(products.length / Math.min(products.length, 6))),
-    image: productImage(product),
-    label: categoryLabel(product, index),
-    product,
-  }));
-}
-
-function categoryLabel(product: Product, index: number): string {
-  const firstWord = product.name.trim().split(/\s+/)[0];
-  if (firstWord && firstWord.length > 2) {
-    return firstWord.toUpperCase();
-  }
-  const fallbackLabels = ["Sản phẩm mới", "Bán chạy", "Ưu đãi", "Bộ sưu tập", "Nổi bật", "Tất cả"];
-  return fallbackLabels[index] ?? "Bộ sưu tập";
 }
 
 function CartDrawer({

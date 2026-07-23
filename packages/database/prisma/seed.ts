@@ -138,6 +138,25 @@ async function main(): Promise<void> {
     },
   });
 
+  await prisma.siteSettings.upsert({
+    where: { key: "default" },
+    update: {
+      bannerButtonText: "Xem thêm",
+      bannerEyebrow: "ROSA PERFUME",
+      bannerSubtitle:
+        "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
+      bannerTitle: "Wear the Story of Every Moment with Distinction",
+    },
+    create: {
+      key: "default",
+      bannerButtonText: "Xem thêm",
+      bannerEyebrow: "ROSA PERFUME",
+      bannerSubtitle:
+        "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
+      bannerTitle: "Wear the Story of Every Moment with Distinction",
+    },
+  });
+
   const products = [
     {
       sku: "DEV-SKU-001",

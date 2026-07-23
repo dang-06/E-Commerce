@@ -10,6 +10,7 @@ import {
   IntegrationLog,
   Order,
   Product,
+  SiteSettings,
 } from '@/lib/types'
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1'
@@ -149,6 +150,15 @@ interface ApiGoogleSheetConfig {
 interface ApiGoogleSheetConfigs {
   eligibleCustomers: ApiGoogleSheetConfig | null
   orders: ApiGoogleSheetConfig | null
+}
+
+interface ApiSiteSettings {
+  bannerButtonText: string
+  bannerEyebrow: string
+  bannerImageUrl: string | null
+  bannerSubtitle: string
+  bannerTitle: string
+  updatedAt: string
 }
 
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -370,6 +380,26 @@ export const integrationService = {
   },
 }
 
+export const siteSettingsService = {
+  async getSettings(): Promise<SiteSettings> {
+    return toSiteSettings(await requestJson<ApiSiteSettings>('/admin/site-settings'))
+  },
+
+  async updateSettings(
+    payload: Pick<
+      SiteSettings,
+      'bannerButtonText' | 'bannerEyebrow' | 'bannerImageUrl' | 'bannerSubtitle' | 'bannerTitle'
+    >,
+  ): Promise<SiteSettings> {
+    return toSiteSettings(
+      await requestJson<ApiSiteSettings>('/admin/site-settings', {
+        body: JSON.stringify(payload),
+        method: 'PUT',
+      }),
+    )
+  },
+}
+
 export const auditLogService = {
   async getLogs(): Promise<AuditLog[]> {
     return (await requestJson<ApiAuditLog[]>('/admin/audit-logs')).map(toAuditLog)
@@ -559,6 +589,17 @@ function toAuditLog(log: ApiAuditLog): AuditLog {
     id: log.id,
     userId: log.adminId ?? 'system',
     userName: log.adminName,
+  }
+}
+
+function toSiteSettings(settings: ApiSiteSettings): SiteSettings {
+  return {
+    bannerButtonText: settings.bannerButtonText,
+    bannerEyebrow: settings.bannerEyebrow,
+    bannerImageUrl: settings.bannerImageUrl,
+    bannerSubtitle: settings.bannerSubtitle,
+    bannerTitle: settings.bannerTitle,
+    updatedAt: new Date(settings.updatedAt),
   }
 }
 

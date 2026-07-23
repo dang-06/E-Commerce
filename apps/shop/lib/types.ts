@@ -31,6 +31,15 @@ export interface Product {
   colorVariants: ProductColorVariant[];
 }
 
+export interface SiteSettings {
+  bannerButtonText: string;
+  bannerEyebrow: string;
+  bannerImageUrl: string | null;
+  bannerSubtitle: string;
+  bannerTitle: string;
+  updatedAt: string;
+}
+
 export interface PromotionCheckResult {
   eligible: boolean;
   promotionToken?: string;
