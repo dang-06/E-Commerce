@@ -55,6 +55,25 @@ export class ImportEligibleCustomersDto {
   sourceLabel?: string;
 }
 
+export class CreateEligibleCustomerDto {
+  @ApiProperty({ example: "0901234567", maxLength: 32, type: String })
+  @IsString()
+  @MaxLength(32)
+  phone!: string;
+
+  @ApiPropertyOptional({ enum: eligibilityReasons, example: "manual", type: String })
+  @IsOptional()
+  @IsString()
+  @IsIn(eligibilityReasons)
+  eligibilityReason?: EligibilityReasonValue;
+
+  @ApiPropertyOptional({ example: "CRM-1001", maxLength: 100, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  sourceCustomerId?: string;
+}
+
 export class ListEligibleCustomersQueryDto {
   @ApiPropertyOptional({ example: true })
   @IsOptional()

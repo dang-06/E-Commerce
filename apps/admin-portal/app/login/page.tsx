@@ -54,8 +54,8 @@ export default function LoginPage() {
         <div className="space-y-6 p-8">
           {/* Logo & Title */}
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground">Quản lý Bán hàng</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Cửa hàng Điện tử Online</p>
+            <h1 className="text-2xl font-bold text-foreground">Admin Portal</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Hệ thống quản lý bán hàng</p>
           </div>
 
           {/* Error Alert */}

@@ -4,14 +4,14 @@ import { IsOptional, IsString, Matches, MaxLength } from "class-validator";
 const imagePathPattern = /^(https?:\/\/[^\s]+|\/[^\s]+)$/;
 
 export class UpdateSiteSettingsDto {
-  @ApiPropertyOptional({ example: "ROSA PERFUME", maxLength: 120, type: String })
+  @ApiPropertyOptional({ example: "Tên thương hiệu", maxLength: 120, type: String })
   @IsOptional()
   @IsString()
   @MaxLength(120)
   bannerEyebrow?: string;
 
   @ApiPropertyOptional({
-    example: "Wear the Story of Every Moment with Distinction",
+    example: "Tiêu đề banner",
     maxLength: 255,
     type: String,
   })
@@ -21,7 +21,7 @@ export class UpdateSiteSettingsDto {
   bannerTitle?: string;
 
   @ApiPropertyOptional({
-    example: "Khám phá bộ sưu tập đang có sẵn.",
+    example: "Mô tả banner",
     maxLength: 500,
     type: String,
   })
@@ -30,7 +30,7 @@ export class UpdateSiteSettingsDto {
   @MaxLength(500)
   bannerSubtitle?: string;
 
-  @ApiPropertyOptional({ example: "Xem thêm", maxLength: 80, type: String })
+  @ApiPropertyOptional({ example: "Xem sản phẩm", maxLength: 80, type: String })
   @IsOptional()
   @IsString()
   @MaxLength(80)
@@ -45,13 +45,19 @@ export class UpdateSiteSettingsDto {
   })
   bannerImageUrl?: string | null;
 
-  @ApiPropertyOptional({ example: "ROSA PERFUME", maxLength: 120, type: String })
+  @ApiPropertyOptional({ example: "Sản phẩm nổi bật", maxLength: 120, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  catalogTitle?: string;
+
+  @ApiPropertyOptional({ example: "Tên thương hiệu", maxLength: 120, type: String })
   @IsOptional()
   @IsString()
   @MaxLength(120)
   logoText?: string;
 
-  @ApiPropertyOptional({ example: "/placeholder-logo.png", maxLength: 2048, nullable: true, type: String })
+  @ApiPropertyOptional({ example: "/uploads/logo.png", maxLength: 2048, nullable: true, type: String })
   @IsOptional()
   @IsString()
   @MaxLength(2048)
@@ -62,25 +68,28 @@ export class UpdateSiteSettingsDto {
 }
 
 export class SiteSettingsResponseDto {
-  @ApiProperty({ example: "ROSA PERFUME", type: String })
+  @ApiProperty({ example: "Tên thương hiệu", type: String })
   bannerEyebrow!: string;
 
-  @ApiProperty({ example: "Wear the Story of Every Moment with Distinction", type: String })
+  @ApiProperty({ example: "Tiêu đề banner", type: String })
   bannerTitle!: string;
 
-  @ApiProperty({ example: "Khám phá bộ sưu tập đang có sẵn.", type: String })
+  @ApiProperty({ example: "Mô tả banner", type: String })
   bannerSubtitle!: string;
 
-  @ApiProperty({ example: "Xem thêm", type: String })
+  @ApiProperty({ example: "Xem sản phẩm", type: String })
   bannerButtonText!: string;
 
   @ApiPropertyOptional({ example: "/products/perfume-1.png", nullable: true, type: String })
   bannerImageUrl!: string | null;
 
-  @ApiProperty({ example: "ROSA PERFUME", type: String })
+  @ApiProperty({ example: "Sản phẩm nổi bật", type: String })
+  catalogTitle!: string;
+
+  @ApiProperty({ example: "Tên thương hiệu", type: String })
   logoText!: string;
 
-  @ApiPropertyOptional({ example: "/placeholder-logo.png", nullable: true, type: String })
+  @ApiPropertyOptional({ example: "/uploads/logo.png", nullable: true, type: String })
   logoImageUrl!: string | null;
 
   @ApiProperty({ example: "2026-07-23T09:00:00.000Z", format: "date-time", type: String })

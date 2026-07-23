@@ -34,14 +34,15 @@ const emptyRecipient: RecipientForm = {
   note: "",
 };
 
-const defaultSiteSettings: SiteSettings = {
-  bannerButtonText: "Xem thêm",
-  bannerEyebrow: "ROSA PERFUME",
+const emptySiteSettings: SiteSettings = {
+  bannerButtonText: "",
+  bannerEyebrow: "",
   bannerImageUrl: null,
-  bannerSubtitle: "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
-  bannerTitle: "Wear the Story of Every Moment with Distinction",
+  bannerSubtitle: "",
+  bannerTitle: "",
+  catalogTitle: "",
   logoImageUrl: null,
-  logoText: "ROSA PERFUME",
+  logoText: "",
   updatedAt: "",
 };
 
@@ -64,7 +65,7 @@ export default function ShopPage(): React.ReactElement {
   const [order, setOrder] = useState<OrderResult | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
-  const [siteSettings, setSiteSettings] = useState<SiteSettings>(defaultSiteSettings);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(emptySiteSettings);
 
   useEffect(() => {
     setCartItems(readCart(globalThis.localStorage));
@@ -80,7 +81,7 @@ export default function ShopPage(): React.ReactElement {
         }
       } catch {
         if (!cancelled) {
-          setSiteSettings(defaultSiteSettings);
+          setSiteSettings(emptySiteSettings);
         }
       }
     }
@@ -265,7 +266,7 @@ export default function ShopPage(): React.ReactElement {
 
       {step === "intro" || step === "checking" ? (
         <section className="phone-panel" aria-labelledby="phone-title">
-          <p className="eyebrow">ROSA PERFUME</p>
+          <p className="eyebrow">{displayBrandName(siteSettings)}</p>
           <h1 id="phone-title">Nhập số điện thoại để vào cửa hàng</h1>
           <p className="intro-copy">
             Nếu số điện thoại có ưu đãi, sản phẩm sẽ tự hiện giá giảm. Nếu chưa có ưu đãi, bạn vẫn xem và đặt hàng với
@@ -339,6 +340,7 @@ export default function ShopPage(): React.ReactElement {
           errors={recipientErrors}
           form={recipient}
           orderError={orderError}
+          siteSettings={siteSettings}
           submitting={submitting}
           totals={totals}
           onBack={() => {
@@ -458,14 +460,14 @@ function ShopHeader({
   searchTerm: string;
   siteSettings: SiteSettings;
 }): React.ReactElement {
-  const logoText = siteSettings.logoText.trim() || "ROSA PERFUME";
-  const logoImage = siteSettings.logoImageUrl ?? "/placeholder-logo.png";
+  const logoText = displayBrandName(siteSettings);
+  const logoImage = siteSettings.logoImageUrl;
 
   return (
     <header className="shop-header">
       <button className="brand-lockup" type="button" aria-label="Về trang chính" onClick={onHome}>
-        <img src={logoImage} alt="" />
-        <span>{logoText}</span>
+        {logoImage ? <img src={logoImage} alt="" /> : null}
+        {logoText ? <span>{logoText}</span> : null}
       </button>
       <label className="search-box">
         <span className="sr-only">Tìm sản phẩm</span>
@@ -519,7 +521,7 @@ function ShopHome({
       <section className="home-hero" aria-labelledby="home-hero-title">
         <div className="home-hero-media">
           {heroImage ? (
-            <img src={heroImage} alt={siteSettings.bannerTitle} />
+            <img src={heroImage} alt={siteSettings.bannerTitle || ""} />
           ) : (
             <span className="image-placeholder" aria-hidden="true">
               R
@@ -527,17 +529,19 @@ function ShopHome({
           )}
         </div>
         <div className="home-hero-copy">
-          <p>{siteSettings.bannerEyebrow}</p>
+          {siteSettings.bannerEyebrow ? <p>{siteSettings.bannerEyebrow}</p> : null}
           <h1 id="home-hero-title">{siteSettings.bannerTitle}</h1>
-          <span>{siteSettings.bannerSubtitle}</span>
-          <button
-            type="button"
-            onClick={() => {
-              document.getElementById("catalog-title")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            }}
-          >
-            {siteSettings.bannerButtonText}
-          </button>
+          {siteSettings.bannerSubtitle ? <span>{siteSettings.bannerSubtitle}</span> : null}
+          {siteSettings.bannerButtonText ? (
+            <button
+              type="button"
+              onClick={() => {
+                document.getElementById("catalog-title")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              {siteSettings.bannerButtonText}
+            </button>
+          ) : null}
         </div>
       </section>
 
@@ -576,7 +580,7 @@ function ShopHome({
 
       <section className="shop-section home-trending" aria-labelledby="catalog-title">
         <div className="home-section-heading">
-          <h2 id="catalog-title">⚡Trending now</h2>
+          <h2 id="catalog-title">{siteSettings.catalogTitle}</h2>
           <span>{filteredProducts.length} sản phẩm</span>
         </div>
         {productsLoading ? <p className="status">Đang tải sản phẩm...</p> : null}
@@ -611,6 +615,10 @@ function totalsFromQuote(quote: OrderQuote): CartTotals {
 
 function productImage(product: Product): string | null {
   return product.imageUrl ?? product.images[0]?.imageUrl ?? product.colorVariants[0]?.imageUrl ?? null;
+}
+
+function displayBrandName(siteSettings: SiteSettings): string {
+  return siteSettings.logoText.trim() || siteSettings.bannerEyebrow.trim();
 }
 
 function CartDrawer({
@@ -687,6 +695,7 @@ function CheckoutView({
   onChange,
   onReview,
   orderError,
+  siteSettings,
   submitting,
   totals,
 }: {
@@ -696,13 +705,14 @@ function CheckoutView({
   onChange: (field: keyof RecipientForm, value: string) => void;
   onReview: () => void;
   orderError: string | null;
+  siteSettings: SiteSettings;
   submitting: boolean;
   totals: CartTotals;
 }): React.ReactElement {
   return (
     <section className="checkout-shell" aria-labelledby="checkout-title">
       <div className="checkout-main">
-        <div className="checkout-brand">ROSA PERFUME</div>
+        <div className="checkout-brand">{displayBrandName(siteSettings)}</div>
         <nav className="checkout-steps" aria-label="Tiến trình thanh toán">
           <span>Giỏ hàng</span>
           <span aria-hidden="true">/</span>
@@ -805,7 +815,7 @@ function ProductDetail({
       <div className="nik-product-gallery">
         <button className="nik-back-button" type="button" onClick={onBack}>
           <ArrowLeft aria-hidden="true" size={18} />
-          Cửa hàng
+          Quay lại
         </button>
         <div className="nik-product-media">
           {discount > 0 ? <span className="nik-sale-badge">Sale off</span> : null}
@@ -840,7 +850,7 @@ function ProductDetail({
           <button type="button" onClick={onHome}>
             Trang chủ
           </button>
-          <span>/</span> Cửa hàng <span>/</span> <strong>{product.name}</strong>
+          <span>/</span> <strong>{product.name}</strong>
         </nav>
         <p className="nik-product-kicker">{selectedVariant?.name ?? product.sku}</p>
         <h2 id="detail-title" className="nik-product-title">

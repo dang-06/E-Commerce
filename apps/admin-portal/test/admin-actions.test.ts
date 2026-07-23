@@ -25,6 +25,7 @@ void test("customer import preview reports row-level errors", () => {
   assert.deepEqual(rows.map((row) => row.valid), [true, false])
   assert.equal(rows[1]?.line, 2)
   assert.equal(rows[1]?.error, "Số điện thoại không hợp lệ")
+  assert.equal(rows[0]?.sourceCustomerId, "VIP")
 })
 
 void test("order report export masks phone and omits raw secrets", () => {

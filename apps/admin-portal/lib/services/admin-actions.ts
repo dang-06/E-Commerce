@@ -39,28 +39,42 @@ export function maskPhone(phone: string): string {
 export interface ImportPreviewRow {
   line: number
   phone: string
-  reason: string
+  sourceCustomerId: string
   valid: boolean
   error?: string
 }
 
 export function parseCustomerImportPreview(content: string): ImportPreviewRow[] {
+  const firstLine = content.split(/\r?\n/).find((line) => line.trim().length > 0) ?? ""
+  const delimiter = firstLine.includes("\t") ? "\t" : firstLine.includes(";") ? ";" : ","
   return content
     .split(/\r?\n/)
     .map((line, index) => ({ line, index }))
     .filter(({ line }) => line.trim().length > 0)
+    .filter(({ line, index }) => index !== 0 || !/^"?\s*(phone|sdt|số điện thoại|so dien thoai)\s*"?\s*[,;\t]/i.test(line))
     .map(({ line, index }) => {
-      const [phone = "", reason = "imported"] = line.split(",").map((value) => value.trim())
+      const [phone = "", sourceCustomerId = ""] = line
+        .split(delimiter)
+        .map((value) => value.trim().replace(/^"|"$/g, ""))
       const normalized = phone.replace(/[\s.-]/g, "").replace(/^\+?84/, "0")
       const valid = /^0\d{9}$/.test(normalized)
       return {
         line: index + 1,
         phone: normalized || phone,
-        reason,
+        sourceCustomerId,
         valid,
         ...(valid ? {} : { error: "Số điện thoại không hợp lệ" }),
       }
     })
+}
+
+export function buildEligibleCustomersSampleCsv(): string {
+  const header = ["phone", "sourceCustomerId"]
+  const rows = [
+    ["0901234567", "CRM-1001"],
+    ["0912345678", "CRM-1002"],
+  ]
+  return [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\n")
 }
 
 export function buildOrdersCsv(orders: Order[]): string {

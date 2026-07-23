@@ -140,22 +140,15 @@ async function main(): Promise<void> {
 
   await prisma.siteSettings.upsert({
     where: { key: "default" },
-    update: {
-      bannerButtonText: "Xem thêm",
-      bannerEyebrow: "ROSA PERFUME",
-      bannerSubtitle:
-        "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
-      bannerTitle: "Wear the Story of Every Moment with Distinction",
-      logoText: "ROSA PERFUME",
-    },
+    update: {},
     create: {
+      bannerButtonText: "",
+      bannerEyebrow: "",
+      bannerSubtitle: "",
+      bannerTitle: "",
+      catalogTitle: "",
       key: "default",
-      bannerButtonText: "Xem thêm",
-      bannerEyebrow: "ROSA PERFUME",
-      bannerSubtitle:
-        "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
-      bannerTitle: "Wear the Story of Every Moment with Distinction",
-      logoText: "ROSA PERFUME",
+      logoText: "",
     },
   });
 

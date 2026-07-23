@@ -158,6 +158,7 @@ interface ApiSiteSettings {
   bannerImageUrl: string | null
   bannerSubtitle: string
   bannerTitle: string
+  catalogTitle: string
   logoImageUrl: string | null
   logoText: string
   updatedAt: string
@@ -304,6 +305,19 @@ export const eligibleCustomerService = {
     return customers.find((customer) => customer.phone.includes(phone)) ?? null
   },
 
+  async createCustomer(payload: {
+    phone: string
+    sourceCustomerId?: string
+    eligibilityReason?: 'manual' | 'imported' | 'purchased' | 'delivered'
+  }): Promise<EligibleCustomer> {
+    return toEligibleCustomer(
+      await requestJson<ApiEligibleCustomer>('/admin/eligible-customers', {
+        body: JSON.stringify(payload),
+        method: 'POST',
+      }),
+    )
+  },
+
   async importFile(file: File): Promise<{ imported: number; updated: number; duplicates: number; errors: number }> {
     const form = new FormData()
     form.set('file', file)
@@ -398,6 +412,7 @@ export const siteSettingsService = {
       | 'bannerImageUrl'
       | 'bannerSubtitle'
       | 'bannerTitle'
+      | 'catalogTitle'
       | 'logoImageUrl'
       | 'logoText'
     >,
@@ -610,6 +625,7 @@ function toSiteSettings(settings: ApiSiteSettings): SiteSettings {
     bannerImageUrl: settings.bannerImageUrl,
     bannerSubtitle: settings.bannerSubtitle,
     bannerTitle: settings.bannerTitle,
+    catalogTitle: settings.catalogTitle,
     logoImageUrl: settings.logoImageUrl,
     logoText: settings.logoText,
     updatedAt: new Date(settings.updatedAt),

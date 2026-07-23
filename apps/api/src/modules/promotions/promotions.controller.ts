@@ -29,6 +29,7 @@ import { AuthGuard } from "../auth/guards/auth.guard.js";
 import { RolesGuard } from "../auth/guards/roles.guard.js";
 import {
   CheckPromotionDto,
+  CreateEligibleCustomerDto,
   ImportEligibleCustomersDto,
   ListEligibleCustomersQueryDto,
   SetEligibleCustomerStatusDto,
@@ -48,6 +49,7 @@ import {
 const importFileMaxSizeBytes = 5 * 1024 * 1024;
 const importFileExtensions = /\.(csv|tsv|txt|xls|xlsx)$/i;
 const importFileMimeTypes = new Set([
+  "",
   "text/csv",
   "text/plain",
   "text/tab-separated-values",
@@ -85,6 +87,13 @@ export class AdminEligibleCustomersController {
     return this.promotions.listEligibleCustomers(query);
   }
 
+  @Post()
+  @Roles("admin")
+  @ApiCreatedResponse({ type: EligibleCustomerResponseDto })
+  create(@Body() dto: CreateEligibleCustomerDto): Promise<EligibleCustomerResponse> {
+    return this.promotions.createEligibleCustomer(dto);
+  }
+
   @Post("import")
   @Roles("admin")
   @UseInterceptors(
@@ -93,7 +102,7 @@ export class AdminEligibleCustomersController {
       fileFilter: (_request, file, callback) => {
         const isAllowedExtension = importFileExtensions.test(file.originalname);
         const isAllowedMimeType = importFileMimeTypes.has(file.mimetype);
-        if (!isAllowedExtension || !isAllowedMimeType) {
+        if (!isAllowedExtension && !isAllowedMimeType) {
           callback(
             new BadRequestException("Only CSV, TSV, TXT, XLS, or XLSX files are supported"),
             false,

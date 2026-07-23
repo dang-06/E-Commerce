@@ -38,7 +38,6 @@ export function AdminSidebar() {
           </div>
           <div className="min-w-0">
             <h1 className="truncate text-sm font-semibold text-sidebar-foreground">Admin Portal</h1>
-            <p className="text-xs text-muted-foreground">Rosa Perfume</p>
           </div>
         </div>
       </div>

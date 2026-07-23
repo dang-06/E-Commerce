@@ -10,6 +10,7 @@ export interface SiteSettingsResponse {
   bannerImageUrl: string | null;
   bannerSubtitle: string;
   bannerTitle: string;
+  catalogTitle: string;
   logoImageUrl: string | null;
   logoText: string;
   updatedAt: Date;
@@ -24,7 +25,13 @@ export class SiteSettingsService {
       where: { key: defaultSettingsKey },
       update: {},
       create: {
+        bannerButtonText: "",
+        bannerEyebrow: "",
+        bannerSubtitle: "",
+        bannerTitle: "",
+        catalogTitle: "",
         key: defaultSettingsKey,
+        logoText: "",
       },
     });
     return this.toResponse(settings);
@@ -39,16 +46,24 @@ export class SiteSettingsService {
         ...(dto.bannerImageUrl !== undefined ? { bannerImageUrl: this.optionalText(dto.bannerImageUrl) } : {}),
         ...(dto.bannerSubtitle !== undefined ? { bannerSubtitle: this.clean(dto.bannerSubtitle) } : {}),
         ...(dto.bannerTitle !== undefined ? { bannerTitle: this.clean(dto.bannerTitle) } : {}),
+        ...(dto.catalogTitle !== undefined ? { catalogTitle: this.clean(dto.catalogTitle) } : {}),
         ...(dto.logoImageUrl !== undefined ? { logoImageUrl: this.optionalText(dto.logoImageUrl) } : {}),
         ...(dto.logoText !== undefined ? { logoText: this.clean(dto.logoText) } : {}),
       },
       create: {
+        bannerButtonText: "",
+        bannerEyebrow: "",
+        bannerSubtitle: "",
+        bannerTitle: "",
+        catalogTitle: "",
         key: defaultSettingsKey,
+        logoText: "",
         ...(dto.bannerButtonText !== undefined ? { bannerButtonText: this.clean(dto.bannerButtonText) } : {}),
         ...(dto.bannerEyebrow !== undefined ? { bannerEyebrow: this.clean(dto.bannerEyebrow) } : {}),
         ...(dto.bannerImageUrl !== undefined ? { bannerImageUrl: this.optionalText(dto.bannerImageUrl) } : {}),
         ...(dto.bannerSubtitle !== undefined ? { bannerSubtitle: this.clean(dto.bannerSubtitle) } : {}),
         ...(dto.bannerTitle !== undefined ? { bannerTitle: this.clean(dto.bannerTitle) } : {}),
+        ...(dto.catalogTitle !== undefined ? { catalogTitle: this.clean(dto.catalogTitle) } : {}),
         ...(dto.logoImageUrl !== undefined ? { logoImageUrl: this.optionalText(dto.logoImageUrl) } : {}),
         ...(dto.logoText !== undefined ? { logoText: this.clean(dto.logoText) } : {}),
       },
@@ -74,6 +89,7 @@ export class SiteSettingsService {
     bannerImageUrl: string | null;
     bannerSubtitle: string;
     bannerTitle: string;
+    catalogTitle: string;
     logoImageUrl: string | null;
     logoText: string;
     updatedAt: Date;
@@ -84,6 +100,7 @@ export class SiteSettingsService {
       bannerImageUrl: settings.bannerImageUrl,
       bannerSubtitle: settings.bannerSubtitle,
       bannerTitle: settings.bannerTitle,
+      catalogTitle: settings.catalogTitle,
       logoImageUrl: settings.logoImageUrl,
       logoText: settings.logoText,
       updatedAt: settings.updatedAt,

@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Quản lý Bán hàng - Cửa hàng Điện tử',
-  description: 'Hệ thống quản lý bán hàng cho cửa hàng điện tử',
+  title: 'Admin Portal',
+  description: 'Hệ thống quản lý bán hàng',
 }
 
 export const viewport: Viewport = {

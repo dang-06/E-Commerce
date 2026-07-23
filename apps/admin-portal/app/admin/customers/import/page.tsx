@@ -5,9 +5,13 @@ import Link from 'next/link'
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, CheckCircle } from 'lucide-react'
-import { parseCustomerImportPreview, type ImportPreviewRow } from '@/lib/services/admin-actions'
-import { eligibleCustomerService } from '@/lib/services/api-service'
+import { ArrowLeft, Upload, CheckCircle, Download } from 'lucide-react'
+import {
+  buildEligibleCustomersSampleCsv,
+  parseCustomerImportPreview,
+  type ImportPreviewRow,
+} from '@/lib/services/admin-actions'
+import { eligibleCustomerService, getErrorMessage } from '@/lib/services/api-service'
 
 type ImportStep = 'upload' | 'preview' | 'confirm' | 'result'
 
@@ -16,6 +20,7 @@ export default function ImportWizardPage() {
   const [fileName, setFileName] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [rows, setRows] = useState<ImportPreviewRow[]>([])
+  const [spreadsheetPreview, setSpreadsheetPreview] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<{ imported: number; updated: number; duplicates: number; errors: number } | null>(
@@ -28,6 +33,13 @@ export default function ImportWizardPage() {
       setFile(selectedFile)
       setFileName(selectedFile.name)
       setError('')
+      const isSpreadsheet = /\.(xlsx|xls)$/i.test(selectedFile.name)
+      setSpreadsheetPreview(isSpreadsheet)
+      if (isSpreadsheet) {
+        setRows([])
+        setStep('confirm')
+        return
+      }
       void selectedFile.text().then((content) => {
         const parsedRows = parseCustomerImportPreview(content)
         setRows(parsedRows)
@@ -51,10 +63,22 @@ export default function ImportWizardPage() {
       setStep('result')
     } catch (e) {
       console.error(e)
-      setError('Không thể nhập danh sách. Vui lòng kiểm tra file và thử lại.')
+      setError(getErrorMessage(e))
     } finally {
       setLoading(false)
     }
+  }
+
+  const downloadSampleFile = () => {
+    const blob = new Blob([buildEligibleCustomersSampleCsv()], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'eligible-customers-sample.csv'
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -69,18 +93,24 @@ export default function ImportWizardPage() {
       />
 
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Link href="/admin/customers">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Nhập danh sách khách ưu đãi</h1>
-          <p className="mt-1 text-muted-foreground">
-            Bước {step === 'upload' ? 1 : step === 'preview' ? 2 : step === 'confirm' ? 3 : 4} / 4
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link href="/admin/customers">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Nhập danh sách khách ưu đãi</h1>
+            <p className="mt-1 text-muted-foreground">
+              Bước {step === 'upload' ? 1 : step === 'preview' ? 2 : step === 'confirm' ? 3 : 4} / 4
+            </p>
+          </div>
         </div>
+        <Button variant="outline" className="gap-2" onClick={downloadSampleFile}>
+          <Download className="h-4 w-4" />
+          Tải file mẫu
+        </Button>
       </div>
 
       {/* Progress Bar */}
@@ -107,14 +137,14 @@ export default function ImportWizardPage() {
                 <Upload className="h-8 w-8 text-primary" />
               </div>
               <h2 className="text-2xl font-semibold mb-2">Tải lên file</h2>
-              <p className="text-muted-foreground">Chấp nhận file Excel (.xlsx) hoặc CSV (.csv)</p>
+              <p className="text-muted-foreground">Chấp nhận CSV, TSV, TXT, XLS hoặc XLSX</p>
             </div>
 
             <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary cursor-pointer transition">
               <input
                 type="file"
                 onChange={handleFileUpload}
-                accept=".xlsx,.csv"
+                accept=".csv,.tsv,.txt,.xls,.xlsx"
                 className="hidden"
                 id="file-upload"
               />
@@ -139,7 +169,7 @@ export default function ImportWizardPage() {
                   <thead className="bg-muted border-b border-border">
                     <tr>
                       <th className="px-4 py-2 text-left">Số điện thoại</th>
-                      <th className="px-4 py-2 text-left">Lý do</th>
+                      <th className="px-4 py-2 text-left">Mã khách/Nguồn</th>
                       <th className="px-4 py-2 text-left">Ghi chú</th>
                     </tr>
                   </thead>
@@ -147,7 +177,7 @@ export default function ImportWizardPage() {
                     {rows.slice(0, 8).map((row) => (
                       <tr key={row.line} className="border-b border-border hover:bg-muted/50">
                         <td className="px-4 py-2">{row.phone}</td>
-                        <td className="px-4 py-2">{row.reason}</td>
+                        <td className="px-4 py-2">{row.sourceCustomerId || '-'}</td>
                         <td className="px-4 py-2">
                           <span className={row.valid ? 'text-emerald-700' : 'font-medium text-rose-700'}>
                             {row.valid ? 'Hợp lệ' : row.error}
@@ -168,7 +198,7 @@ export default function ImportWizardPage() {
                 Quay lại
               </Button>
               <Button onClick={() => { setStep('confirm'); }} className="flex-1" disabled={rows.length === 0}>
-                Xác nhân
+                Xác nhận
               </Button>
             </div>
           </div>
@@ -177,9 +207,11 @@ export default function ImportWizardPage() {
         {step === 'confirm' && (
           <div className="space-y-6 max-w-md mx-auto">
             <div className="text-center">
-              <h2 className="text-2xl font-semibold mb-4">Xác nhân nhập</h2>
+              <h2 className="text-2xl font-semibold mb-4">Xác nhận nhập</h2>
               <p className="text-muted-foreground mb-6">
-                Bạn sắp nhập {rows.filter((row) => row.valid).length} khách hàng hợp lệ vào hệ thống.
+                {spreadsheetPreview
+                  ? 'File Excel sẽ được xử lý trực tiếp bởi hệ thống.'
+                  : `Bạn sắp nhập ${rows.filter((row) => row.valid).length} khách hàng hợp lệ vào hệ thống.`}
               </p>
               <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
                 Các số điện thoại lỗi hoặc trùng lặp sẽ được báo theo từng dòng và không ghi đè dữ liệu hợp lệ.
@@ -187,7 +219,13 @@ export default function ImportWizardPage() {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => { setStep('preview'); }} className="flex-1">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStep(spreadsheetPreview ? 'upload' : 'preview')
+                }}
+                className="flex-1"
+              >
                 Quay lại
               </Button>
               <Button

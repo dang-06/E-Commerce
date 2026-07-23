@@ -37,6 +37,7 @@ export interface SiteSettings {
   bannerImageUrl: string | null;
   bannerSubtitle: string;
   bannerTitle: string;
+  catalogTitle: string;
   logoImageUrl: string | null;
   logoText: string;
   updatedAt: string;

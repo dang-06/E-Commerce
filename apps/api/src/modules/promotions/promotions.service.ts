@@ -4,7 +4,11 @@ import * as XLSX from "xlsx";
 import { getConfig } from "../../config/app.config.js";
 import { PrismaService } from "../../database/prisma.service.js";
 import { GoogleSheetsClientService } from "../integrations/google-sheets-client.service.js";
-import type { ImportEligibleCustomersDto, ListEligibleCustomersQueryDto } from "./dto/promotion.dto.js";
+import type {
+  CreateEligibleCustomerDto,
+  ImportEligibleCustomersDto,
+  ListEligibleCustomersQueryDto,
+} from "./dto/promotion.dto.js";
 import { PromotionRateLimiterService } from "./promotion-rate-limiter.service.js";
 import { PromotionTokenService } from "./promotion-token.service.js";
 import { hashSensitiveValue } from "./utils/hash.js";
@@ -115,6 +119,30 @@ export class PromotionsService {
     const customer = await this.prisma.eligibleCustomer.update({
       where: { id: BigInt(id) },
       data: { isActive },
+    });
+    return this.toEligibleCustomerResponse(customer);
+  }
+
+  async createEligibleCustomer(dto: CreateEligibleCustomerDto): Promise<EligibleCustomerResponse> {
+    const normalizedPhone = this.normalizePhone(dto.phone);
+    const phoneHash = this.hash(normalizedPhone);
+    const customer = await this.prisma.eligibleCustomer.upsert({
+      where: { phoneHash },
+      update: {
+        eligibilityReason: dto.eligibilityReason ?? "manual",
+        isActive: true,
+        phoneNormalized: normalizedPhone,
+        source: "manual",
+        sourceCustomerId: dto.sourceCustomerId ?? null,
+      },
+      create: {
+        eligibilityReason: dto.eligibilityReason ?? "manual",
+        isActive: true,
+        phoneHash,
+        phoneNormalized: normalizedPhone,
+        source: "manual",
+        sourceCustomerId: dto.sourceCustomerId ?? null,
+      },
     });
     return this.toEligibleCustomerResponse(customer);
   }

@@ -26,6 +26,7 @@ interface BannerFormState {
   bannerImageUrl: string
   bannerSubtitle: string
   bannerTitle: string
+  catalogTitle: string
   logoImageUrl: string
   logoText: string
 }
@@ -38,14 +39,15 @@ const emptySheetForm: SheetFormState = {
   worksheetName: '',
 }
 
-const defaultBannerForm: BannerFormState = {
-  bannerButtonText: 'Xem thêm',
-  bannerEyebrow: 'ROSA PERFUME',
+const emptyBannerForm: BannerFormState = {
+  bannerButtonText: '',
+  bannerEyebrow: '',
   bannerImageUrl: '',
-  bannerSubtitle: 'Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.',
-  bannerTitle: 'Wear the Story of Every Moment with Distinction',
+  bannerSubtitle: '',
+  bannerTitle: '',
+  catalogTitle: '',
   logoImageUrl: '',
-  logoText: 'ROSA PERFUME',
+  logoText: '',
 }
 
 export default function SettingsPage() {
@@ -56,7 +58,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<'eligible_customers' | 'orders' | null>(null)
   const [sheetMessage, setSheetMessage] = useState<string | null>(null)
   const [sheetError, setSheetError] = useState<string | null>(null)
-  const [bannerForm, setBannerForm] = useState<BannerFormState>(defaultBannerForm)
+  const [bannerForm, setBannerForm] = useState<BannerFormState>(emptyBannerForm)
   const [loadingBanner, setLoadingBanner] = useState(true)
   const [savingBanner, setSavingBanner] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
@@ -107,6 +109,7 @@ export default function SettingsPage() {
           bannerImageUrl: settings.bannerImageUrl ?? '',
           bannerSubtitle: settings.bannerSubtitle,
           bannerTitle: settings.bannerTitle,
+          catalogTitle: settings.catalogTitle,
           logoImageUrl: settings.logoImageUrl ?? '',
           logoText: settings.logoText,
         })
@@ -150,6 +153,7 @@ export default function SettingsPage() {
         bannerImageUrl: saved.bannerImageUrl ?? '',
         bannerSubtitle: saved.bannerSubtitle,
         bannerTitle: saved.bannerTitle,
+        catalogTitle: saved.catalogTitle,
         logoImageUrl: saved.logoImageUrl ?? '',
         logoText: saved.logoText,
       })
@@ -251,7 +255,7 @@ export default function SettingsPage() {
                         Logo
                       </div>
                     )}
-                    <span className="text-sm font-semibold">{bannerForm.logoText || 'ROSA PERFUME'}</span>
+                    {bannerForm.logoText ? <span className="text-sm font-semibold">{bannerForm.logoText}</span> : null}
                   </div>
                   <div>
                     <Label htmlFor="logo-text">Text logo</Label>
@@ -359,6 +363,17 @@ export default function SettingsPage() {
                   value={bannerForm.bannerButtonText}
                   onChange={(event) => {
                     setBannerForm({ ...bannerForm, bannerButtonText: event.target.value })
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="catalog-title">Tiêu đề catalog</Label>
+                <Input
+                  id="catalog-title"
+                  placeholder="Ví dụ: Sản phẩm nổi bật"
+                  value={bannerForm.catalogTitle}
+                  onChange={(event) => {
+                    setBannerForm({ ...bannerForm, catalogTitle: event.target.value })
                   }}
                 />
               </div>

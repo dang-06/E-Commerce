@@ -614,8 +614,8 @@ De xuat bo sung khi thiet ke chi tiet:
 | Database | In progress | [x] Prisma baseline [x] Migration baseline [x] Business schemas [x] Seed [ ] Backup plan |
 | Auth/Admin | In progress | [x] Login [x] Current user [x] Role guard [x] Auth tests [x] Admin UI shell |
 | Products | In progress | [x] CRUD [x] Status [x] Images [x] Public catalog [x] Admin UI |
-| Site settings | In progress | [x] Homepage banner text/image API [x] Header logo text/image API [x] Admin settings form [x] Public shop rendering |
-| Eligible customers | In progress | [x] Import CSV/Excel [x] Phone hash [x] Activate/deactivate [x] Masked list |
+| Site settings | In progress | [x] Homepage banner text/image API [x] Header logo text/image API [x] Catalog title API [x] Admin settings form [x] Public shop rendering |
+| Eligible customers | In progress | [x] Manual add [x] Import CSV/Excel [x] Sample import file [x] Phone hash [x] Activate/deactivate [x] Masked list |
 | Promotions | In progress | [x] Check API [x] Token [x] Rate limit [x] Logs [ ] UI |
 | Pricing/Cart | In progress | [x] Quote [x] Cart UI [x] Price summary [x] Price-change handling |
 | Checkout/Orders | In progress | [x] Validation [x] Transaction [x] Idempotency [x] Order success [ ] Public order lookup pending confirmation |
@@ -638,9 +638,18 @@ De xuat bo sung khi thiet ke chi tiet:
 
 - [x] Added persisted `site_settings` config for homepage banner text and image URL.
 - [x] Added persisted header logo text and image URL settings.
+- [x] Added persisted catalog title setting for the public shop catalog heading.
 - [x] Added public API for shop rendering and admin API for editing banner settings.
 - [x] Added admin settings form with image upload/URL controls for logo and banner content.
 - [x] Workspace typecheck, lint, and build pass with Node.js 24.
+
+### 2026-07-23 - Eligible customer admin operations
+
+- [x] Added admin API and UI action for manually adding/upserting eligible customers.
+- [x] Fixed eligible customer import file filtering for common browser CSV/Excel MIME behavior.
+- [x] Added downloadable CSV sample file for eligible customer imports.
+- [x] Updated import preview to treat the second column as `sourceCustomerId`.
+- [x] Applied `20260723110000_site_settings_catalog_title` migration in Docker and rebuilt API/web/admin-portal.
 
 ### 2026-07-15 - Database schema va admin auth
 
