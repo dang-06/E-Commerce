@@ -4,7 +4,7 @@ import { Bell, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { User as UserType } from '@/lib/types'
-import { getStoredAuth } from '@/lib/services/auth'
+import { getStoredAuth, logout } from '@/lib/services/auth'
 
 interface AdminHeaderProps {
   user?: UserType | null
@@ -63,8 +63,8 @@ export function AdminHeader({ user }: AdminHeaderProps) {
             variant="ghost"
             size="icon"
             onClick={() => {
-              localStorage.removeItem('auth_context')
-              window.location.href = '/admin/login'
+              logout()
+              window.location.href = '/login'
             }}
           >
             <LogOut className="h-5 w-5" />

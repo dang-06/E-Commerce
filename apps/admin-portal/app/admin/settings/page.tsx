@@ -26,6 +26,8 @@ interface BannerFormState {
   bannerImageUrl: string
   bannerSubtitle: string
   bannerTitle: string
+  logoImageUrl: string
+  logoText: string
 }
 
 const emptySheetForm: SheetFormState = {
@@ -42,6 +44,8 @@ const defaultBannerForm: BannerFormState = {
   bannerImageUrl: '',
   bannerSubtitle: 'Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.',
   bannerTitle: 'Wear the Story of Every Moment with Distinction',
+  logoImageUrl: '',
+  logoText: 'ROSA PERFUME',
 }
 
 export default function SettingsPage() {
@@ -56,6 +60,7 @@ export default function SettingsPage() {
   const [loadingBanner, setLoadingBanner] = useState(true)
   const [savingBanner, setSavingBanner] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [bannerMessage, setBannerMessage] = useState<string | null>(null)
   const [bannerError, setBannerError] = useState<string | null>(null)
   const googleSheetConfigured =
@@ -102,6 +107,8 @@ export default function SettingsPage() {
           bannerImageUrl: settings.bannerImageUrl ?? '',
           bannerSubtitle: settings.bannerSubtitle,
           bannerTitle: settings.bannerTitle,
+          logoImageUrl: settings.logoImageUrl ?? '',
+          logoText: settings.logoText,
         })
       } catch (error) {
         if (!cancelled) {
@@ -135,6 +142,7 @@ export default function SettingsPage() {
       const saved = await siteSettingsService.updateSettings({
         ...bannerForm,
         bannerImageUrl: bannerForm.bannerImageUrl.trim() || null,
+        logoImageUrl: bannerForm.logoImageUrl.trim() || null,
       })
       setBannerForm({
         bannerButtonText: saved.bannerButtonText,
@@ -142,8 +150,10 @@ export default function SettingsPage() {
         bannerImageUrl: saved.bannerImageUrl ?? '',
         bannerSubtitle: saved.bannerSubtitle,
         bannerTitle: saved.bannerTitle,
+        logoImageUrl: saved.logoImageUrl ?? '',
+        logoText: saved.logoText,
       })
-      setBannerMessage('Đã lưu banner trang chủ.')
+      setBannerMessage('Đã lưu giao diện trang chủ.')
     } catch (error) {
       setBannerError(getErrorMessage(error))
     } finally {
@@ -164,6 +174,22 @@ export default function SettingsPage() {
       setBannerError(getErrorMessage(error))
     } finally {
       setUploadingBanner(false)
+    }
+  }
+
+  async function uploadLogoImage(file: File | undefined): Promise<void> {
+    if (!file) return
+    setUploadingLogo(true)
+    setBannerError(null)
+    setBannerMessage(null)
+    try {
+      const uploaded = await productService.uploadProductImage(file)
+      setBannerForm((current) => ({ ...current, logoImageUrl: uploaded.imageUrl }))
+      setBannerMessage('Đã tải logo lên. Bấm lưu để áp dụng.')
+    } catch (error) {
+      setBannerError(getErrorMessage(error))
+    } finally {
+      setUploadingLogo(false)
     }
   }
 
@@ -208,12 +234,64 @@ export default function SettingsPage() {
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <ImageIcon className="h-5 w-5" />
-              Banner trang chủ
+              Giao diện trang chủ
             </h2>
             <p className="mb-4 text-sm text-muted-foreground">
-              Thay đổi ảnh và nội dung hero banner đang hiển thị trên website người mua.
+              Thay đổi logo header, ảnh và nội dung hero banner đang hiển thị trên website người mua.
             </p>
             <div className="space-y-4">
+              <div className="rounded-md border p-4">
+                <h3 className="mb-3 text-sm font-semibold">Logo header</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 rounded-md bg-muted p-4">
+                    {bannerForm.logoImageUrl ? (
+                      <img src={bannerForm.logoImageUrl} alt="Logo header" className="h-14 w-20 object-contain" />
+                    ) : (
+                      <div className="flex h-14 w-20 items-center justify-center rounded-md border bg-background text-sm font-semibold">
+                        Logo
+                      </div>
+                    )}
+                    <span className="text-sm font-semibold">{bannerForm.logoText || 'ROSA PERFUME'}</span>
+                  </div>
+                  <div>
+                    <Label htmlFor="logo-text">Text logo</Label>
+                    <Input
+                      id="logo-text"
+                      value={bannerForm.logoText}
+                      onChange={(event) => {
+                        setBannerForm({ ...bannerForm, logoText: event.target.value })
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="logo-image-file">Tải ảnh logo</Label>
+                    <Input
+                      id="logo-image-file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      disabled={uploadingLogo}
+                      type="file"
+                      onChange={(event) => {
+                        void uploadLogoImage(event.target.files?.[0])
+                        event.target.value = ''
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="logo-image-url">URL ảnh logo</Label>
+                    <Input
+                      id="logo-image-url"
+                      placeholder="/products/logo.png hoặc https://..."
+                      value={bannerForm.logoImageUrl}
+                      onChange={(event) => {
+                        setBannerForm({ ...bannerForm, logoImageUrl: event.target.value })
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="pt-2">
+                <h3 className="mb-3 text-sm font-semibold">Banner hero</h3>
+              </div>
               {bannerForm.bannerImageUrl ? (
                 <div className="overflow-hidden rounded-md border bg-muted">
                   <img src={bannerForm.bannerImageUrl} alt="Banner trang chủ" className="h-64 w-full object-cover" />
@@ -286,13 +364,13 @@ export default function SettingsPage() {
               </div>
               <Button
                 className="gap-2"
-                disabled={loadingBanner || savingBanner || uploadingBanner}
+                disabled={loadingBanner || savingBanner || uploadingBanner || uploadingLogo}
                 onClick={() => {
                   void saveBanner()
                 }}
               >
-                {uploadingBanner ? <Upload className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                {savingBanner ? 'Đang lưu...' : uploadingBanner ? 'Đang tải ảnh...' : 'Lưu banner'}
+                {uploadingBanner || uploadingLogo ? <Upload className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+                {savingBanner ? 'Đang lưu...' : uploadingBanner || uploadingLogo ? 'Đang tải ảnh...' : 'Lưu giao diện'}
               </Button>
               {bannerMessage ? <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">{bannerMessage}</p> : null}
               {bannerError ? <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{bannerError}</p> : null}

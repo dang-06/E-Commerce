@@ -7,7 +7,7 @@ CREATE TABLE "site_settings" (
     "banner_button_text" VARCHAR(80) NOT NULL DEFAULT 'Xem thêm',
     "banner_image_url" TEXT,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(6) NOT NULL,
+    "updated_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "site_settings_pkey" PRIMARY KEY ("id")
 );
@@ -19,12 +19,14 @@ INSERT INTO "site_settings" (
     "banner_eyebrow",
     "banner_title",
     "banner_subtitle",
-    "banner_button_text"
+    "banner_button_text",
+    "updated_at"
 ) VALUES (
     'default',
     'ROSA PERFUME',
     'Wear the Story of Every Moment with Distinction',
     'Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.',
-    'Xem thêm'
+    'Xem thêm',
+    CURRENT_TIMESTAMP
 )
 ON CONFLICT ("key") DO NOTHING;

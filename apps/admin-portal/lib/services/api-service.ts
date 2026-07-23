@@ -1,6 +1,6 @@
 'use client'
 
-import { getStoredAuth } from '@/lib/services/auth'
+import { getStoredAuth, redirectToLogin } from '@/lib/services/auth'
 import {
   AuditLog,
   EligibleCustomer,
@@ -158,6 +158,8 @@ interface ApiSiteSettings {
   bannerImageUrl: string | null
   bannerSubtitle: string
   bannerTitle: string
+  logoImageUrl: string | null
+  logoText: string
   updatedAt: string
 }
 
@@ -174,6 +176,9 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
   const response = await fetch(`${apiBaseUrl}${path}`, { ...init, headers })
   if (!response.ok) {
     const body = await readResponseBody(response)
+    if (response.status === 401) {
+      redirectToLogin()
+    }
     throw new ApiRequestError(extractApiErrorMessage(body, response.status), response.status, body)
   }
   return (await response.json()) as T
@@ -388,7 +393,13 @@ export const siteSettingsService = {
   async updateSettings(
     payload: Pick<
       SiteSettings,
-      'bannerButtonText' | 'bannerEyebrow' | 'bannerImageUrl' | 'bannerSubtitle' | 'bannerTitle'
+      | 'bannerButtonText'
+      | 'bannerEyebrow'
+      | 'bannerImageUrl'
+      | 'bannerSubtitle'
+      | 'bannerTitle'
+      | 'logoImageUrl'
+      | 'logoText'
     >,
   ): Promise<SiteSettings> {
     return toSiteSettings(
@@ -599,6 +610,8 @@ function toSiteSettings(settings: ApiSiteSettings): SiteSettings {
     bannerImageUrl: settings.bannerImageUrl,
     bannerSubtitle: settings.bannerSubtitle,
     bannerTitle: settings.bannerTitle,
+    logoImageUrl: settings.logoImageUrl,
+    logoText: settings.logoText,
     updatedAt: new Date(settings.updatedAt),
   }
 }

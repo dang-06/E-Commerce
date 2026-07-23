@@ -4,7 +4,7 @@ import { ReactNode, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/shared/AdminLayout'
 import { User } from '@/lib/types'
-import { validateToken, getStoredAuth } from '@/lib/services/auth'
+import { clearStoredAuth, getStoredAuth, validateToken } from '@/lib/services/auth'
 
 interface AdminLayoutWrapperProps {
   children: ReactNode
@@ -29,10 +29,12 @@ export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps
         if (validatedUser) {
           setUser(validatedUser)
         } else {
+          clearStoredAuth()
           router.push('/login')
         }
       } catch (e) {
         console.error('Auth validation failed:', e)
+        clearStoredAuth()
         router.push('/login')
       } finally {
         setLoading(false)

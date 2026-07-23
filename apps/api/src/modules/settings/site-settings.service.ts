@@ -10,6 +10,8 @@ export interface SiteSettingsResponse {
   bannerImageUrl: string | null;
   bannerSubtitle: string;
   bannerTitle: string;
+  logoImageUrl: string | null;
+  logoText: string;
   updatedAt: Date;
 }
 
@@ -37,6 +39,8 @@ export class SiteSettingsService {
         ...(dto.bannerImageUrl !== undefined ? { bannerImageUrl: this.optionalText(dto.bannerImageUrl) } : {}),
         ...(dto.bannerSubtitle !== undefined ? { bannerSubtitle: this.clean(dto.bannerSubtitle) } : {}),
         ...(dto.bannerTitle !== undefined ? { bannerTitle: this.clean(dto.bannerTitle) } : {}),
+        ...(dto.logoImageUrl !== undefined ? { logoImageUrl: this.optionalText(dto.logoImageUrl) } : {}),
+        ...(dto.logoText !== undefined ? { logoText: this.clean(dto.logoText) } : {}),
       },
       create: {
         key: defaultSettingsKey,
@@ -45,6 +49,8 @@ export class SiteSettingsService {
         ...(dto.bannerImageUrl !== undefined ? { bannerImageUrl: this.optionalText(dto.bannerImageUrl) } : {}),
         ...(dto.bannerSubtitle !== undefined ? { bannerSubtitle: this.clean(dto.bannerSubtitle) } : {}),
         ...(dto.bannerTitle !== undefined ? { bannerTitle: this.clean(dto.bannerTitle) } : {}),
+        ...(dto.logoImageUrl !== undefined ? { logoImageUrl: this.optionalText(dto.logoImageUrl) } : {}),
+        ...(dto.logoText !== undefined ? { logoText: this.clean(dto.logoText) } : {}),
       },
     });
     return this.toResponse(settings);
@@ -68,6 +74,8 @@ export class SiteSettingsService {
     bannerImageUrl: string | null;
     bannerSubtitle: string;
     bannerTitle: string;
+    logoImageUrl: string | null;
+    logoText: string;
     updatedAt: Date;
   }): SiteSettingsResponse {
     return {
@@ -76,6 +84,8 @@ export class SiteSettingsService {
       bannerImageUrl: settings.bannerImageUrl,
       bannerSubtitle: settings.bannerSubtitle,
       bannerTitle: settings.bannerTitle,
+      logoImageUrl: settings.logoImageUrl,
+      logoText: settings.logoText,
       updatedAt: settings.updatedAt,
     };
   }

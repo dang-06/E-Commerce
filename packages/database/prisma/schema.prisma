@@ -354,6 +354,8 @@ model SiteSettings {
   bannerSubtitle   String   @default("Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.") @map("banner_subtitle") @db.VarChar(500)
   bannerButtonText String   @default("Xem thêm") @map("banner_button_text") @db.VarChar(80)
   bannerImageUrl   String?  @map("banner_image_url")
+  logoText         String   @default("ROSA PERFUME") @map("logo_text") @db.VarChar(120)
+  logoImageUrl     String?  @map("logo_image_url")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
 

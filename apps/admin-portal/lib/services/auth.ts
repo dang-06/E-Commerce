@@ -88,6 +88,13 @@ export function logout(): void {
   clearStoredAuth()
 }
 
+export function redirectToLogin(): void {
+  if (typeof window === 'undefined') return
+
+  clearStoredAuth()
+  window.location.href = '/login'
+}
+
 export async function validateToken(token: string): Promise<User | null> {
   const response = await fetch(`${apiBaseUrl}/admin/auth/me`, {
     headers: { authorization: `Bearer ${token}` },

@@ -1,0 +1,3 @@
+ALTER TABLE "site_settings"
+ADD COLUMN "logo_text" VARCHAR(120) NOT NULL DEFAULT 'ROSA PERFUME',
+ADD COLUMN "logo_image_url" TEXT;

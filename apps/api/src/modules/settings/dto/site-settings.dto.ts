@@ -44,6 +44,21 @@ export class UpdateSiteSettingsDto {
     message: "bannerImageUrl must be an http(s) URL or an absolute public path",
   })
   bannerImageUrl?: string | null;
+
+  @ApiPropertyOptional({ example: "ROSA PERFUME", maxLength: 120, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  logoText?: string;
+
+  @ApiPropertyOptional({ example: "/placeholder-logo.png", maxLength: 2048, nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  @Matches(imagePathPattern, {
+    message: "logoImageUrl must be an http(s) URL or an absolute public path",
+  })
+  logoImageUrl?: string | null;
 }
 
 export class SiteSettingsResponseDto {
@@ -61,6 +76,12 @@ export class SiteSettingsResponseDto {
 
   @ApiPropertyOptional({ example: "/products/perfume-1.png", nullable: true, type: String })
   bannerImageUrl!: string | null;
+
+  @ApiProperty({ example: "ROSA PERFUME", type: String })
+  logoText!: string;
+
+  @ApiPropertyOptional({ example: "/placeholder-logo.png", nullable: true, type: String })
+  logoImageUrl!: string | null;
 
   @ApiProperty({ example: "2026-07-23T09:00:00.000Z", format: "date-time", type: String })
   updatedAt!: Date;

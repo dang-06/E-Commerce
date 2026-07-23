@@ -12,6 +12,8 @@ import {
   LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { isAdminNavItemActive } from '@/lib/navigation/admin-sidebar'
+import { logout } from '@/lib/services/auth'
 
 const navItems = [
   { label: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
@@ -35,7 +37,7 @@ export function AdminSidebar() {
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {navItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          const isActive = isAdminNavItemActive(pathname, item.href)
           return (
             <Link key={item.href} href={item.href}>
               <Button
@@ -57,8 +59,8 @@ export function AdminSidebar() {
           variant="ghost"
           className="w-full justify-start text-destructive hover:bg-red-50"
           onClick={() => {
-            localStorage.removeItem('auth_context')
-            window.location.href = '/admin/login'
+            logout()
+            window.location.href = '/login'
           }}
         >
           <LogOut className="mr-2 h-4 w-4" />

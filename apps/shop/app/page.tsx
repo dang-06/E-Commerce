@@ -40,6 +40,8 @@ const defaultSiteSettings: SiteSettings = {
   bannerImageUrl: null,
   bannerSubtitle: "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
   bannerTitle: "Wear the Story of Every Moment with Distinction",
+  logoImageUrl: null,
+  logoText: "ROSA PERFUME",
   updatedAt: "",
 };
 
@@ -253,6 +255,7 @@ export default function ShopPage(): React.ReactElement {
         cartQuantity={totals.totalQuantity}
         cartTotal={totals.payableAmount ?? totals.subtotal - totals.discountAmount}
         searchTerm={searchTerm}
+        siteSettings={siteSettings}
         onCartClick={() => {
           setCartOpen(true);
         }}
@@ -445,6 +448,7 @@ function ShopHeader({
   onHome,
   onSearchChange,
   searchTerm,
+  siteSettings,
 }: {
   cartQuantity: number;
   cartTotal: number;
@@ -452,12 +456,16 @@ function ShopHeader({
   onHome: () => void;
   onSearchChange: (value: string) => void;
   searchTerm: string;
+  siteSettings: SiteSettings;
 }): React.ReactElement {
+  const logoText = siteSettings.logoText.trim() || "ROSA PERFUME";
+  const logoImage = siteSettings.logoImageUrl ?? "/placeholder-logo.png";
+
   return (
     <header className="shop-header">
       <button className="brand-lockup" type="button" aria-label="Về trang chính" onClick={onHome}>
-        <img src="/placeholder-logo.png" alt="" />
-        <span>ROSA PERFUME</span>
+        <img src={logoImage} alt="" />
+        <span>{logoText}</span>
       </button>
       <label className="search-box">
         <span className="sr-only">Tìm sản phẩm</span>

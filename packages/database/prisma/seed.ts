@@ -146,6 +146,7 @@ async function main(): Promise<void> {
       bannerSubtitle:
         "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
       bannerTitle: "Wear the Story of Every Moment with Distinction",
+      logoText: "ROSA PERFUME",
     },
     create: {
       key: "default",
@@ -154,6 +155,7 @@ async function main(): Promise<void> {
       bannerSubtitle:
         "Khám phá bộ sưu tập đang có sẵn. Giá ưu đãi sẽ tự áp dụng khi số điện thoại đủ điều kiện.",
       bannerTitle: "Wear the Story of Every Moment with Distinction",
+      logoText: "ROSA PERFUME",
     },
   });
 
