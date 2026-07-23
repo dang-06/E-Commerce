@@ -1,11 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Search, ShoppingBag } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  ClipboardList,
+  Search,
+  ShoppingBag,
+  ShoppingCart,
+  Trash2,
+  X,
+} from "lucide-react";
 import { OrderSummary } from "../components/OrderSummary";
 import { ProductCard } from "../components/ProductCard";
 import { RecipientFields } from "../components/RecipientFields";
-import { checkPromotion, createOrder, fetchProducts, fetchSiteSettings, quoteOrder } from "../lib/api";
+import {
+  checkPromotion,
+  createOrder,
+  fetchProducts,
+  fetchSiteSettings,
+  quoteOrder,
+} from "../lib/api";
 import { normalizeVietnamesePhone } from "../lib/phone";
 import { calculateCartTotals, type CartTotals } from "../lib/pricing";
 import { readCart, setCartQuantity, writeCart } from "../lib/cart";
@@ -57,7 +72,9 @@ export default function ShopPage(): React.ReactElement {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [recipient, setRecipient] = useState<RecipientForm>(emptyRecipient);
-  const [recipientErrors, setRecipientErrors] = useState<Partial<Record<keyof RecipientForm, string>>>({});
+  const [recipientErrors, setRecipientErrors] = useState<
+    Partial<Record<keyof RecipientForm, string>>
+  >({});
   const [orderError, setOrderError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [checkoutIdempotencyKey, setCheckoutIdempotencyKey] = useState<string | null>(null);
@@ -269,8 +286,8 @@ export default function ShopPage(): React.ReactElement {
           <p className="eyebrow">{displayBrandName(siteSettings)}</p>
           <h1 id="phone-title">Nhập số điện thoại để vào cửa hàng</h1>
           <p className="intro-copy">
-            Nếu số điện thoại có ưu đãi, sản phẩm sẽ tự hiện giá giảm. Nếu chưa có ưu đãi, bạn vẫn xem và đặt hàng với
-            giá gốc.
+            Nếu số điện thoại có ưu đãi, sản phẩm sẽ tự hiện giá giảm. Nếu chưa có ưu đãi, bạn vẫn
+            xem và đặt hàng với giá gốc.
           </p>
           <label className="field" htmlFor="promotion-phone">
             <span>Số điện thoại</span>
@@ -301,7 +318,9 @@ export default function ShopPage(): React.ReactElement {
       ) : null}
 
       {promotionSession ? (
-        <section className={promotionSession.eligible ? "promotion-banner eligible" : "promotion-banner"}>
+        <section
+          className={promotionSession.eligible ? "promotion-banner eligible" : "promotion-banner"}
+        >
           {promotionSession.eligible
             ? "Số điện thoại có ưu đãi. Giá giảm đã được áp dụng trên sản phẩm đủ điều kiện."
             : "Bạn đang xem giá gốc. Giá cuối cùng vẫn sẽ được hệ thống xác nhận khi đặt hàng."}
@@ -367,7 +386,8 @@ export default function ShopPage(): React.ReactElement {
               <strong>Điện thoại:</strong> {recipient.recipientPhone}
             </p>
             <p>
-              <strong>Địa chỉ:</strong> {recipient.address}, {recipient.ward}, {recipient.district}, {recipient.province}
+              <strong>Địa chỉ:</strong> {recipient.address}, {recipient.ward}, {recipient.district},{" "}
+              {recipient.province}
             </p>
           </div>
           {orderError ? <p className="status error">{orderError}</p> : null}
@@ -480,7 +500,12 @@ function ShopHeader({
         />
         <Search aria-hidden="true" size={25} />
       </label>
-      <button className="cart-status" type="button" onClick={onCartClick} aria-label={`${cartQuantity} sản phẩm trong giỏ`}>
+      <button
+        className="cart-status"
+        type="button"
+        onClick={onCartClick}
+        aria-label={`${cartQuantity} sản phẩm trong giỏ`}
+      >
         <ShoppingBag aria-hidden="true" size={31} />
         <div>
           <strong>{formatVnd(cartTotal)}</strong>
@@ -536,7 +561,9 @@ function ShopHome({
             <button
               type="button"
               onClick={() => {
-                document.getElementById("catalog-title")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                document
+                  .getElementById("catalog-title")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
             >
               {siteSettings.bannerButtonText}
@@ -546,34 +573,37 @@ function ShopHome({
       </section>
 
       {storyImages.length > 0 ? (
-        <section className={`home-story-strip${storyImages.length > 1 ? " is-animated" : ""}`} aria-label="Bộ sưu tập nổi bật">
+        <section
+          className={`home-story-strip${storyImages.length > 1 ? " is-animated" : ""}`}
+          aria-label="Bộ sưu tập nổi bật"
+        >
           <div className="home-story-track">
-          {storyImages.map((item) => (
-            <button
-              key={item.product.id}
-              type="button"
-              onClick={() => {
-                onDetail(item.product);
-              }}
-            >
-              <img src={item.image} alt={item.name} />
-            </button>
-          ))}
-          {storyImages.length > 1
-            ? storyImages.map((item) => (
-                <button
-                  key={`${item.product.id}-loop`}
-                  aria-hidden="true"
-                  tabIndex={-1}
-                  type="button"
-                  onClick={() => {
-                    onDetail(item.product);
-                  }}
-                >
-                  <img src={item.image} alt="" />
-                </button>
-              ))
-            : null}
+            {storyImages.map((item) => (
+              <button
+                key={item.product.id}
+                type="button"
+                onClick={() => {
+                  onDetail(item.product);
+                }}
+              >
+                <img src={item.image} alt={item.name} />
+              </button>
+            ))}
+            {storyImages.length > 1
+              ? storyImages.map((item) => (
+                  <button
+                    key={`${item.product.id}-loop`}
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    type="button"
+                    onClick={() => {
+                      onDetail(item.product);
+                    }}
+                  >
+                    <img src={item.image} alt="" />
+                  </button>
+                ))
+              : null}
           </div>
         </section>
       ) : null}
@@ -588,12 +618,20 @@ function ShopHome({
         {!productsLoading && !productsError && products.length === 0 ? (
           <p className="empty-state">Hiện chưa có sản phẩm khả dụng.</p>
         ) : null}
-        {!productsLoading && !productsError && products.length > 0 && filteredProducts.length === 0 ? (
+        {!productsLoading &&
+        !productsError &&
+        products.length > 0 &&
+        filteredProducts.length === 0 ? (
           <p className="empty-state">Không tìm thấy sản phẩm phù hợp.</p>
         ) : null}
         <div className="product-list">
           {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} promotionUnlocked={promotionUnlocked} onDetail={onDetail} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              promotionUnlocked={promotionUnlocked}
+              onDetail={onDetail}
+            />
           ))}
         </div>
         {orderError ? <p className="status error">{orderError}</p> : null}
@@ -614,7 +652,9 @@ function totalsFromQuote(quote: OrderQuote): CartTotals {
 }
 
 function productImage(product: Product): string | null {
-  return product.imageUrl ?? product.images[0]?.imageUrl ?? product.colorVariants[0]?.imageUrl ?? null;
+  return (
+    product.imageUrl ?? product.images[0]?.imageUrl ?? product.colorVariants[0]?.imageUrl ?? null
+  );
 }
 
 function displayBrandName(siteSettings: SiteSettings): string {
@@ -622,11 +662,9 @@ function displayBrandName(siteSettings: SiteSettings): string {
 }
 
 function CartDrawer({
-  cartItems,
   onCheckout,
   onClose,
   onQuantityChange,
-  products,
   totals,
 }: {
   cartItems: CartItem[];
@@ -636,6 +674,12 @@ function CartDrawer({
   products: Product[];
   totals: CartTotals;
 }): React.ReactElement {
+  const freeShipThreshold = 700000;
+  const merchandiseTotal = totals.subtotal - totals.discountAmount;
+  const freeShipRemaining = Math.max(freeShipThreshold - merchandiseTotal, 0);
+  const freeShipProgress = Math.min((merchandiseTotal / freeShipThreshold) * 100, 100);
+  const checkoutTotal = totals.payableAmount ?? merchandiseTotal;
+
   return (
     <div className="cart-backdrop" role="presentation" onClick={onClose}>
       <aside
@@ -647,42 +691,139 @@ function CartDrawer({
           event.stopPropagation();
         }}
       >
-        <div className="section-heading">
-          <h2 id="cart-title">Giỏ hàng</h2>
-          <button className="close-button" type="button" onClick={onClose} aria-label="Đóng giỏ hàng">
-            ×
+        <div className="cart-drawer-header">
+          <div className="cart-tabs">
+            <h2 id="cart-title">
+              Giỏ hàng <sup>{totals.totalQuantity}</sup>
+            </h2>
+            <span>Đã xem gần đây</span>
+          </div>
+          <button
+            className="cart-close-button"
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng giỏ hàng"
+          >
+            <X aria-hidden="true" size={20} />
           </button>
         </div>
-        {cartItems.length === 0 ? <p className="empty-state">Giỏ hàng đang trống.</p> : null}
-        {cartItems.map((item) => {
-          const product = products.find((candidate) => candidate.id === item.productId);
-          if (!product) {
-            return null;
-          }
-          return (
-            <div className="cart-row" key={item.productId}>
-              <div>
-                <strong>{product.name}</strong>
-                <p>{formatVnd(parseVnd(product.listedPrice))}</p>
-              </div>
-              <label>
-                <span className="sr-only">Số lượng {product.name}</span>
-                <input
-                  min={0}
-                  type="number"
-                  value={item.quantity}
-                  onChange={(event) => {
-                    onQuantityChange(item.productId, Number(event.target.value));
-                  }}
-                />
-              </label>
+
+        <div
+          className="cart-free-ship"
+          aria-label={`Tiến độ miễn phí vận chuyển ${Math.round(freeShipProgress)}%`}
+        >
+          <p>
+            {freeShipRemaining > 0
+              ? `Bạn còn ${formatVnd(freeShipRemaining)} nữa là được FreeShip`
+              : "Đơn hàng đã đủ điều kiện FreeShip"}
+          </p>
+          <div>
+            <span style={{ width: `${freeShipProgress}%` }} />
+          </div>
+          <strong>{formatVnd(freeShipThreshold)}</strong>
+        </div>
+
+        <div className="cart-drawer-body">
+          {totals.lines.length === 0 ? (
+            <div className="cart-empty-state">
+              <ShoppingCart aria-hidden="true" size={28} />
+              <p>Giỏ hàng đang trống.</p>
+              <button type="button" onClick={onClose}>
+                Tiếp tục mua hàng
+              </button>
             </div>
-          );
-        })}
-        <OrderSummary totals={totals} />
-        <button className="primary-button full-width" type="button" onClick={onCheckout}>
-          Nhận hàng
-        </button>
+          ) : null}
+
+          {totals.lines.map((line) => {
+            const imageUrl = productImage(line.product);
+            const variantLabel = line.product.colorVariants[0]?.name ?? line.product.sku;
+            return (
+              <div className="cart-product-row" key={line.product.id}>
+                <div className="cart-product-image">
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={line.product.name} />
+                  ) : (
+                    <span aria-hidden="true">{line.product.name.slice(0, 1).toUpperCase()}</span>
+                  )}
+                </div>
+                <div className="cart-product-copy">
+                  <span>{variantLabel}</span>
+                  <strong>{line.product.name}</strong>
+                  <p>{line.product.sku}</p>
+                  <div className="cart-product-unit-price">
+                    <strong>{formatVnd(line.finalUnitPrice)}</strong>
+                    {line.discountPerItem > 0 ? <span>{formatVnd(line.listedPrice)}</span> : null}
+                  </div>
+                  <div className="cart-quantity-actions">
+                    <div className="cart-stepper" aria-label={`Số lượng ${line.product.name}`}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onQuantityChange(line.product.id, Math.max(line.quantity - 1, 0));
+                        }}
+                        aria-label={`Giảm số lượng ${line.product.name}`}
+                      >
+                        -
+                      </button>
+                      <span>{line.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onQuantityChange(line.product.id, line.quantity + 1);
+                        }}
+                        aria-label={`Tăng số lượng ${line.product.name}`}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      className="cart-remove-button"
+                      type="button"
+                      onClick={() => {
+                        onQuantityChange(line.product.id, 0);
+                      }}
+                      aria-label={`Xóa ${line.product.name} khỏi giỏ hàng`}
+                    >
+                      <Trash2 aria-hidden="true" size={19} />
+                    </button>
+                  </div>
+                </div>
+                <strong className="cart-product-total">{formatVnd(line.lineTotal)}</strong>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="cart-drawer-footer">
+          <button className="cart-note-button" type="button">
+            <ClipboardList aria-hidden="true" size={18} />
+            Order note
+          </button>
+          <button
+            className="cart-checkout-button"
+            type="button"
+            onClick={onCheckout}
+            disabled={totals.lines.length === 0}
+          >
+            <span>
+              <ShoppingBag aria-hidden="true" size={22} />
+              Thanh toán
+            </span>
+            <strong>{formatVnd(checkoutTotal)}</strong>
+          </button>
+          <button
+            className="cart-page-link"
+            type="button"
+            onClick={onCheckout}
+            disabled={totals.lines.length === 0}
+          >
+            Đi đến trang giỏ hàng
+            <ChevronRight aria-hidden="true" size={17} />
+          </button>
+          <p>
+            Thuế và phí <span>vận chuyển</span> được tính khi thanh toán
+          </p>
+        </div>
       </aside>
     </div>
   );
@@ -728,7 +869,12 @@ function CheckoutView({
             <ArrowLeft aria-hidden="true" size={17} />
             Tiếp tục mua hàng
           </button>
-          <button className="checkout-primary-button" disabled={submitting} type="button" onClick={onReview}>
+          <button
+            className="checkout-primary-button"
+            disabled={submitting}
+            type="button"
+            onClick={onReview}
+          >
             {submitting ? "Đang lấy báo giá..." : "Tiếp tục thanh toán"}
           </button>
         </div>
@@ -780,7 +926,9 @@ function ProductDetail({
   promotionUnlocked: boolean;
   quantity: number;
 }): React.ReactElement {
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(product.colorVariants[0]?.id ?? null);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
+    product.colorVariants[0]?.id ?? null,
+  );
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
 
@@ -790,11 +938,18 @@ function ProductDetail({
   }, [product.id]);
 
   const listedPrice = parseVnd(product.listedPrice);
-  const discount = promotionUnlocked && product.isPromotionEligible ? Math.min(parseVnd(product.discountAmount), listedPrice) : 0;
+  const discount =
+    promotionUnlocked && product.isPromotionEligible
+      ? Math.min(parseVnd(product.discountAmount), listedPrice)
+      : 0;
   const finalPrice = listedPrice - discount;
-  const selectedVariant = product.colorVariants.find((variant) => variant.id === selectedVariantId) ?? product.colorVariants[0] ?? null;
+  const selectedVariant =
+    product.colorVariants.find((variant) => variant.id === selectedVariantId) ??
+    product.colorVariants[0] ??
+    null;
   const galleryImages = buildProductGallery(product, selectedVariant?.id ?? null);
-  const fallbackImageUrl = selectedVariant?.imageUrl ?? product.imageUrl ?? product.images[0]?.imageUrl ?? null;
+  const fallbackImageUrl =
+    selectedVariant?.imageUrl ?? product.imageUrl ?? product.images[0]?.imageUrl ?? null;
   const imageUrl = selectedImageUrl ?? fallbackImageUrl;
 
   useEffect(() => {
@@ -803,7 +958,9 @@ function ProductDetail({
 
   const trimmedDescription = product.description?.trim();
   const description =
-    trimmedDescription && trimmedDescription.length > 0 ? trimmedDescription : "Sản phẩm đang được cập nhật mô tả.";
+    trimmedDescription && trimmedDescription.length > 0
+      ? trimmedDescription
+      : "Sản phẩm đang được cập nhật mô tả.";
   const detailRows = buildProductDetailRows(description);
 
   function addSelectedQuantityToCart(): void {
@@ -832,7 +989,9 @@ function ProductDetail({
             {galleryImages.map((image) => (
               <button
                 key={image.id}
-                className={image.imageUrl === imageUrl ? "nik-product-thumb selected" : "nik-product-thumb"}
+                className={
+                  image.imageUrl === imageUrl ? "nik-product-thumb selected" : "nik-product-thumb"
+                }
                 type="button"
                 onClick={() => {
                   setSelectedImageUrl(image.imageUrl);
@@ -872,7 +1031,11 @@ function ProductDetail({
               {product.colorVariants.map((variant) => (
                 <button
                   key={variant.id}
-                  className={variant.id === selectedVariant?.id ? "nik-color-option selected" : "nik-color-option"}
+                  className={
+                    variant.id === selectedVariant?.id
+                      ? "nik-color-option selected"
+                      : "nik-color-option"
+                  }
                   type="button"
                   title={variant.name}
                   onClick={() => {
@@ -959,9 +1122,17 @@ function buildProductGallery(
   const selectedVariant = product.colorVariants.find((variant) => variant.id === selectedVariantId);
   const images = [
     ...(selectedVariant
-      ? [{ id: `variant-${selectedVariant.id}`, imageUrl: selectedVariant.imageUrl, altText: selectedVariant.name }]
+      ? [
+          {
+            id: `variant-${selectedVariant.id}`,
+            imageUrl: selectedVariant.imageUrl,
+            altText: selectedVariant.name,
+          },
+        ]
       : []),
-    ...(product.imageUrl ? [{ id: "main", imageUrl: product.imageUrl, altText: product.name }] : []),
+    ...(product.imageUrl
+      ? [{ id: "main", imageUrl: product.imageUrl, altText: product.name }]
+      : []),
     ...product.images.map((image) => ({
       id: `image-${image.id}`,
       imageUrl: image.imageUrl,
