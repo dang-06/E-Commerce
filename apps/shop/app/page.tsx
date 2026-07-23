@@ -542,7 +542,8 @@ function ShopHome({
       </section>
 
       {storyImages.length > 0 ? (
-        <section className="home-story-strip" aria-label="Bộ sưu tập nổi bật">
+        <section className={`home-story-strip${storyImages.length > 1 ? " is-animated" : ""}`} aria-label="Bộ sưu tập nổi bật">
+          <div className="home-story-track">
           {storyImages.map((item) => (
             <button
               key={item.product.id}
@@ -554,6 +555,22 @@ function ShopHome({
               <img src={item.image} alt={item.name} />
             </button>
           ))}
+          {storyImages.length > 1
+            ? storyImages.map((item) => (
+                <button
+                  key={`${item.product.id}-loop`}
+                  aria-hidden="true"
+                  tabIndex={-1}
+                  type="button"
+                  onClick={() => {
+                    onDetail(item.product);
+                  }}
+                >
+                  <img src={item.image} alt="" />
+                </button>
+              ))
+            : null}
+          </div>
         </section>
       ) : null}
 

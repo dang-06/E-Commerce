@@ -399,12 +399,44 @@ h2 {
 }
 
 .home-story-strip {
-  display: grid;
-  gap: 0;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(190px, 1fr);
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
+  --story-card-width: clamp(190px, 22vw, 260px);
+  overflow: hidden;
+  position: relative;
+}
+
+.home-story-strip::before,
+.home-story-strip::after {
+  content: "";
+  inset-block: 0;
+  pointer-events: none;
+  position: absolute;
+  width: clamp(32px, 8vw, 120px);
+  z-index: 1;
+}
+
+.home-story-strip::before {
+  background: linear-gradient(90deg, #ffffff, rgba(255, 255, 255, 0));
+  left: 0;
+}
+
+.home-story-strip::after {
+  background: linear-gradient(270deg, #ffffff, rgba(255, 255, 255, 0));
+  right: 0;
+}
+
+.home-story-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.home-story-strip.is-animated .home-story-track {
+  animation: marquee 34s linear infinite;
+}
+
+.home-story-strip:hover .home-story-track,
+.home-story-strip:focus-within .home-story-track {
+  animation-play-state: paused;
 }
 
 .home-story-strip button {
@@ -412,9 +444,9 @@ h2 {
   background: #f6f6f6;
   border: 0;
   cursor: pointer;
+  flex: 0 0 var(--story-card-width);
   overflow: hidden;
   padding: 0;
-  scroll-snap-align: start;
 }
 
 .home-story-strip img {
@@ -1650,7 +1682,7 @@ h2 {
   }
 
   .home-story-strip {
-    grid-auto-columns: minmax(220px, 1fr);
+    --story-card-width: clamp(220px, 14vw, 320px);
   }
 
   .category-grid {
@@ -1876,7 +1908,7 @@ h2 {
   }
 
   .home-story-strip {
-    grid-auto-columns: 46%;
+    --story-card-width: 46vw;
   }
 
   .home-categories,
