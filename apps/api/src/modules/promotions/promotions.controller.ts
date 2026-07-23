@@ -13,7 +13,16 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from "@nestjs/swagger";
 import type { Request } from "express";
 import { Roles } from "../auth/decorators/roles.decorator.js";
 import { AuthGuard } from "../auth/guards/auth.guard.js";
@@ -24,6 +33,11 @@ import {
   ListEligibleCustomersQueryDto,
   SetEligibleCustomerStatusDto,
 } from "./dto/promotion.dto.js";
+import {
+  EligibleCustomerResponseDto,
+  ImportEligibleCustomersResultDto,
+  PromotionCheckResponseDto,
+} from "./dto/promotion-response.dto.js";
 import {
   PromotionsService,
   type EligibleCustomerResponse,
@@ -48,13 +62,14 @@ export class PromotionsController {
   constructor(private readonly promotions: PromotionsService) {}
 
   @Post("check")
+  @ApiCreatedResponse({ type: PromotionCheckResponseDto })
   check(@Body() dto: CheckPromotionDto, @Req() request: Request): Promise<PromotionCheckResponse> {
     return this.promotions.check(dto.phone, request.ip ?? "unknown", request.header("user-agent"));
   }
 }
 
 @ApiTags("admin eligible customers")
-@ApiBearerAuth()
+@ApiBearerAuth("bearer")
 @UseGuards(AuthGuard, RolesGuard)
 @Controller("admin/eligible-customers")
 export class AdminEligibleCustomersController {
@@ -62,6 +77,10 @@ export class AdminEligibleCustomersController {
 
   @Get()
   @Roles("operator", "admin")
+  @ApiQuery({ name: "isActive", required: false, example: true })
+  @ApiQuery({ name: "source", required: false, enum: ["sheet", "pancake", "best", "import", "manual"] })
+  @ApiQuery({ name: "limit", required: false, example: 50, description: "Max 100." })
+  @ApiOkResponse({ type: [EligibleCustomerResponseDto] })
   list(@Query() query: ListEligibleCustomersQueryDto): Promise<EligibleCustomerResponse[]> {
     return this.promotions.listEligibleCustomers(query);
   }
@@ -101,6 +120,7 @@ export class AdminEligibleCustomersController {
       },
     },
   })
+  @ApiCreatedResponse({ type: ImportEligibleCustomersResultDto })
   import(
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body() dto: ImportEligibleCustomersDto,
@@ -110,6 +130,8 @@ export class AdminEligibleCustomersController {
 
   @Patch(":id/status")
   @Roles("admin")
+  @ApiParam({ name: "id", example: "1" })
+  @ApiOkResponse({ type: EligibleCustomerResponseDto })
   setStatus(
     @Param("id") id: string,
     @Body() dto: SetEligibleCustomerStatusDto,

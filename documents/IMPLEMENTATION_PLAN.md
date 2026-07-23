@@ -618,13 +618,20 @@ De xuat bo sung khi thiet ke chi tiet:
 | Promotions | In progress | [x] Check API [x] Token [x] Rate limit [x] Logs [ ] UI |
 | Pricing/Cart | In progress | [x] Quote [x] Cart UI [x] Price summary [x] Price-change handling |
 | Checkout/Orders | In progress | [x] Validation [x] Transaction [x] Idempotency [x] Order success [ ] Public order lookup pending confirmation |
-| Admin orders | In progress | [x] UI list [x] UI detail [x] UI status update [x] UI export [ ] API list/detail/status |
+| Admin orders | In progress | [x] UI list [x] UI detail [x] UI status update [x] UI export [x] API list/detail/status |
 | Integrations | In progress | [x] UI job/log status [x] UI retry action [x] Worker [x] Retry backend [x] Mock/HTTP adapter interface [ ] Real partner adapters pending confirmed docs |
-| QA/Release | In progress | [x] Automated tests [x] Security checklist [x] Test report [ ] Browser device matrix [ ] UAT [ ] Monitoring [ ] Production deploy |
+| QA/Release | In progress | [x] Automated tests [x] Security checklist [x] Test report [x] Swagger/OpenAPI docs [ ] Browser device matrix [ ] UAT [ ] Monitoring [ ] Production deploy |
 
 ---
 
 ## 14. Verification log
+
+### 2026-07-21 - Swagger/OpenAPI API docs
+
+- [x] Swagger UI enabled at `/api/v1/docs` when `API_SWAGGER_ENABLED=true`.
+- [x] Added request examples and response schemas for public shop APIs, admin auth, products, eligible customers, orders, integrations, audit logs, and health checks.
+- [x] API typecheck, API lint, and full workspace build pass with Node.js 24.
+- [ ] Full workspace lint is blocked by pre-existing unused variables in `apps/shop/app/page.tsx`.
 
 ### 2026-07-15 - Database schema va admin auth
 

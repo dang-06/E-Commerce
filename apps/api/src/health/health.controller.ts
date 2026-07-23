@@ -6,6 +6,7 @@ import {
   type RequestWithId,
 } from "../common/middleware/request-id.middleware.js";
 import { DatabaseReadinessService } from "./database-readiness.service.js";
+import { HealthStatusResponseDto } from "./dto/health-response.dto.js";
 
 interface HealthStatus {
   status: "ok" | "error";
@@ -19,7 +20,7 @@ export class HealthController {
   constructor(private readonly databaseReadiness: DatabaseReadinessService) {}
 
   @Get("live")
-  @ApiOkResponse({ description: "API process is alive." })
+  @ApiOkResponse({ description: "API process is alive.", type: HealthStatusResponseDto })
   liveness(@Req() request: Request): HealthStatus {
     const requestId = this.getRequestId(request);
 
@@ -31,7 +32,7 @@ export class HealthController {
   }
 
   @Get("ready")
-  @ApiOkResponse({ description: "API dependencies are ready." })
+  @ApiOkResponse({ description: "API dependencies are ready.", type: HealthStatusResponseDto })
   async readiness(@Req() request: Request): Promise<HealthStatus> {
     const isDatabaseReady = await this.databaseReadiness.isReady();
     if (!isDatabaseReady) {

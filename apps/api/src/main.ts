@@ -35,12 +35,26 @@ async function bootstrap(): Promise<void> {
 
   if (config.swaggerEnabled) {
     const documentConfig = new DocumentBuilder()
-      .setTitle("Ecommerce Promotion API")
-      .setDescription("API foundation for the phone-based promotion MVP.")
+      .setTitle("Ecommerce API")
+      .setDescription("Public shop and admin APIs for products, promotions, orders, integrations, and health checks.")
       .setVersion("0.1.0")
+      .addTag("admin auth", "Admin login and current profile. Use /admin/auth/login, then paste accessToken into Authorize.")
+      .addBearerAuth(
+        {
+          bearerFormat: "JWT",
+          scheme: "bearer",
+          type: "http",
+        },
+        "bearer",
+      )
+      .addSecurityRequirements("bearer")
       .build();
     const document = SwaggerModule.createDocument(app, documentConfig);
-    SwaggerModule.setup("api/v1/docs", app, document);
+    SwaggerModule.setup("api/v1/docs", app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
+      },
+    });
   }
 
   await app.listen(config.port, config.host);

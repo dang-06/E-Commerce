@@ -12,7 +12,16 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+} from "@nestjs/swagger";
 import { Roles } from "../auth/decorators/roles.decorator.js";
 import { AuthGuard } from "../auth/guards/auth.guard.js";
 import { RolesGuard } from "../auth/guards/roles.guard.js";
@@ -22,6 +31,10 @@ import {
   SetProductVisibilityDto,
   UpdateProductDto,
 } from "./dto/product.dto.js";
+import {
+  ProductResponseDto,
+  UploadedProductImageResponseDto,
+} from "./dto/product-response.dto.js";
 import { ProductsService, type ProductResponse } from "./products.service.js";
 
 @ApiTags("products")
@@ -30,18 +43,22 @@ export class PublicProductsController {
   constructor(private readonly products: ProductsService) {}
 
   @Get()
+  @ApiOkResponse({ type: [ProductResponseDto] })
   list(): Promise<ProductResponse[]> {
     return this.products.listPublic();
   }
 
   @Get(":slug")
+  @ApiParam({ name: "slug", example: "nuoc-hoa-floral-50ml" })
+  @ApiOkResponse({ type: ProductResponseDto })
+  @ApiNotFoundResponse({ description: "Product not found." })
   getBySlug(@Param("slug") slug: string): Promise<ProductResponse> {
     return this.products.getPublicBySlug(slug);
   }
 }
 
 @ApiTags("admin products")
-@ApiBearerAuth()
+@ApiBearerAuth("bearer")
 @UseGuards(AuthGuard, RolesGuard)
 @Controller("admin/products")
 export class AdminProductsController {
@@ -52,12 +69,14 @@ export class AdminProductsController {
 
   @Get()
   @Roles("operator", "admin")
+  @ApiOkResponse({ type: [ProductResponseDto] })
   list(): Promise<ProductResponse[]> {
     return this.products.listAdmin();
   }
 
   @Post()
   @Roles("admin")
+  @ApiCreatedResponse({ type: ProductResponseDto })
   create(@Body() dto: CreateProductDto): Promise<ProductResponse> {
     return this.products.create(dto);
   }
@@ -86,18 +105,25 @@ export class AdminProductsController {
       },
     },
   })
+  @ApiCreatedResponse({ type: UploadedProductImageResponseDto })
   uploadImage(@UploadedFile() file: Express.Multer.File | undefined): Promise<UploadedProductImage> {
     return this.images.uploadProductImage(file);
   }
 
   @Patch(":id")
   @Roles("admin")
+  @ApiParam({ name: "id", example: "1" })
+  @ApiOkResponse({ type: ProductResponseDto })
+  @ApiNotFoundResponse({ description: "Product not found." })
   update(@Param("id") id: string, @Body() dto: UpdateProductDto): Promise<ProductResponse> {
     return this.products.update(id, dto);
   }
 
   @Patch(":id/visibility")
   @Roles("admin")
+  @ApiParam({ name: "id", example: "1" })
+  @ApiOkResponse({ type: ProductResponseDto })
+  @ApiNotFoundResponse({ description: "Product not found." })
   setVisibility(
     @Param("id") id: string,
     @Body() dto: SetProductVisibilityDto,
@@ -107,6 +133,9 @@ export class AdminProductsController {
 
   @Delete(":id")
   @Roles("admin")
+  @ApiParam({ name: "id", example: "1" })
+  @ApiOkResponse({ type: ProductResponseDto })
+  @ApiNotFoundResponse({ description: "Product not found." })
   softDelete(@Param("id") id: string): Promise<ProductResponse> {
     return this.products.softDelete(id);
   }

@@ -1,4 +1,5 @@
 import { Type } from "class-transformer";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsArray,
   IsBoolean,
@@ -18,6 +19,7 @@ const skuPattern = /^[A-Z0-9][A-Z0-9._-]{1,49}$/i;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export class ProductImageInputDto {
+  @ApiProperty({ example: "/products/perfume-1.png" })
   @IsString()
   @MaxLength(2048)
   @Matches(imagePathPattern, {
@@ -25,11 +27,13 @@ export class ProductImageInputDto {
   })
   imageUrl!: string;
 
+  @ApiPropertyOptional({ example: "Front product image" })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   altText?: string;
 
+  @ApiPropertyOptional({ example: 0, minimum: 0, maximum: 9999 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -39,10 +43,12 @@ export class ProductImageInputDto {
 }
 
 export class ProductColorVariantInputDto {
+  @ApiProperty({ example: "Pink" })
   @IsString()
   @MaxLength(120)
   name!: string;
 
+  @ApiPropertyOptional({ example: "#F4C7C3" })
   @IsOptional()
   @IsString()
   @MaxLength(20)
@@ -51,6 +57,7 @@ export class ProductColorVariantInputDto {
   })
   colorCode?: string;
 
+  @ApiProperty({ example: "/products/perfume-pink.png" })
   @IsString()
   @MaxLength(2048)
   @Matches(imagePathPattern, {
@@ -58,11 +65,13 @@ export class ProductColorVariantInputDto {
   })
   imageUrl!: string;
 
+  @ApiPropertyOptional({ example: "PERFUME-PINK" })
   @IsOptional()
   @IsString()
   @MaxLength(80)
   sku?: string;
 
+  @ApiPropertyOptional({ example: 0, minimum: 0, maximum: 9999 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -72,25 +81,30 @@ export class ProductColorVariantInputDto {
 }
 
 export class CreateProductDto {
+  @ApiProperty({ example: "PERFUME-001", maxLength: 50 })
   @IsString()
   @MaxLength(50)
   @Matches(skuPattern)
   sku!: string;
 
+  @ApiProperty({ example: "Nuoc hoa Floral 50ml", maxLength: 255 })
   @IsString()
   @MaxLength(255)
   name!: string;
 
+  @ApiProperty({ example: "nuoc-hoa-floral-50ml", maxLength: 255 })
   @IsString()
   @MaxLength(255)
   @Matches(slugPattern)
   slug!: string;
 
+  @ApiPropertyOptional({ example: "Mui huong nhe, phu hop dung hang ngay.", maxLength: 5000 })
   @IsOptional()
   @IsString()
   @MaxLength(5000)
   description?: string;
 
+  @ApiPropertyOptional({ example: "/products/perfume-1.png", maxLength: 2048 })
   @IsOptional()
   @IsString()
   @MaxLength(2048)
@@ -99,31 +113,37 @@ export class CreateProductDto {
   })
   imageUrl?: string;
 
+  @ApiProperty({ example: 350000, minimum: 0 })
   @Type(() => Number)
   @IsInt()
   @Min(0)
   listedPrice!: number;
 
+  @ApiPropertyOptional({ example: 25, minimum: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   stockQuantity?: number;
 
+  @ApiPropertyOptional({ example: true })
   @IsOptional()
   @IsBoolean()
   isPromotionEligible?: boolean;
 
+  @ApiPropertyOptional({ example: 25000, minimum: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   discountAmount?: number;
 
+  @ApiPropertyOptional({ example: true })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 
+  @ApiPropertyOptional({ example: 0, minimum: 0, maximum: 9999 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -131,12 +151,14 @@ export class CreateProductDto {
   @Max(9999)
   sortOrder?: number;
 
+  @ApiPropertyOptional({ type: [ProductImageInputDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductImageInputDto)
   images?: ProductImageInputDto[];
 
+  @ApiPropertyOptional({ type: [ProductColorVariantInputDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -145,28 +167,33 @@ export class CreateProductDto {
 }
 
 export class UpdateProductDto {
+  @ApiPropertyOptional({ example: "PERFUME-001", maxLength: 50 })
   @IsOptional()
   @IsString()
   @MaxLength(50)
   @Matches(skuPattern)
   sku?: string;
 
+  @ApiPropertyOptional({ example: "Nuoc hoa Floral 50ml", maxLength: 255 })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   name?: string;
 
+  @ApiPropertyOptional({ example: "nuoc-hoa-floral-50ml", maxLength: 255 })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   @Matches(slugPattern)
   slug?: string;
 
+  @ApiPropertyOptional({ example: "Mui huong nhe, phu hop dung hang ngay.", nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(5000)
   description?: string | null;
 
+  @ApiPropertyOptional({ example: "/products/perfume-1.png", nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(2048)
@@ -175,32 +202,38 @@ export class UpdateProductDto {
   })
   imageUrl?: string | null;
 
+  @ApiPropertyOptional({ example: 350000, minimum: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   listedPrice?: number;
 
+  @ApiPropertyOptional({ example: 25, minimum: 0, nullable: true })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   stockQuantity?: number | null;
 
+  @ApiPropertyOptional({ example: true })
   @IsOptional()
   @IsBoolean()
   isPromotionEligible?: boolean;
 
+  @ApiPropertyOptional({ example: 25000, minimum: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
   discountAmount?: number;
 
+  @ApiPropertyOptional({ example: true })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 
+  @ApiPropertyOptional({ example: 0, minimum: 0, maximum: 9999 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -208,12 +241,14 @@ export class UpdateProductDto {
   @Max(9999)
   sortOrder?: number;
 
+  @ApiPropertyOptional({ type: [ProductImageInputDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductImageInputDto)
   images?: ProductImageInputDto[];
 
+  @ApiPropertyOptional({ type: [ProductColorVariantInputDto] })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -222,6 +257,7 @@ export class UpdateProductDto {
 }
 
 export class SetProductVisibilityDto {
+  @ApiProperty({ example: true })
   @IsBoolean()
   isActive!: boolean;
 }

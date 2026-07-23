@@ -1,9 +1,10 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from "@nestjs/swagger";
 import { PrismaService } from "../../database/prisma.service.js";
 import { Roles } from "../auth/decorators/roles.decorator.js";
 import { AuthGuard } from "../auth/guards/auth.guard.js";
 import { RolesGuard } from "../auth/guards/roles.guard.js";
+import { AuditLogResponseDto } from "./dto/audit-response.dto.js";
 
 interface AuditLogResponse {
   id: string;
@@ -17,7 +18,7 @@ interface AuditLogResponse {
 }
 
 @ApiTags("admin audit logs")
-@ApiBearerAuth()
+@ApiBearerAuth("bearer")
 @UseGuards(AuthGuard, RolesGuard)
 @Controller("admin/audit-logs")
 export class AuditController {
@@ -25,6 +26,7 @@ export class AuditController {
 
   @Get()
   @Roles("admin")
+  @ApiOkResponse({ type: [AuditLogResponseDto] })
   async list(): Promise<AuditLogResponse[]> {
     const logs = await this.prisma.auditLog.findMany({
       include: { admin: { select: { fullName: true } } },
