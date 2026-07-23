@@ -5,7 +5,7 @@ import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
 import { MetricCard } from '@/components/shared/MetricCard'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Download, TrendingUp } from 'lucide-react'
+import { BarChart3, Download, PackageCheck, ReceiptText, Tags, Target, TrendingUp } from 'lucide-react'
 import { Order, Product } from '@/lib/types'
 import { orderService, productService } from '@/lib/services/api-service'
 import { buildOrdersCsv } from '@/lib/services/admin-actions'
@@ -81,16 +81,16 @@ export default function ReportsPage() {
 
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <MetricCard label="Tổng đơn hàng" value={totalOrders} icon="📊" variant="primary" />
-        <MetricCard label="Đơn thành công" value={successfulOrders} icon="✅" variant="success" />
-        <MetricCard label="Doanh thu" value={formatVND(totalRevenue)} icon="💰" variant="success" />
-        <MetricCard label="Tổng giảm giá" value={formatVND(totalDiscount)} icon="🏷️" variant="default" />
-        <MetricCard label="AOV" value={formatVND(aov)} icon="📈" variant="default" />
+        <MetricCard label="Tổng đơn hàng" value={totalOrders} icon={<ReceiptText className="h-4 w-4" />} variant="primary" />
+        <MetricCard label="Đơn thành công" value={successfulOrders} icon={<PackageCheck className="h-4 w-4" />} variant="success" />
+        <MetricCard label="Doanh thu" value={formatVND(totalRevenue)} icon={<TrendingUp className="h-4 w-4" />} variant="success" />
+        <MetricCard label="Tổng giảm giá" value={formatVND(totalDiscount)} icon={<Tags className="h-4 w-4" />} variant="warning" />
+        <MetricCard label="AOV" value={formatVND(aov)} icon={<BarChart3 className="h-4 w-4" />} variant="violet" />
         <MetricCard
           label="Tỷ lệ ưu đãi"
           value={formatPercent(promotionConversion)}
-          icon="🎯"
-          variant="default"
+          icon={<Target className="h-4 w-4" />}
+          variant="info"
         />
       </div>
 

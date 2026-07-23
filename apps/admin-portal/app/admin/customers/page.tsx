@@ -73,11 +73,8 @@ export default function CustomersPage() {
       accessorKey: 'status',
       header: 'Trạng thái',
       cell: ({ row }) => (
-        <span
-          className={`text-xs font-semibold ${
-            row.original.status === 'active' ? 'text-green-600' : 'text-gray-600'
-          }`}
-        >
+        <span className="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold text-foreground">
+          <span className="size-1.5 rounded-full bg-current opacity-70" aria-hidden="true"></span>
           {row.original.status === 'active' ? 'Hoạt động' : 'Vô hiệu'}
         </span>
       ),

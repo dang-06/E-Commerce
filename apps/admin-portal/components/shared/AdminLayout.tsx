@@ -9,11 +9,13 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, user }: AdminLayoutProps) {
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background text-foreground">
       <AdminSidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AdminHeader user={user} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main id="main-content" className="flex-1 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   )

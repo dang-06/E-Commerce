@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
 import { MetricCard } from '@/components/shared/MetricCard'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { TrendingUp, ShoppingCart, Users, BarChart3 } from 'lucide-react'
+import { AlertCircle, ArrowRight, BarChart3, Package, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 import { dashboardService } from '@/lib/services/api-service'
 import { formatVND } from '@/lib/utils/vietnamese'
 
@@ -34,125 +34,189 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Breadcrumbs */}
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
       <Breadcrumbs items={[{ label: 'Tổng quan' }]} />
 
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Tổng quan</h1>
-        <p className="mt-1 text-muted-foreground">Xem tóm tắt hoạt động của cửa hàng</p>
+      <div className="flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Tổng quan</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Theo dõi đơn hàng, khách ưu đãi và trạng thái vận hành.</p>
+        </div>
+        <Link
+          href="/admin/orders"
+          className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-ring"
+        >
+          Xem đơn hàng
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
       </div>
 
-      {/* Metric Cards Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Đơn hôm nay"
           value={stats.todayOrders}
-          icon="📦"
-          variant={stats.todayOrders > 0 ? 'primary' : 'default'}
+          icon={<Package className="h-4 w-4" />}
+          variant={stats.todayOrders > 0 ? 'primary' : 'info'}
         />
         <MetricCard
           label="Doanh thu hôm nay"
           value={formatVND(stats.todayRevenue)}
-          icon="💰"
+          icon={<TrendingUp className="h-4 w-4" />}
           variant="success"
         />
         <MetricCard
           label="Khách ưu đãi"
           value={stats.eligibleUsers}
-          icon="👥"
+          icon={<Users className="h-4 w-4" />}
           variant="default"
         />
         <MetricCard
           label="Đơn chờ xác nhận"
           value={stats.pendingOrders}
-          icon="⏳"
+          icon={<ShoppingCart className="h-4 w-4" />}
           variant={stats.pendingOrders > 0 ? 'warning' : 'default'}
         />
-        {/* <MetricCard
-          label="Đồng bộ thất bại"
-          value={stats.failedSyncs}
-          icon="⚠️"
-          variant={stats.failedSyncs > 0 ? 'error' : 'default'}
-        /> */}
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Wide */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Quick Actions */}
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Thao tác nhanh</h2>
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-4">
-              <Button variant="outline" className="flex flex-col h-auto py-4">
-                <ShoppingCart className="h-5 w-5 mb-2" />
-                <span className="text-xs">Tạo đơn</span>
-              </Button>
-              <Button variant="outline" className="flex flex-col h-auto py-4">
-                <Users className="h-5 w-5 mb-2" />
-                <span className="text-xs">Nhập khách</span>
-              </Button>
-              <Button variant="outline" className="flex flex-col h-auto py-4">
-                <TrendingUp className="h-5 w-5 mb-2" />
-                <span className="text-xs">Báo cáo</span>
-              </Button>
-              <Button variant="outline" className="flex flex-col h-auto py-4">
-                <BarChart3 className="h-5 w-5 mb-2" />
-                <span className="text-xs">Thống kê</span>
-              </Button>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Thao tác nhanh</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Đi tới các luồng vận hành dùng thường xuyên.</p>
+              </div>
             </div>
-          </Card>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <QuickAction href="/admin/orders" icon={<ShoppingCart className="h-4 w-4" />} label="Xử lý đơn hàng" />
+              <QuickAction
+                href="/admin/customers/import"
+                icon={<Users className="h-4 w-4" />}
+                label="Nhập khách ưu đãi"
+                tone="emerald"
+              />
+              <QuickAction
+                href="/admin/products/new"
+                icon={<Package className="h-4 w-4" />}
+                label="Thêm sản phẩm"
+                tone="violet"
+              />
+              <QuickAction href="/admin/reports" icon={<BarChart3 className="h-4 w-4" />} label="Xem báo cáo" tone="amber" />
+            </div>
+          </Card> 
 
-          {/* Recent Activity Placeholder */}
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Hoạt động gần đây</h2>
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-3 pb-3 border-b border-border last:border-0">
-                  <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0"></div>
-                  <p className="text-sm text-foreground">Đơn hàng ORD{String(i).padStart(6, '0')} được tạo</p>
-                  <span className="text-xs text-muted-foreground ml-auto">2 giờ trước</span>
-                </div>
-              ))}
+            <h2 className="text-base font-semibold text-foreground">Việc cần chú ý</h2>
+            <div className="mt-4 divide-y">
+              <StatusRow
+                href="/admin/orders"
+                label="Đơn chờ xác nhận"
+                value={`${stats.pendingOrders} đơn`}
+                tone={stats.pendingOrders > 0 ? 'warning' : 'default'}
+              />
+              <StatusRow
+                href="/admin/sync"
+                label="Đồng bộ cần kiểm tra"
+                value={`${stats.failedSyncs} job`}
+                tone={stats.failedSyncs > 0 ? 'warning' : 'default'}
+              />
+              <StatusRow href="/admin/customers" label="Khách ưu đãi đang lưu" value={`${stats.eligibleUsers} khách`} />
             </div>
           </Card>
         </div>
 
-        {/* Right Column */}
-        {/* <div className="space-y-6">
+        <div className="space-y-6">
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Trạng thái hệ thống</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground">Google Sheet</span>
-                <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground">Pancake</span>
-                <span className="h-2 w-2 rounded-full bg-green-500"></span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground">BEST Express</span>
-                <span className="h-2 w-2 rounded-full bg-amber-500"></span>
-              </div>
+            <h2 className="text-base font-semibold text-foreground">Trạng thái hệ thống</h2>
+            <div className="mt-4 space-y-3">
+              {[
+                ['API', 'Đang hoạt động'],
+                ['Database', 'Đang hoạt động'],
+                ['Admin Portal', 'Đang hoạt động'],
+              ].map(([label, status]) => (
+                <div key={label} className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+                  <span className="text-sm text-foreground">{label}</span>
+                  <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-foreground" aria-hidden="true"></span>
+                    {status}
+                  </span>
+                </div>
+              ))}
             </div>
           </Card>
 
-          {stats.failedSyncs > 0 && (
-            <Card className="p-4 border-amber-200 bg-amber-50">
-              <div className="flex gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-amber-900 text-sm">Có {stats.failedSyncs} đồng bộ thất bại</p>
-                  <p className="text-xs text-amber-800 mt-1">Nhấn Retry để thử lại</p>
-                </div>
+          <Card className="p-6">
+            <div className="flex gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+              <div>
+                <h2 className="text-base font-semibold text-foreground">Kiểm tra định kỳ</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Xem lại cấu hình Google Sheet và upload ảnh trước các đợt chạy khuyến mãi.
+                </p>
               </div>
-            </Card>
-          )}
-        </div> */}
+            </div>
+          </Card> 
+        </div>
       </div>
     </div>
+  )
+}
+
+const quickActionToneStyles = {
+  amber: 'bg-amber-50 text-amber-700 border-amber-200',
+  emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  sky: 'bg-sky-50 text-sky-700 border-sky-200',
+  violet: 'bg-violet-50 text-violet-700 border-violet-200',
+}
+
+function QuickAction({
+  href,
+  icon,
+  label,
+  tone = 'sky',
+}: {
+  href: string
+  icon: React.ReactNode
+  label: string
+  tone?: keyof typeof quickActionToneStyles
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-14 items-center justify-between gap-3 rounded-md border bg-background px-4 py-3 text-sm font-medium transition-colors hover:border-foreground/30 hover:bg-muted focus-visible:outline-ring"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span className={`flex size-8 shrink-0 items-center justify-center rounded-md border ${quickActionToneStyles[tone]}`} aria-hidden="true">
+          {icon}
+        </span>
+        <span className="truncate">{label}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+    </Link>
+  )
+}
+
+function StatusRow({
+  href,
+  label,
+  tone = 'default',
+  value,
+}: {
+  href: string
+  label: string
+  tone?: 'default' | 'warning'
+  value: string
+}) {
+  return (
+    <Link href={href} className="flex items-center justify-between gap-3 py-3 text-sm hover:text-foreground">
+      <span className="flex min-w-0 items-center gap-3">
+        <span
+          className={`size-2 shrink-0 rounded-full ${tone === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+          aria-hidden="true"
+        ></span>
+        <span className="truncate text-foreground">{label}</span>
+      </span>
+      <span className="shrink-0 text-muted-foreground tabular-nums">{value}</span>
+    </Link>
   )
 }

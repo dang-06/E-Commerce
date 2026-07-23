@@ -76,7 +76,7 @@ export default function ProductsPage() {
       accessorKey: 'stock',
       header: 'Tồn kho',
       cell: ({ row }) => (
-        <span className={(row.original.stock ?? 0) > 20 ? 'text-green-600' : 'text-amber-600'}>
+        <span className={(row.original.stock ?? 0) > 20 ? 'text-foreground' : 'font-medium text-foreground'}>
           {row.original.stock ?? 'Chưa cấu hình'}
         </span>
       ),

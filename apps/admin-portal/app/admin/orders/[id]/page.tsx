@@ -140,7 +140,7 @@ export default function OrderDetailPage() {
                 Lưu trạng thái
               </Button>
             </div>
-            {success ? <p className="mt-3 text-sm text-green-700">{success}</p> : null}
+            {success ? <p className="mt-3 text-sm text-emerald-700">{success}</p> : null}
           </Card>
 
           {/* Recipient Info */}
@@ -209,7 +209,7 @@ export default function OrderDetailPage() {
                 </span>
               </div>
               {order.discountApplied && (
-                <div className="flex justify-between text-green-600">
+                <div className="flex justify-between text-emerald-700">
                   <span className="text-muted-foreground">Giảm giá ưu đãi</span>
                   <span>-{order.discount.toLocaleString('vi-VN')} ₫</span>
                 </div>

@@ -157,9 +157,9 @@ export default function EditProductPage() {
         </div>
       </div>
 
-      {message ? <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">{message}</div> : null}
+      {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</div> : null}
       {formError ? (
-        <div className="whitespace-pre-line rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <div className="whitespace-pre-line rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-800">
           {formError}
         </div>
       ) : null}

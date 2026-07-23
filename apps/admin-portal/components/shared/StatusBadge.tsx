@@ -2,13 +2,15 @@ import { Badge } from '@/components/ui/badge'
 import { OrderStatus, PaymentStatus, SyncStatus } from '@/lib/types'
 
 const orderStatusColors: Record<OrderStatus, string> = {
-  pending: 'bg-blue-100 text-blue-800',
-  confirmed: 'bg-blue-100 text-blue-800',
-  preparing: 'bg-amber-100 text-amber-800',
-  shipping: 'bg-purple-100 text-purple-800',
-  delivered: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
-  returned: 'bg-orange-100 text-orange-800',
+  pending: 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-200',
+  confirmed: 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200',
+  preparing: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200',
+  shipping: 'border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-200',
+  delivered:
+    'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200',
+  cancelled: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200',
+  returned:
+    'border-orange-200 bg-orange-50 text-orange-800 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-200',
 }
 
 const orderStatusLabels: Record<OrderStatus, string> = {
@@ -22,9 +24,9 @@ const orderStatusLabels: Record<OrderStatus, string> = {
 }
 
 const paymentStatusColors: Record<PaymentStatus, string> = {
-  unpaid: 'bg-red-100 text-red-800',
-  paid: 'bg-green-100 text-green-800',
-  refunded: 'bg-gray-100 text-gray-800',
+  unpaid: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200',
+  paid: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200',
+  refunded: 'border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-500/30 dark:bg-zinc-500/10 dark:text-zinc-200',
 }
 
 const paymentStatusLabels: Record<PaymentStatus, string> = {
@@ -34,10 +36,10 @@ const paymentStatusLabels: Record<PaymentStatus, string> = {
 }
 
 const syncStatusColors: Record<SyncStatus, string> = {
-  pending: 'bg-gray-100 text-gray-800',
-  processing: 'bg-blue-100 text-blue-800',
-  success: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
+  pending: 'border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-500/30 dark:bg-zinc-500/10 dark:text-zinc-200',
+  processing: 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-200',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200',
+  failed: 'border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200',
 }
 
 const syncStatusLabels: Record<SyncStatus, string> = {
@@ -69,7 +71,8 @@ export function StatusBadge({ type, status, className }: StatusBadgeProps) {
   }
 
   return (
-    <Badge variant="secondary" className={`${colors} ${className ?? ''}`}>
+    <Badge variant="outline" className={`gap-1.5 rounded-md px-2 ${colors} ${className ?? ''}`}>
+      <span className="size-1.5 rounded-full bg-current opacity-70" aria-hidden="true"></span>
       {label}
     </Badge>
   )

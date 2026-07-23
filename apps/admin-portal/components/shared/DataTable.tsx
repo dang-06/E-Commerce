@@ -43,15 +43,15 @@ export function DataTable<TData>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="overflow-hidden rounded-lg border bg-card">
         <Table>
-          <TableHeader className="bg-muted">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="font-semibold text-foreground"
+                    className="font-semibold"
                     style={{
                       width: header.getSize(),
                     }}
@@ -68,7 +68,7 @@ export function DataTable<TData>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
-                  className="border-b border-border hover:bg-muted/50"
+                  className="border-b border-border"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
@@ -84,7 +84,7 @@ export function DataTable<TData>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={columns.length} className="h-28 text-center text-muted-foreground">
                   Không có dữ liệu
                 </TableCell>
               </TableRow>
@@ -94,28 +94,28 @@ export function DataTable<TData>({
       </div>
 
       {pagination && (
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-sm text-muted-foreground tabular-nums">
             Trang {table.getState().pagination.pageIndex + 1} của {table.getPageCount()}
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { table.previousPage(); }}
+              onClick={() => { table.previousPage() }}
               disabled={!table.getCanPreviousPage()}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
+              <ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" />
               Trước
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { table.nextPage(); }}
+              onClick={() => { table.nextPage() }}
               disabled={!table.getCanNextPage()}
             >
               Sau
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>

@@ -113,28 +113,28 @@ export default function SyncPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
           label="Google Sheet"
-          value={status.google_sheet === 'connected' ? '✓ Kết nối' : 'Ngắt kết nối'}
+          value={status.google_sheet === 'connected' ? 'Kết nối' : 'Ngắt kết nối'}
           variant={status.google_sheet === 'connected' ? 'success' : 'default'}
         />
         <MetricCard
           label="Pancake"
-          value={status.pancake === 'connected' ? '✓ Kết nối' : 'Ngắt kết nối'}
-          variant={status.pancake === 'connected' ? 'success' : 'default'}
+          value={status.pancake === 'connected' ? 'Kết nối' : 'Ngắt kết nối'}
+          variant={status.pancake === 'connected' ? 'violet' : 'default'}
         />
         <MetricCard
           label="BEST Express"
-          value={status.best === 'degraded' ? '⚠ Yếu' : '✓ Kết nối'}
+          value={status.best === 'degraded' ? 'Cần kiểm tra' : 'Kết nối'}
           variant={status.best === 'degraded' ? 'warning' : 'default'}
         />
       </div>
 
       {/* Alerts */}
       {failedCount > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+        <div className="flex gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-rose-950 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+          <AlertCircle className="h-5 w-5 flex-shrink-0 text-rose-700 dark:text-rose-200" />
           <div>
-            <p className="font-semibold text-red-900">Có {failedCount} lần đồng bộ thất bại</p>
-            <p className="text-sm text-red-800 mt-1">Nhấn nút Retry để thử lại các lần đồng bộ thất bại</p>
+            <p className="font-semibold">Có {failedCount} lần đồng bộ cần xử lý</p>
+            <p className="mt-1 text-sm text-rose-800 dark:text-rose-200/80">Nhấn nút Retry để thử lại các lần đồng bộ thất bại.</p>
           </div>
         </div>
       )}

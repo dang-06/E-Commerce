@@ -372,8 +372,8 @@ export default function SettingsPage() {
                 {uploadingBanner || uploadingLogo ? <Upload className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                 {savingBanner ? 'Đang lưu...' : uploadingBanner || uploadingLogo ? 'Đang tải ảnh...' : 'Lưu giao diện'}
               </Button>
-              {bannerMessage ? <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">{bannerMessage}</p> : null}
-              {bannerError ? <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{bannerError}</p> : null}
+              {bannerMessage ? <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{bannerMessage}</p> : null}
+              {bannerError ? <p className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-800">{bannerError}</p> : null}
             </div>
           </Card>
 
@@ -510,8 +510,8 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          {sheetMessage ? <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">{sheetMessage}</p> : null}
-          {sheetError ? <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{sheetError}</p> : null}
+          {sheetMessage ? <p className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{sheetMessage}</p> : null}
+          {sheetError ? <p className="rounded-md border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-800">{sheetError}</p> : null}
         </div>
 
         {/* Right Sidebar */}

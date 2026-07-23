@@ -151,7 +151,7 @@ export default function NewProductPage() {
       </div>
 
       {formError ? (
-        <div className="whitespace-pre-line rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+        <div className="whitespace-pre-line rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-800">
           {formError}
         </div>
       ) : null}

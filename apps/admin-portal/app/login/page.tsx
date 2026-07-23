@@ -67,10 +67,10 @@ export default function LoginPage() {
           )}
 
           {/* Demo Credentials */}
-          <div className="rounded-lg bg-blue-50 p-3 text-sm text-blue-900 border border-blue-200">
+          <div className="rounded-md border bg-muted/50 p-3 text-sm text-foreground">
             <p className="font-semibold">Tài khoản Demo:</p>
             <p>Admin: admin@example.local</p>
-            <p className="text-xs mt-1">Mật khẩu mặc định: Admin@123456</p>
+            <p className="mt-1 text-xs text-muted-foreground">Mật khẩu mặc định: Admin@123456</p>
           </div>
 
           {/* Form */}
