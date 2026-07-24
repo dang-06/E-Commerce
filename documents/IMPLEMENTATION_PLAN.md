@@ -613,7 +613,7 @@ De xuat bo sung khi thiet ke chi tiet:
 | Monorepo foundation | In progress | [ ] Git [x] npm workspaces [x] Next [x] Nest API [ ] Worker deferred [x] CI [x] Docker |
 | Database | In progress | [x] Prisma baseline [x] Migration baseline [x] Business schemas [x] Seed [ ] Backup plan |
 | Auth/Admin | In progress | [x] Login [x] Current user [x] Role guard [x] Auth tests [x] Admin UI shell |
-| Products | In progress | [x] CRUD [x] Status [x] Images [x] Public catalog [x] Admin UI |
+| Products | In progress | [x] CRUD [x] Status [x] Images [x] Detail attributes/images [x] Public catalog [x] Admin UI |
 | Site settings | In progress | [x] Homepage banner text/image API [x] Header logo text/image API [x] Catalog title API [x] Admin settings form [x] Public shop rendering |
 | Eligible customers | In progress | [x] Manual add [x] Import CSV/Excel [x] Sample import file [x] Phone hash [x] Activate/deactivate [x] Masked list |
 | Promotions | In progress | [x] Check API [x] Token [x] Rate limit [x] Logs [ ] UI |
@@ -626,6 +626,13 @@ De xuat bo sung khi thiet ke chi tiet:
 ---
 
 ## 14. Verification log
+
+### 2026-07-24 - Product detail content
+
+- [x] Added persisted product detail attributes and long-form detail image URLs.
+- [x] Added admin create/edit controls for product attributes and detail description images.
+- [x] Updated public product detail page toward a 1688-style layout: gallery, price ladder, option grid, attributes table, and detail image section.
+- [x] API/admin/shop typecheck, lint, and build pass with Node.js 24.
 
 ### 2026-07-21 - Swagger/OpenAPI API docs
 
@@ -742,3 +749,12 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] Tao `documents/SECURITY_CHECKLIST.md`.
 - [ ] Kiem thu thiet bi/trinh duyet that: Chrome, Safari, Android, iPhone, Messenger/Facebook in-app browser.
 - [ ] Kiem thu tich hop that Pancake/Google Sheet/BEST sau khi co endpoint, payload, auth va sandbox/credential da xac nhan.
+
+### 2026-07-24 - Product detail 1688-style content
+
+- [x] Mo rong `products` schema/API DTO/response de luu seller, MOQ, logistics, return policy, review summary, review images, quality certifications va packaging attributes.
+- [x] Them admin product create/edit fields cho du lieu chi tiet kieu 1688: nha ban, so nam, nganh hang, so luong toi thieu, noi gui, thoi gian giao, chinh sach, review, anh review, chung nhan, dong goi, thong so va anh mo ta dai.
+- [x] Cap nhat shop product detail theo layout 1688-inspired: gallery, supplier strip, price ladder, policy strip, sticky purchase panel, review block, attributes table, certificate block, packaging table, long detail images va related product grid.
+- [x] Them nut xuat `products-sheet-data.csv` trong admin products voi tat ca thuoc tinh san pham moi de nap/doi chieu sheet data.
+- [x] Cap nhat database seed voi day du product detail metadata moi, site banner/logo/catalog, gallery images, color variants va mot san pham demo phu du tat ca tinh nang moi.
+- [x] API/shop/admin lint, typecheck, admin tests va build thanh cong cho pham vi vua thay doi.

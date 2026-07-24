@@ -336,8 +336,12 @@ export default function ShopPage(): React.ReactElement {
           onAdd={addToCart}
           onBuyNow={buyNow}
           onHome={goHome}
+          onSelectProduct={setSelectedProduct}
           promotionUnlocked={promotionSession?.eligible === true}
           quantity={cartItems.find((item) => item.productId === selectedProduct.id)?.quantity ?? 0}
+          relatedProducts={products
+            .filter((product) => product.id !== selectedProduct.id)
+            .slice(0, 8)}
         />
       ) : null}
 
@@ -914,17 +918,21 @@ function ProductDetail({
   onBack,
   onBuyNow,
   onHome,
+  onSelectProduct,
   product,
   promotionUnlocked,
   quantity,
+  relatedProducts,
 }: {
   onAdd: (productId: string, quantity?: number) => void;
   onBack: () => void;
   onBuyNow: (productId: string, quantity: number) => void;
   onHome: () => void;
+  onSelectProduct: (product: Product) => void;
   product: Product;
   promotionUnlocked: boolean;
   quantity: number;
+  relatedProducts: Product[];
 }): React.ReactElement {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     product.colorVariants[0]?.id ?? null,
@@ -961,7 +969,11 @@ function ProductDetail({
     trimmedDescription && trimmedDescription.length > 0
       ? trimmedDescription
       : "Sản phẩm đang được cập nhật mô tả.";
-  const detailRows = buildProductDetailRows(description);
+  const detailRows =
+    product.productAttributes.length > 0
+      ? product.productAttributes
+      : buildProductDetailRows(description);
+  const detailImageUrls = product.detailImageUrls.filter((item) => item.trim().length > 0);
 
   function addSelectedQuantityToCart(): void {
     onAdd(product.id, selectedQuantity);
@@ -970,10 +982,6 @@ function ProductDetail({
   return (
     <section aria-labelledby="detail-title" className="nik-product-page">
       <div className="nik-product-gallery">
-        <button className="nik-back-button" type="button" onClick={onBack}>
-          <ArrowLeft aria-hidden="true" size={18} />
-          Quay lại
-        </button>
         <div className="nik-product-media">
           {discount > 0 ? <span className="nik-sale-badge">Sale off</span> : null}
           {imageUrl ? (
@@ -1016,9 +1024,26 @@ function ProductDetail({
           {product.name}
         </h2>
 
-        <div className="nik-product-price">
-          {discount > 0 ? <span>{formatVnd(listedPrice)}</span> : null}
-          <strong>{formatVnd(finalPrice)}</strong>
+        <div className="nik-supplier-strip">
+          <span>{product.sellerYears ? `Đã ${product.sellerYears} năm` : "Nhà bán"}</span>
+          <strong>{product.sellerName ?? "Kho sẵn"}</strong>
+          <em>
+            {product.sellerPrimaryCategory ??
+              (product.stockQuantity === null ? "Còn hàng" : `${product.stockQuantity} sản phẩm`)}
+          </em>
+        </div>
+
+        <div className="nik-product-price-panel">
+          <div className="nik-price-row">
+            <span>Giá bán</span>
+            <strong>{formatVnd(finalPrice)}</strong>
+            {discount > 0 ? <del>{formatVnd(listedPrice)}</del> : null}
+          </div>
+          <div className="nik-policy-strip">
+            {product.returnPolicy ? <span>{product.returnPolicy}</span> : null}
+            {product.shippingLeadTime ? <span>{product.shippingLeadTime}</span> : null}
+            {product.shippingOrigin ? <span>Gửi hàng từ {product.shippingOrigin}</span> : null}
+          </div>
         </div>
 
         {product.colorVariants.length > 0 ? (
@@ -1095,22 +1120,134 @@ function ProductDetail({
             Mua ngay
           </button>
         </div>
+      </aside>
 
-        <details className="nik-accordion" open>
-          <summary>Mô tả</summary>
+      <section className="nik-detail-content" aria-label="Mô tả sản phẩm">
+        {product.reviewRating !== null ||
+        product.reviewTags.length > 0 ||
+        product.reviewImageUrls.length > 0 ? (
+          <section className="nik-review-section" aria-label="Đánh giá sản phẩm">
+            <div className="nik-detail-heading">
+              <h3>Đánh giá sản phẩm</h3>
+              <span>
+                {product.reviewRating !== null
+                  ? `${product.reviewRating.toFixed(1)} / 5`
+                  : "Đang cập nhật"}
+                {product.reviewCount !== null ? ` (${product.reviewCount} đánh giá)` : ""}
+              </span>
+            </div>
+            {product.reviewTags.length > 0 ? (
+              <div className="nik-review-tags">
+                {product.reviewTags.map((tag) => (
+                  <span key={`${tag.label}-${tag.value}`}>
+                    {tag.label} <strong>{tag.value}</strong>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            {product.reviewImageUrls.length > 0 ? (
+              <div className="nik-review-images">
+                {product.reviewImageUrls.map((reviewImageUrl, index) => (
+                  <img
+                    key={`${reviewImageUrl}-${index}`}
+                    src={reviewImageUrl}
+                    alt={`${product.name} đánh giá ${index + 1}`}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        <section className="nik-attributes-panel" aria-label="Thuộc tính sản phẩm">
+          <h3>Thuộc tính sản phẩm</h3>
           <div>
             {detailRows.length > 0 ? (
               detailRows.map((row) => (
                 <p key={row.label}>
-                  <strong>{row.label}:</strong> {row.value}
+                  <span>{row.label}</span>
+                  <strong>{row.value}</strong>
                 </p>
               ))
             ) : (
-              <p>{description}</p>
+              <p>
+                <span>Mô tả</span>
+                <strong>{description}</strong>
+              </p>
             )}
           </div>
-        </details>
-      </aside>
+        </section>
+
+        <div className="nik-detail-heading">
+          <h3>Chi tiết sản phẩm</h3>
+          <span>{product.sku}</span>
+        </div>
+        {product.qualityCertifications.length > 0 ? (
+          <section
+            className="nik-certificate-section"
+            aria-label="Giấy chứng nhận chất lượng sản phẩm"
+          >
+            <h3>Giấy chứng nhận chất lượng sản phẩm</h3>
+            {product.qualityCertifications.map((item) => (
+              <p key={`${item.label}-${item.value}`}>
+                <strong>{item.label}:</strong> {item.value}
+              </p>
+            ))}
+          </section>
+        ) : null}
+        {product.packagingAttributes.length > 0 ? (
+          <section className="nik-packaging-section" aria-label="Đóng gói">
+            <h3>Đóng gói</h3>
+            <div className="nik-packaging-grid">
+              {product.packagingAttributes.map((item) => (
+                <p key={`${item.label}-${item.value}`}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </p>
+              ))}
+            </div>
+          </section>
+        ) : null}
+        {trimmedDescription ? <p className="nik-detail-description">{description}</p> : null}
+        {detailImageUrls.length > 0 ? (
+          <div className="nik-detail-images">
+            {detailImageUrls.map((detailImageUrl, index) => (
+              <img
+                key={`${detailImageUrl}-${index}`}
+                src={detailImageUrl}
+                alt={`${product.name} chi tiết ${index + 1}`}
+              />
+            ))}
+          </div>
+        ) : null}
+        {relatedProducts.length > 0 ? (
+          <section className="nik-related-section" aria-label="Đề xuất sản phẩm">
+            <div className="nik-detail-heading">
+              <h3>Đề xuất theo cùng một phong cách</h3>
+              <span>{relatedProducts.length} sản phẩm</span>
+            </div>
+            <div className="nik-related-grid">
+              {relatedProducts.map((relatedProduct) => {
+                const relatedImage = productImage(relatedProduct);
+                return (
+                  <button
+                    key={relatedProduct.id}
+                    type="button"
+                    onClick={() => {
+                      onSelectProduct(relatedProduct);
+                      window.scrollTo({ behavior: "smooth", top: 0 });
+                    }}
+                  >
+                    {relatedImage ? <img src={relatedImage} alt={relatedProduct.name} /> : null}
+                    <strong>{relatedProduct.name}</strong>
+                    <span>{formatVnd(parseVnd(relatedProduct.listedPrice))}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+      </section>
     </section>
   );
 }

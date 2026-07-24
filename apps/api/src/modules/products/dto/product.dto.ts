@@ -3,6 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsArray,
   IsBoolean,
+  IsNumber,
   IsInt,
   IsOptional,
   IsString,
@@ -40,6 +41,18 @@ export class ProductImageInputDto {
   @Min(0)
   @Max(9999)
   sortOrder?: number;
+}
+
+export class ProductAttributeInputDto {
+  @ApiProperty({ example: "Chất liệu", type: String })
+  @IsString()
+  @MaxLength(120)
+  label!: string;
+
+  @ApiProperty({ example: "Cotton", type: String })
+  @IsString()
+  @MaxLength(255)
+  value!: string;
 }
 
 export class ProductColorVariantInputDto {
@@ -112,6 +125,117 @@ export class CreateProductDto {
     message: "imageUrl must be an http(s) URL or an absolute public path",
   })
   imageUrl?: string;
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  productAttributes?: ProductAttributeInputDto[];
+
+  @ApiPropertyOptional({ example: ["/products/detail-1.png"], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  @Matches(imagePathPattern, {
+    each: true,
+    message: "detailImageUrls must contain http(s) URLs or absolute public paths",
+  })
+  detailImageUrls?: string[];
+
+  @ApiPropertyOptional({ example: "Công ty TNHH Công nghệ", maxLength: 255, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  sellerName?: string;
+
+  @ApiPropertyOptional({ example: 3, minimum: 0, maximum: 100, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  sellerYears?: number;
+
+  @ApiPropertyOptional({ example: "Sản phẩm chăm sóc tóc", maxLength: 255, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  sellerPrimaryCategory?: string;
+
+  @ApiPropertyOptional({ example: 3, minimum: 1, maximum: 9999, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(9999)
+  minimumOrderQuantity?: number;
+
+  @ApiPropertyOptional({ example: "Sán Đầu, Quảng Đông", maxLength: 255, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  shippingOrigin?: string;
+
+  @ApiPropertyOptional({ example: "Giao hàng trong vòng 48 giờ", maxLength: 120, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  shippingLeadTime?: string;
+
+  @ApiPropertyOptional({ example: "Miễn phí vận chuyển trả hàng", maxLength: 255, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  returnPolicy?: string;
+
+  @ApiPropertyOptional({ example: 4.4, minimum: 0, maximum: 5, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(5)
+  reviewRating?: number;
+
+  @ApiPropertyOptional({ example: 70, minimum: 0, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  reviewCount?: number;
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  reviewTags?: ProductAttributeInputDto[];
+
+  @ApiPropertyOptional({ example: ["/products/review-1.png"], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  @Matches(imagePathPattern, {
+    each: true,
+    message: "reviewImageUrls must contain http(s) URLs or absolute public paths",
+  })
+  reviewImageUrls?: string[];
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  qualityCertifications?: ProductAttributeInputDto[];
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  packagingAttributes?: ProductAttributeInputDto[];
 
   @ApiProperty({ example: 350000, minimum: 0 })
   @Type(() => Number)
@@ -201,6 +325,117 @@ export class UpdateProductDto {
     message: "imageUrl must be an http(s) URL or an absolute public path",
   })
   imageUrl?: string | null;
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  productAttributes?: ProductAttributeInputDto[];
+
+  @ApiPropertyOptional({ example: ["/products/detail-1.png"], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  @Matches(imagePathPattern, {
+    each: true,
+    message: "detailImageUrls must contain http(s) URLs or absolute public paths",
+  })
+  detailImageUrls?: string[];
+
+  @ApiPropertyOptional({ example: "Công ty TNHH Công nghệ", nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  sellerName?: string | null;
+
+  @ApiPropertyOptional({ example: 3, minimum: 0, maximum: 100, nullable: true, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  sellerYears?: number | null;
+
+  @ApiPropertyOptional({ example: "Sản phẩm chăm sóc tóc", nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  sellerPrimaryCategory?: string | null;
+
+  @ApiPropertyOptional({ example: 3, minimum: 1, maximum: 9999, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(9999)
+  minimumOrderQuantity?: number;
+
+  @ApiPropertyOptional({ example: "Sán Đầu, Quảng Đông", nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  shippingOrigin?: string | null;
+
+  @ApiPropertyOptional({ example: "Giao hàng trong vòng 48 giờ", nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  shippingLeadTime?: string | null;
+
+  @ApiPropertyOptional({ example: "Miễn phí vận chuyển trả hàng", nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  returnPolicy?: string | null;
+
+  @ApiPropertyOptional({ example: 4.4, minimum: 0, maximum: 5, nullable: true, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(5)
+  reviewRating?: number | null;
+
+  @ApiPropertyOptional({ example: 70, minimum: 0, nullable: true, type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  reviewCount?: number | null;
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  reviewTags?: ProductAttributeInputDto[];
+
+  @ApiPropertyOptional({ example: ["/products/review-1.png"], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  @Matches(imagePathPattern, {
+    each: true,
+    message: "reviewImageUrls must contain http(s) URLs or absolute public paths",
+  })
+  reviewImageUrls?: string[];
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  qualityCertifications?: ProductAttributeInputDto[];
+
+  @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttributeInputDto)
+  packagingAttributes?: ProductAttributeInputDto[];
 
   @ApiPropertyOptional({ example: 350000, minimum: 0 })
   @IsOptional()

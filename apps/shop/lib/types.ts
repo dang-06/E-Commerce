@@ -14,6 +14,11 @@ export interface ProductColorVariant {
   sortOrder: number;
 }
 
+export interface ProductAttribute {
+  label: string;
+  value: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -21,6 +26,21 @@ export interface Product {
   slug: string;
   description: string | null;
   imageUrl: string | null;
+  productAttributes: ProductAttribute[];
+  detailImageUrls: string[];
+  sellerName: string | null;
+  sellerYears: number | null;
+  sellerPrimaryCategory: string | null;
+  minimumOrderQuantity: number;
+  shippingOrigin: string | null;
+  shippingLeadTime: string | null;
+  returnPolicy: string | null;
+  reviewRating: number | null;
+  reviewCount: number | null;
+  reviewTags: ProductAttribute[];
+  reviewImageUrls: string[];
+  qualityCertifications: ProductAttribute[];
+  packagingAttributes: ProductAttribute[];
   listedPrice: string;
   stockQuantity: number | null;
   isPromotionEligible: boolean;

@@ -34,6 +34,14 @@ export class ProductColorVariantResponseDto {
   sortOrder!: number;
 }
 
+export class ProductAttributeResponseDto {
+  @ApiProperty({ example: "Chất liệu", type: String })
+  label!: string;
+
+  @ApiProperty({ example: "Cotton", type: String })
+  value!: string;
+}
+
 export class ProductResponseDto {
   @ApiProperty({ example: "1", type: String })
   id!: string;
@@ -47,11 +55,60 @@ export class ProductResponseDto {
   @ApiProperty({ example: "nuoc-hoa-floral-50ml", type: String })
   slug!: string;
 
-  @ApiPropertyOptional({ example: "Mui huong nhe, phu hop dung hang ngay.", nullable: true, type: String })
+  @ApiPropertyOptional({
+    example: "Mui huong nhe, phu hop dung hang ngay.",
+    nullable: true,
+    type: String,
+  })
   description!: string | null;
 
   @ApiPropertyOptional({ example: "/products/perfume-1.png", nullable: true, type: String })
   imageUrl!: string | null;
+
+  @ApiProperty({ type: [ProductAttributeResponseDto] })
+  productAttributes!: ProductAttributeResponseDto[];
+
+  @ApiProperty({ example: ["/products/detail-1.png"], type: [String] })
+  detailImageUrls!: string[];
+
+  @ApiPropertyOptional({ example: "Công ty TNHH Công nghệ", nullable: true, type: String })
+  sellerName!: string | null;
+
+  @ApiPropertyOptional({ example: 3, nullable: true, type: Number })
+  sellerYears!: number | null;
+
+  @ApiPropertyOptional({ example: "Sản phẩm chăm sóc tóc", nullable: true, type: String })
+  sellerPrimaryCategory!: string | null;
+
+  @ApiProperty({ example: 3, type: Number })
+  minimumOrderQuantity!: number;
+
+  @ApiPropertyOptional({ example: "Sán Đầu, Quảng Đông", nullable: true, type: String })
+  shippingOrigin!: string | null;
+
+  @ApiPropertyOptional({ example: "Giao hàng trong vòng 48 giờ", nullable: true, type: String })
+  shippingLeadTime!: string | null;
+
+  @ApiPropertyOptional({ example: "Miễn phí vận chuyển trả hàng", nullable: true, type: String })
+  returnPolicy!: string | null;
+
+  @ApiPropertyOptional({ example: 4.4, nullable: true, type: Number })
+  reviewRating!: number | null;
+
+  @ApiPropertyOptional({ example: 70, nullable: true, type: Number })
+  reviewCount!: number | null;
+
+  @ApiProperty({ type: [ProductAttributeResponseDto] })
+  reviewTags!: ProductAttributeResponseDto[];
+
+  @ApiProperty({ example: ["/products/review-1.png"], type: [String] })
+  reviewImageUrls!: string[];
+
+  @ApiProperty({ type: [ProductAttributeResponseDto] })
+  qualityCertifications!: ProductAttributeResponseDto[];
+
+  @ApiProperty({ type: [ProductAttributeResponseDto] })
+  packagingAttributes!: ProductAttributeResponseDto[];
 
   @ApiProperty({
     description: "VND amount serialized as a string.",

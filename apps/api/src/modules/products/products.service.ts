@@ -2,13 +2,16 @@ import { ConflictException, Injectable, NotFoundException } from "@nestjs/common
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../database/prisma.service.js";
 import type {
+  ProductAttributeInputDto,
   CreateProductDto,
   ProductColorVariantInputDto,
   ProductImageInputDto,
   UpdateProductDto,
 } from "./dto/product.dto.js";
 
-type ProductWithImages = Prisma.ProductGetPayload<{ include: { images: true; colorVariants: true } }>;
+type ProductWithImages = Prisma.ProductGetPayload<{
+  include: { images: true; colorVariants: true };
+}>;
 
 export interface ProductResponse {
   id: string;
@@ -17,6 +20,21 @@ export interface ProductResponse {
   slug: string;
   description: string | null;
   imageUrl: string | null;
+  productAttributes: ProductAttributeResponse[];
+  detailImageUrls: string[];
+  sellerName: string | null;
+  sellerYears: number | null;
+  sellerPrimaryCategory: string | null;
+  minimumOrderQuantity: number;
+  shippingOrigin: string | null;
+  shippingLeadTime: string | null;
+  returnPolicy: string | null;
+  reviewRating: number | null;
+  reviewCount: number | null;
+  reviewTags: ProductAttributeResponse[];
+  reviewImageUrls: string[];
+  qualityCertifications: ProductAttributeResponse[];
+  packagingAttributes: ProductAttributeResponse[];
   listedPrice: string;
   stockQuantity: number | null;
   isPromotionEligible: boolean;
@@ -35,6 +53,11 @@ export interface ProductImageResponse {
   imageUrl: string;
   altText: string | null;
   sortOrder: number;
+}
+
+export interface ProductAttributeResponse {
+  label: string;
+  value: string;
 }
 
 export interface ProductColorVariantResponse {
@@ -86,6 +109,21 @@ export class ProductsService {
         slug: dto.slug.trim(),
         description: this.optionalText(dto.description),
         imageUrl: this.optionalText(dto.imageUrl),
+        productAttributes: this.mapAttributes(dto.productAttributes ?? []),
+        detailImageUrls: this.mapDetailImageUrls(dto.detailImageUrls ?? []),
+        sellerName: this.optionalText(dto.sellerName),
+        sellerYears: dto.sellerYears ?? null,
+        sellerPrimaryCategory: this.optionalText(dto.sellerPrimaryCategory),
+        minimumOrderQuantity: dto.minimumOrderQuantity ?? 1,
+        shippingOrigin: this.optionalText(dto.shippingOrigin),
+        shippingLeadTime: this.optionalText(dto.shippingLeadTime),
+        returnPolicy: this.optionalText(dto.returnPolicy),
+        reviewRating: dto.reviewRating !== undefined ? new Prisma.Decimal(dto.reviewRating) : null,
+        reviewCount: dto.reviewCount ?? null,
+        reviewTags: this.mapAttributes(dto.reviewTags ?? []),
+        reviewImageUrls: this.mapDetailImageUrls(dto.reviewImageUrls ?? []),
+        qualityCertifications: this.mapAttributes(dto.qualityCertifications ?? []),
+        packagingAttributes: this.mapAttributes(dto.packagingAttributes ?? []),
         listedPrice: BigInt(dto.listedPrice),
         stockQuantity: dto.stockQuantity ?? null,
         isPromotionEligible: dto.isPromotionEligible ?? true,
@@ -119,14 +157,62 @@ export class ProductsService {
           ...(dto.sku !== undefined ? { sku: this.normalizeSku(dto.sku) } : {}),
           ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
           ...(dto.slug !== undefined ? { slug: dto.slug.trim() } : {}),
-          ...(dto.description !== undefined ? { description: this.optionalText(dto.description) } : {}),
+          ...(dto.description !== undefined
+            ? { description: this.optionalText(dto.description) }
+            : {}),
           ...(dto.imageUrl !== undefined ? { imageUrl: this.optionalText(dto.imageUrl) } : {}),
+          ...(dto.productAttributes !== undefined
+            ? { productAttributes: this.mapAttributes(dto.productAttributes) }
+            : {}),
+          ...(dto.detailImageUrls !== undefined
+            ? { detailImageUrls: this.mapDetailImageUrls(dto.detailImageUrls) }
+            : {}),
+          ...(dto.sellerName !== undefined
+            ? { sellerName: this.optionalText(dto.sellerName) }
+            : {}),
+          ...(dto.sellerYears !== undefined ? { sellerYears: dto.sellerYears } : {}),
+          ...(dto.sellerPrimaryCategory !== undefined
+            ? { sellerPrimaryCategory: this.optionalText(dto.sellerPrimaryCategory) }
+            : {}),
+          ...(dto.minimumOrderQuantity !== undefined
+            ? { minimumOrderQuantity: dto.minimumOrderQuantity }
+            : {}),
+          ...(dto.shippingOrigin !== undefined
+            ? { shippingOrigin: this.optionalText(dto.shippingOrigin) }
+            : {}),
+          ...(dto.shippingLeadTime !== undefined
+            ? { shippingLeadTime: this.optionalText(dto.shippingLeadTime) }
+            : {}),
+          ...(dto.returnPolicy !== undefined
+            ? { returnPolicy: this.optionalText(dto.returnPolicy) }
+            : {}),
+          ...(dto.reviewRating !== undefined
+            ? {
+                reviewRating:
+                  dto.reviewRating === null ? null : new Prisma.Decimal(dto.reviewRating),
+              }
+            : {}),
+          ...(dto.reviewCount !== undefined ? { reviewCount: dto.reviewCount } : {}),
+          ...(dto.reviewTags !== undefined
+            ? { reviewTags: this.mapAttributes(dto.reviewTags) }
+            : {}),
+          ...(dto.reviewImageUrls !== undefined
+            ? { reviewImageUrls: this.mapDetailImageUrls(dto.reviewImageUrls) }
+            : {}),
+          ...(dto.qualityCertifications !== undefined
+            ? { qualityCertifications: this.mapAttributes(dto.qualityCertifications) }
+            : {}),
+          ...(dto.packagingAttributes !== undefined
+            ? { packagingAttributes: this.mapAttributes(dto.packagingAttributes) }
+            : {}),
           ...(dto.listedPrice !== undefined ? { listedPrice: BigInt(dto.listedPrice) } : {}),
           ...(dto.stockQuantity !== undefined ? { stockQuantity: dto.stockQuantity } : {}),
           ...(dto.isPromotionEligible !== undefined
             ? { isPromotionEligible: dto.isPromotionEligible }
             : {}),
-          ...(dto.discountAmount !== undefined ? { discountAmount: BigInt(dto.discountAmount) } : {}),
+          ...(dto.discountAmount !== undefined
+            ? { discountAmount: BigInt(dto.discountAmount) }
+            : {}),
           ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
           ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
           ...(dto.images !== undefined
@@ -205,6 +291,19 @@ export class ProductsService {
     }));
   }
 
+  private mapAttributes(attributes: ProductAttributeInputDto[]): Prisma.InputJsonValue {
+    return attributes
+      .map((attribute) => ({
+        label: attribute.label.trim(),
+        value: attribute.value.trim(),
+      }))
+      .filter((attribute) => attribute.label && attribute.value);
+  }
+
+  private mapDetailImageUrls(imageUrls: string[]): Prisma.InputJsonValue {
+    return imageUrls.map((imageUrl) => imageUrl.trim()).filter(Boolean);
+  }
+
   private mapColorVariants(
     variants: ProductColorVariantInputDto[],
   ): Prisma.ProductColorVariantCreateManyProductInput[] {
@@ -238,6 +337,21 @@ export class ProductsService {
       slug: product.slug,
       description: product.description,
       imageUrl: product.imageUrl,
+      productAttributes: this.toAttributeResponse(product.productAttributes),
+      detailImageUrls: this.toDetailImageUrls(product.detailImageUrls),
+      sellerName: product.sellerName,
+      sellerYears: product.sellerYears,
+      sellerPrimaryCategory: product.sellerPrimaryCategory,
+      minimumOrderQuantity: product.minimumOrderQuantity,
+      shippingOrigin: product.shippingOrigin,
+      shippingLeadTime: product.shippingLeadTime,
+      returnPolicy: product.returnPolicy,
+      reviewRating: product.reviewRating === null ? null : product.reviewRating.toNumber(),
+      reviewCount: product.reviewCount,
+      reviewTags: this.toAttributeResponse(product.reviewTags),
+      reviewImageUrls: this.toDetailImageUrls(product.reviewImageUrls),
+      qualityCertifications: this.toAttributeResponse(product.qualityCertifications),
+      packagingAttributes: this.toAttributeResponse(product.packagingAttributes),
       listedPrice: product.listedPrice.toString(),
       stockQuantity: product.stockQuantity,
       isPromotionEligible: product.isPromotionEligible,
@@ -262,5 +376,32 @@ export class ProductsService {
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
     };
+  }
+
+  private toAttributeResponse(value: Prisma.JsonValue): ProductAttributeResponse[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    return value.flatMap((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return [];
+      }
+      const candidate = item as { label?: unknown; value?: unknown };
+      if (typeof candidate.label !== "string" || typeof candidate.value !== "string") {
+        return [];
+      }
+      const label = candidate.label.trim();
+      const attributeValue = candidate.value.trim();
+      return label && attributeValue ? [{ label, value: attributeValue }] : [];
+    });
+  }
+
+  private toDetailImageUrls(value: Prisma.JsonValue): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+    return value.filter(
+      (item): item is string => typeof item === "string" && item.trim().length > 0,
+    );
   }
 }
