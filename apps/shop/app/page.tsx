@@ -1049,7 +1049,7 @@ function ProductDetail({
         {product.colorVariants.length > 0 ? (
           <div className="nik-option-group" aria-label="Màu sản phẩm">
             <div className="nik-option-heading">
-              <h3>Màu khác</h3>
+              <h3>Loại khác</h3>
               {selectedVariant ? <span>{selectedVariant.name}</span> : null}
             </div>
             <div className="nik-color-grid">
