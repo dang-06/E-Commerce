@@ -2,6 +2,9 @@ import { getProduct } from "./cart";
 import { parseVnd } from "./money";
 import type { CartItem, Product } from "./types";
 
+export const singleItemShippingFee = 30000;
+export const freeShippingMinQuantity = 2;
+
 export interface CartLine {
   product: Product;
   quantity: number;
@@ -26,7 +29,7 @@ export function calculateCartTotals(
   products: Product[],
   items: CartItem[],
   hasPromotion: boolean,
-  shippingFee: number | null,
+  shippingFee?: number | null,
 ): CartTotals {
   const lines = items.flatMap((item) => {
     const product = getProduct(products, item.productId);
@@ -56,13 +59,15 @@ export function calculateCartTotals(
   const subtotal = lines.reduce((sum, line) => sum + line.lineSubtotal, 0);
   const discountAmount = lines.reduce((sum, line) => sum + line.lineDiscount, 0);
   const totalQuantity = lines.reduce((sum, line) => sum + line.quantity, 0);
+  const resolvedShippingFee =
+    shippingFee ?? (totalQuantity === 0 ? 0 : totalQuantity >= freeShippingMinQuantity ? 0 : singleItemShippingFee);
 
   return {
     lines,
     totalQuantity,
     subtotal,
     discountAmount,
-    shippingFee,
-    payableAmount: shippingFee === null ? null : subtotal - discountAmount + shippingFee,
+    shippingFee: resolvedShippingFee,
+    payableAmount: subtotal - discountAmount + resolvedShippingFee,
   };
 }

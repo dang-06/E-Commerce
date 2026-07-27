@@ -140,7 +140,7 @@ export function getConfig(): AppConfig {
       "postgresql://ecommerce:change_me@localhost:5432/ecommerce?schema=public",
     defaultShippingFeeVnd: parseNonNegativeInt(
       process.env.API_DEFAULT_SHIPPING_FEE_VND,
-      0,
+      30000,
       "API_DEFAULT_SHIPPING_FEE_VND",
     ),
     host: process.env.API_HOST ?? "0.0.0.0",

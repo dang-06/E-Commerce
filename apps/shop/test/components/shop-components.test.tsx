@@ -45,7 +45,7 @@ void test("ProductCard escapes product names rendered from API data", () => {
   assert.match(html, /&lt;script&gt;/);
 });
 
-void test("OrderSummary renders live totals and unknown shipping state", () => {
+void test("OrderSummary renders live totals and free shipping state", () => {
   const product = sampleProduct();
   const totals = calculateCartTotals([product], [{ productId: product.id, quantity: 2 }], true, null);
   const html = renderToStaticMarkup(<OrderSummary totals={totals} />);
@@ -53,5 +53,5 @@ void test("OrderSummary renders live totals and unknown shipping state", () => {
   assert.match(html, /Tổng giá gốc/);
   assert.match(html, /198\.000/);
   assert.match(html, /50\.000/);
-  assert.match(html, /Chờ xác nhận phí vận chuyển/);
+  assert.match(html, /Miễn phí/);
 });

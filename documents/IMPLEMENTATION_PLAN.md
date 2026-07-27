@@ -561,7 +561,7 @@ De xuat bo sung khi thiet ke chi tiet:
 | Khong OTP nhung cho dung SĐT chia se | Uu dai co the bi dung boi nguoi khong phai chu SĐT | Chap nhan la quyet dinh kinh doanh, them rate limit va usage limit neu duoc chot. |
 | Phone gate anh huong SEO/chuyen doi | Giam index va tang bounce rate | Chot phone gate vs public catalog truoc UI. |
 | Tich hop Pancake/BEST thieu tai lieu | Tre milestone integration | Mock adapter va chi implement khi co credential/docs/sandbox. |
-| Phi ship/thanh toan chua ro | Sai tong thanh toan va thong tin don | Chot phi ship/payment truoc checkout. |
+| Phi ship/thanh toan thay doi | Sai tong thanh toan va thong tin don | Rule hien tai: 1 san pham ship 30.000 VND, tu 2 san pham mien phi ship; backend tinh lai chinh thuc. |
 
 ### 11.2. Rui ro ky thuat
 

@@ -242,7 +242,8 @@ void test("quotes and creates a normal-price order when product is not promotion
   const quote = await service.quote(input);
   assert.equal(quote.subtotal, "100000");
   assert.equal(quote.discountAmount, "0");
-  assert.equal(quote.totalAmount, "100000");
+  assert.equal(quote.shippingFee, "30000");
+  assert.equal(quote.totalAmount, "130000");
 
   const order = await service.create(input);
   assert.equal(order.status, "created");
@@ -265,6 +266,7 @@ void test("calculates promotion discount for multiple products and repeated quan
   assert.equal(quote.totalQuantity, 3);
   assert.equal(quote.subtotal, "400000");
   assert.equal(quote.discountAmount, "75000");
+  assert.equal(quote.shippingFee, "0");
   assert.equal(quote.totalAmount, "325000");
 });
 

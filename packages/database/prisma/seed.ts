@@ -70,6 +70,21 @@ function json(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
 }
 
+async function resetSeedData(): Promise<void> {
+  await prisma.auditLog.deleteMany();
+  await prisma.integrationLog.deleteMany();
+  await prisma.integrationJob.deleteMany();
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.eligibleCustomer.deleteMany();
+  await prisma.productImage.deleteMany();
+  await prisma.productColorVariant.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.promotionRule.deleteMany();
+  await prisma.googleSheetConfig.deleteMany();
+  await prisma.siteSettings.deleteMany();
+}
+
 async function main(): Promise<void> {
   const passwordHash = await bcrypt.hash(defaultPassword, 12);
 
@@ -106,6 +121,8 @@ async function main(): Promise<void> {
       status: "active",
     },
   });
+
+  await resetSeedData();
 
   await prisma.promotionRule.upsert({
     where: { code: "PHONE_25000" },
@@ -678,37 +695,8 @@ async function main(): Promise<void> {
 
   const seededProducts = [];
   for (const product of products) {
-    const seededProduct = await prisma.product.upsert({
-      where: { sku: product.sku },
-      update: {
-        name: product.name,
-        slug: product.slug,
-        description: product.description,
-        productAttributes: json(product.productAttributes),
-        detailImageUrls: json(product.detailImageUrls),
-        sellerName: product.sellerName,
-        sellerYears: product.sellerYears,
-        sellerPrimaryCategory: product.sellerPrimaryCategory,
-        minimumOrderQuantity: product.minimumOrderQuantity,
-        shippingOrigin: product.shippingOrigin,
-        shippingLeadTime: product.shippingLeadTime,
-        returnPolicy: product.returnPolicy,
-        reviewRating: product.reviewRating,
-        reviewCount: product.reviewCount,
-        reviewTags: json(product.reviewTags),
-        reviewImageUrls: json(product.reviewImageUrls),
-        reviewSample: json(product.reviewSample ?? sharedReviewSample),
-        qualityCertifications: json(product.qualityCertifications),
-        packagingAttributes: json(product.packagingAttributes),
-        listedPrice: product.listedPrice,
-        imageUrl: product.imageUrl,
-        stockQuantity: product.stockQuantity,
-        discountAmount: 25000n,
-        isPromotionEligible: true,
-        isActive: true,
-        sortOrder: product.sortOrder,
-      },
-      create: {
+    const seededProduct = await prisma.product.create({
+      data: {
         sku: product.sku,
         slug: product.slug,
         name: product.name,
@@ -736,27 +724,23 @@ async function main(): Promise<void> {
         discountAmount: 25000n,
         isPromotionEligible: true,
         isActive: true,
+        images: {
+          create: product.images.map((image) => ({
+            altText: image.altText,
+            imageUrl: image.imageUrl,
+            sortOrder: image.sortOrder,
+          })),
+        },
+        colorVariants: {
+          create: product.colorVariants.map((variant) => ({
+            colorCode: variant.colorCode,
+            imageUrl: variant.imageUrl,
+            name: variant.name,
+            sku: variant.sku,
+            sortOrder: variant.sortOrder,
+          })),
+        },
       },
-    });
-    await prisma.productImage.deleteMany({ where: { productId: seededProduct.id } });
-    await prisma.productColorVariant.deleteMany({ where: { productId: seededProduct.id } });
-    await prisma.productImage.createMany({
-      data: product.images.map((image) => ({
-        altText: image.altText,
-        imageUrl: image.imageUrl,
-        productId: seededProduct.id,
-        sortOrder: image.sortOrder,
-      })),
-    });
-    await prisma.productColorVariant.createMany({
-      data: product.colorVariants.map((variant) => ({
-        colorCode: variant.colorCode,
-        imageUrl: variant.imageUrl,
-        name: variant.name,
-        productId: seededProduct.id,
-        sku: variant.sku,
-        sortOrder: variant.sortOrder,
-      })),
     });
     seededProducts.push(seededProduct);
   }
@@ -812,7 +796,7 @@ async function main(): Promise<void> {
 
   const firstOrderSubtotal = firstProduct.listedPrice * 2n + secondProduct.listedPrice;
   const firstOrderDiscount = firstProduct.discountAmount * 2n + secondProduct.discountAmount;
-  const firstOrderShipping = 30000n;
+  const firstOrderShipping = 0n;
   const firstOrder = await prisma.order.create({
     data: {
       orderCode: "DEVORDER001",

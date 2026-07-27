@@ -17,6 +17,8 @@ void test("buyer flow checks phone, builds cart, validates recipient and submits
   assert.equal(totals.totalQuantity, 2);
   assert.equal(totals.subtotal, 198000);
   assert.equal(totals.discountAmount, 50000);
+  assert.equal(totals.shippingFee, 0);
+  assert.equal(totals.payableAmount, 148000);
 
   const recipient = validRecipient();
   assert.equal(validateRecipientForm(recipient).valid, true);
@@ -59,6 +61,8 @@ void test("buyer flow allows non-eligible phone session with normal pricing", as
 
   assert.equal(totals.discountAmount, 0);
   assert.equal(totals.subtotal, 99000);
+  assert.equal(totals.shippingFee, 30000);
+  assert.equal(totals.payableAmount, 129000);
 
   const result = await submitCheckout({
     cartItems: cart,
@@ -72,8 +76,8 @@ void test("buyer flow allows non-eligible phone session with normal pricing", as
         totalQuantity: 1,
         subtotal: "99000",
         discountAmount: "0",
-        shippingFee: "0",
-        totalAmount: "99000",
+        shippingFee: "30000",
+        totalAmount: "129000",
       });
     },
     idempotencyKey: "idem-normal-1",
@@ -86,7 +90,7 @@ void test("buyer flow allows non-eligible phone session with normal pricing", as
   });
 
   assert.equal(result.ok, true);
-  assert.equal(result.order?.totalAmount, "99000");
+  assert.equal(result.order?.totalAmount, "129000");
 });
 
 void test("buyer flow blocks checkout without promotion session or valid recipient", async () => {

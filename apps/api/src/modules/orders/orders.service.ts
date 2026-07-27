@@ -318,7 +318,7 @@ export class OrdersService {
     const subtotal = lines.reduce((sum, line) => sum + line.lineSubtotal, 0n);
     const discountAmount = lines.reduce((sum, line) => sum + line.lineDiscount, 0n);
     const totalQuantity = lines.reduce((sum, line) => sum + line.quantity, 0);
-    const shippingFee = this.resolveShippingFee();
+    const shippingFee = this.resolveShippingFee(totalQuantity);
     return {
       promotion,
       lines,
@@ -385,8 +385,8 @@ export class OrdersService {
       .sort((left, right) => BigInt(left.productId) < BigInt(right.productId) ? -1 : 1);
   }
 
-  private resolveShippingFee(): bigint {
-    return BigInt(getConfig().defaultShippingFeeVnd);
+  private resolveShippingFee(totalQuantity: number): bigint {
+    return totalQuantity >= 2 ? 0n : BigInt(getConfig().defaultShippingFeeVnd);
   }
 
   private toSnapshot(idempotencyKey: string, calculation: PriceCalculation): Omit<OrderQuoteSnapshot, "expiresAt"> {

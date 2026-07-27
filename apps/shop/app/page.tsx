@@ -24,7 +24,12 @@ import {
   quoteOrder,
 } from "../lib/api";
 import { normalizeVietnamesePhone } from "../lib/phone";
-import { calculateCartTotals, type CartTotals } from "../lib/pricing";
+import {
+  calculateCartTotals,
+  freeShippingMinQuantity,
+  singleItemShippingFee,
+  type CartTotals,
+} from "../lib/pricing";
 import { readCart, setCartQuantity, writeCart } from "../lib/cart";
 import { formatVnd, parseVnd } from "../lib/money";
 import { submitCheckout } from "../lib/checkout-flow";
@@ -667,10 +672,12 @@ function CartDrawer({
   products: Product[];
   totals: CartTotals;
 }): React.ReactElement {
-  const freeShipThreshold = 700000;
   const merchandiseTotal = totals.subtotal - totals.discountAmount;
-  const freeShipRemaining = Math.max(freeShipThreshold - merchandiseTotal, 0);
-  const freeShipProgress = Math.min((merchandiseTotal / freeShipThreshold) * 100, 100);
+  const freeShipRemaining = Math.max(freeShippingMinQuantity - totals.totalQuantity, 0);
+  const freeShipProgress =
+    totals.totalQuantity === 0
+      ? 0
+      : Math.min((totals.totalQuantity / freeShippingMinQuantity) * 100, 100);
   const checkoutTotal = totals.payableAmount ?? merchandiseTotal;
 
   return (
@@ -707,13 +714,13 @@ function CartDrawer({
         >
           <p>
             {freeShipRemaining > 0
-              ? `Bạn còn ${formatVnd(freeShipRemaining)} nữa là được FreeShip`
+              ? `Mua thêm ${freeShipRemaining} sản phẩm để được FreeShip`
               : "Đơn hàng đã đủ điều kiện FreeShip"}
           </p>
           <div>
             <span style={{ width: `${freeShipProgress}%` }} />
           </div>
-          <strong>{formatVnd(freeShipThreshold)}</strong>
+          <strong>1 sản phẩm ship {formatVnd(singleItemShippingFee)}</strong>
         </div>
 
         <div className="cart-drawer-body">

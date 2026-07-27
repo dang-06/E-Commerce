@@ -399,7 +399,7 @@ h2 {
 }
 
 .home-story-strip {
-  --story-card-width: clamp(190px, 22vw, 260px);
+  --story-card-width: clamp(120px, 16vw, 170px);
   overflow: hidden;
   position: relative;
 }
@@ -439,12 +439,15 @@ h2 {
   animation-play-state: paused;
 }
 
+.home-story-strip a,
 .home-story-strip button {
   aspect-ratio: 4 / 5;
   background: #f6f6f6;
   border: 0;
   cursor: pointer;
+  display: block;
   flex: 0 0 var(--story-card-width);
+  max-height: 212px;
   overflow: hidden;
   padding: 0;
 }
@@ -458,6 +461,7 @@ h2 {
   width: 100%;
 }
 
+.home-story-strip a:hover img,
 .home-story-strip button:hover img {
   filter: saturate(1.05);
   transform: scale(1.04);
@@ -2115,13 +2119,13 @@ h2 {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 22px;
-  margin-bottom: 24px;
+  gap: 10px 16px;
+  margin-bottom: 18px;
 }
 
 .nik-review-header h3 {
   color: #242628;
-  font-size: clamp(1.55rem, 2.4vw, 2.25rem);
+  font-size: clamp(1.18rem, 1.65vw, 1.55rem);
   font-weight: 800;
   line-height: 1.1;
   margin: 0;
@@ -2130,18 +2134,18 @@ h2 {
 .nik-review-score {
   align-items: center;
   display: inline-flex;
-  gap: 8px;
+  gap: 6px;
 }
 
 .nik-review-score strong {
   color: #ff3b12;
-  font-size: 1.2rem;
+  font-size: 0.98rem;
   font-weight: 500;
 }
 
 .nik-review-score span {
   color: #9d9d9d;
-  font-size: 1.15rem;
+  font-size: 0.96rem;
 }
 
 .nik-review-stars {
@@ -2153,7 +2157,9 @@ h2 {
 
 .nik-review-stars svg {
   fill: currentColor;
+  height: 16px;
   stroke: currentColor;
+  width: 16px;
 }
 
 .nik-review-stars .filled {
@@ -2163,16 +2169,16 @@ h2 {
 .nik-review-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 14px;
-  margin-bottom: 26px;
+  gap: 8px 10px;
+  margin-bottom: 18px;
 }
 
 .nik-review-tags span {
   background: #f0f0f0;
   color: #1f2225;
-  font-size: 1.05rem;
+  font-size: 0.86rem;
   line-height: 1.1;
-  padding: 10px 14px;
+  padding: 7px 10px;
 }
 
 .nik-review-tags strong {
@@ -2182,15 +2188,15 @@ h2 {
 }
 
 .nik-review-sample {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .nik-review-buyer {
   align-items: center;
   color: #9d9d9d;
   display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .nik-review-buyer img,
@@ -2200,18 +2206,18 @@ h2 {
   color: #7c8f88;
   display: inline-grid;
   flex: 0 0 auto;
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 800;
-  height: 28px;
+  height: 22px;
   object-fit: cover;
   place-items: center;
-  width: 28px;
+  width: 22px;
 }
 
 .nik-review-buyer strong,
 .nik-review-buyer em {
   color: #9d9d9d;
-  font-size: 1rem;
+  font-size: 0.82rem;
   font-style: normal;
   font-weight: 500;
 }
@@ -2219,14 +2225,14 @@ h2 {
 .nik-review-buyer i {
   background: #e0e0e0;
   display: block;
-  height: 20px;
+  height: 16px;
   width: 1px;
 }
 
 .nik-review-sample p {
   color: #282b2d;
-  font-size: 1.1rem;
-  line-height: 1.55;
+  font-size: 0.92rem;
+  line-height: 1.5;
   margin: 0;
 }
 
@@ -2255,11 +2261,11 @@ h2 {
 .nik-review-images figcaption {
   background: rgba(25, 24, 20, 0.72);
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   font-weight: 700;
   left: 0;
   line-height: 1;
-  padding: 8px 10px;
+  padding: 6px 8px;
   position: absolute;
   top: 0;
   z-index: 1;
@@ -2271,12 +2277,12 @@ h2 {
   color: #ff3b12;
   cursor: pointer;
   display: block;
-  font-size: 1rem;
+  font-size: 0.88rem;
   letter-spacing: 0;
-  margin: 26px auto 0;
-  min-height: 48px;
-  min-width: 230px;
-  padding: 0 26px;
+  margin: 20px auto 0;
+  min-height: 40px;
+  min-width: 190px;
+  padding: 0 18px;
   transition:
     background var(--motion-fast) ease,
     color var(--motion-fast) ease,
@@ -2614,7 +2620,7 @@ h2 {
   }
 
   .home-story-strip {
-    --story-card-width: clamp(220px, 14vw, 320px);
+    --story-card-width: clamp(132px, 11vw, 180px);
   }
 
   .category-grid {
@@ -2946,17 +2952,17 @@ h2 {
   }
 
   .nik-review-header h3 {
-    font-size: 1.35rem;
+    font-size: 1.05rem;
   }
 
   .nik-review-score strong,
   .nik-review-score span {
-    font-size: 0.98rem;
+    font-size: 0.82rem;
   }
 
   .nik-review-stars svg {
-    height: 16px;
-    width: 16px;
+    height: 14px;
+    width: 14px;
   }
 
   .nik-review-tags {
@@ -2965,12 +2971,12 @@ h2 {
   }
 
   .nik-review-tags span {
-    font-size: 0.9rem;
-    padding: 8px 10px;
+    font-size: 0.78rem;
+    padding: 6px 8px;
   }
 
   .nik-review-sample p {
-    font-size: 0.95rem;
+    font-size: 0.84rem;
   }
 
   .nik-review-images img {
@@ -2983,11 +2989,11 @@ h2 {
   }
 
   .nik-review-more-button {
-    font-size: 0.92rem;
-    margin-top: 20px;
-    min-height: 42px;
-    min-width: 190px;
-    padding: 0 18px;
+    font-size: 0.8rem;
+    margin-top: 16px;
+    min-height: 36px;
+    min-width: 160px;
+    padding: 0 14px;
   }
 
   .announcement-bar {
@@ -3011,7 +3017,7 @@ h2 {
   }
 
   .home-story-strip {
-    --story-card-width: 46vw;
+    --story-card-width: clamp(112px, 34vw, 150px);
   }
 
   .home-categories,

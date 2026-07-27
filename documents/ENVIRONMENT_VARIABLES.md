@@ -33,7 +33,7 @@ Khong commit secret that. File `.env.example` chi dung placeholder; moi truong s
 | `API_PROMOTION_TOKEN_TTL_SECONDS` | Khong | `1800` | TTL promotion token |
 | `API_PROMOTION_RATE_LIMIT_MAX` | Khong | `20` | Gioi han check uu dai |
 | `API_PROMOTION_RATE_LIMIT_WINDOW_SECONDS` | Khong | `900` | Cua so rate limit check uu dai |
-| `API_DEFAULT_SHIPPING_FEE_VND` | Can xac nhan | `0` | Tam thoi theo business rule da chot/cau hinh |
+| `API_DEFAULT_SHIPPING_FEE_VND` | Khong | `30000` | Phi ship cho don 1 san pham; tu 2 san pham tro len mien phi ship |
 | `API_ORDER_INTEGRATIONS` | Khong | `sheet,pancake` | Danh sach adapter tao job khi co don |
 | `CLOUDINARY_CLOUD_NAME` | Khi upload anh | `your_cloud_name` | Cloudinary cloud name |
 | `CLOUDINARY_API_KEY` | Khi upload anh | `your_api_key` | Chi dung server-side |

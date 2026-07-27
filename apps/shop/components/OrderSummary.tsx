@@ -20,14 +20,22 @@ export function OrderSummary({ totals }: { totals: CartTotals }): React.ReactEle
         </div>
         <div>
           <dt>Phí vận chuyển</dt>
-          <dd>{totals.shippingFee === null ? "Chờ xác nhận" : formatVnd(totals.shippingFee)}</dd>
+          <dd>
+            {totals.shippingFee === null
+              ? "Chờ xác nhận"
+              : totals.shippingFee === 0
+                ? "Miễn phí"
+                : formatVnd(totals.shippingFee)}
+          </dd>
         </div>
         <div className="summary-total">
           <dt>Tổng thanh toán</dt>
-          <dd>{totals.payableAmount === null ? "Chờ xác nhận phí vận chuyển" : formatVnd(totals.payableAmount)}</dd>
+          <dd>{totals.payableAmount === null ? "Chờ xác nhận" : formatVnd(totals.payableAmount)}</dd>
         </div>
       </dl>
-      <p className="summary-note">Giá hiển thị là tạm tính. Hệ thống sẽ tính lại giá chính thức khi tạo đơn.</p>
+      <p className="summary-note">
+        Phí ship 30.000đ cho đơn 1 sản phẩm; từ 2 sản phẩm trở lên miễn phí ship.
+      </p>
     </section>
   );
 }

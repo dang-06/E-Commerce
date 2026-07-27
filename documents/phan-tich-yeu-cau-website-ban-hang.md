@@ -256,6 +256,11 @@ Tổng sau giảm = Tổng giá gốc − Tổng giảm giá
 Tổng thanh toán = Tổng sau giảm + Phí vận chuyển
 ```
 
+Chính sách phí vận chuyển đã xác nhận:
+
+- Đơn có tổng số lượng 1 sản phẩm: phí vận chuyển 30.000 VND.
+- Đơn có tổng số lượng từ 2 sản phẩm trở lên: miễn phí vận chuyển.
+
 Ví dụ:
 
 | Nội dung | Giá trị |
@@ -266,7 +271,7 @@ Ví dụ:
 | Tổng giá gốc | 377.000 VND |
 | Giảm 3 sản phẩm | -75.000 VND |
 | Tổng sau giảm | 302.000 VND |
-| Phí vận chuyển | Theo chính sách |
+| Phí vận chuyển | 0 VND vì tổng số lượng từ 2 sản phẩm trở lên |
 | Tổng thanh toán | Tổng sau giảm + phí vận chuyển |
 
 ### 5.2. Chuẩn hóa số điện thoại
@@ -797,7 +802,7 @@ Các yếu tố có thể làm tăng thời gian và chi phí:
 - [ ] Secret và API key không nằm trong source code.
 - [ ] Đã import tệp khách thật và kiểm tra mẫu.
 - [ ] Đã xác nhận giá và trạng thái 9 sản phẩm.
-- [ ] Đã xác nhận phí vận chuyển.
+- [x] Đã xác nhận phí vận chuyển: 1 sản phẩm 30.000 VND, từ 2 sản phẩm miễn phí.
 - [ ] Đã test đơn thật từ đầu đến cuối.
 - [ ] Đã test Pancake/Google Sheet hoặc BEST theo phạm vi.
 - [ ] Đã test trình duyệt Messenger/Facebook.
@@ -841,4 +846,3 @@ Không đưa yêu cầu chưa được xác nhận vào sprint đang thực hi�
 | Tích hợp BEST Express | Chưa xác nhận |
 | UX phone gate và SEO | Chưa chốt phương án |
 | Domain/hosting | Chưa xác nhận |
-
