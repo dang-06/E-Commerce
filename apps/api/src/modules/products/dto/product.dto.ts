@@ -55,6 +55,45 @@ export class ProductAttributeInputDto {
   value!: string;
 }
 
+export class ProductReviewSampleInputDto {
+  @ApiPropertyOptional({ example: "Ẩn danh mua", maxLength: 120, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  buyerName?: string;
+
+  @ApiPropertyOptional({ example: "/placeholder-user.jpg", maxLength: 2048, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  @Matches(imagePathPattern, {
+    message: "buyerAvatarUrl must be an http(s) URL or an absolute public path",
+  })
+  buyerAvatarUrl?: string;
+
+  @ApiPropertyOptional({ example: "6 kiện", maxLength: 80, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  purchasedSummary?: string;
+
+  @ApiPropertyOptional({
+    example: "We got samples and these are looking nice packing 13533445404",
+    maxLength: 1000,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  content?: string;
+
+  @ApiPropertyOptional({ example: "买家实拍", maxLength: 80, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  imageBadge?: string;
+}
+
 export class ProductColorVariantInputDto {
   @ApiProperty({ example: "Pink" })
   @IsString()
@@ -222,6 +261,12 @@ export class CreateProductDto {
     message: "reviewImageUrls must contain http(s) URLs or absolute public paths",
   })
   reviewImageUrls?: string[];
+
+  @ApiPropertyOptional({ type: ProductReviewSampleInputDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProductReviewSampleInputDto)
+  reviewSample?: ProductReviewSampleInputDto;
 
   @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
   @IsOptional()
@@ -422,6 +467,12 @@ export class UpdateProductDto {
     message: "reviewImageUrls must contain http(s) URLs or absolute public paths",
   })
   reviewImageUrls?: string[];
+
+  @ApiPropertyOptional({ nullable: true, type: ProductReviewSampleInputDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ProductReviewSampleInputDto)
+  reviewSample?: ProductReviewSampleInputDto | null;
 
   @ApiPropertyOptional({ type: [ProductAttributeInputDto] })
   @IsOptional()

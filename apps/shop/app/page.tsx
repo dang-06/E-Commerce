@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -8,6 +9,7 @@ import {
   Search,
   ShoppingBag,
   ShoppingCart,
+  Star,
   Trash2,
   X,
 } from "lucide-react";
@@ -151,8 +153,9 @@ export default function ShopPage(): React.ReactElement {
         ...(result.expiresAt ? { expiresAt: result.expiresAt } : {}),
         ...(result.promotionToken ? { promotionToken: result.promotionToken } : {}),
       });
-      setStep("catalog");
       await loadProducts();
+      const shouldCheckout = new URLSearchParams(globalThis.location.search).get("checkout") === "1";
+      setStep(shouldCheckout && cartItems.length > 0 ? "checkout" : "catalog");
     } catch {
       setPromotionError("Không thể kiểm tra ưu đãi lúc này. Vui lòng thử lại.");
       setStep("intro");
@@ -330,15 +333,11 @@ export default function ShopPage(): React.ReactElement {
       {step === "catalog" && selectedProduct ? (
         <ProductDetail
           product={selectedProduct}
-          onBack={() => {
-            setSelectedProduct(null);
-          }}
           onAdd={addToCart}
           onBuyNow={buyNow}
           onHome={goHome}
           onSelectProduct={setSelectedProduct}
           promotionUnlocked={promotionSession?.eligible === true}
-          quantity={cartItems.find((item) => item.productId === selectedProduct.id)?.quantity ?? 0}
           relatedProducts={products
             .filter((product) => product.id !== selectedProduct.id)
             .slice(0, 8)}
@@ -354,7 +353,6 @@ export default function ShopPage(): React.ReactElement {
           productsLoading={productsLoading}
           promotionUnlocked={promotionSession?.eligible === true}
           siteSettings={siteSettings}
-          onDetail={setSelectedProduct}
         />
       ) : null}
 
@@ -522,7 +520,6 @@ function ShopHeader({
 
 function ShopHome({
   filteredProducts,
-  onDetail,
   orderError,
   products,
   productsError,
@@ -531,7 +528,6 @@ function ShopHome({
   siteSettings,
 }: {
   filteredProducts: Product[];
-  onDetail: (product: Product) => void;
   orderError: string | null;
   products: Product[];
   productsError: string | null;
@@ -583,29 +579,23 @@ function ShopHome({
         >
           <div className="home-story-track">
             {storyImages.map((item) => (
-              <button
+              <Link
                 key={item.product.id}
-                type="button"
-                onClick={() => {
-                  onDetail(item.product);
-                }}
+                href={`/products/${item.product.slug}`}
               >
                 <img src={item.image} alt={item.name} />
-              </button>
+              </Link>
             ))}
             {storyImages.length > 1
               ? storyImages.map((item) => (
-                  <button
+                  <Link
                     key={`${item.product.id}-loop`}
                     aria-hidden="true"
+                    href={`/products/${item.product.slug}`}
                     tabIndex={-1}
-                    type="button"
-                    onClick={() => {
-                      onDetail(item.product);
-                    }}
                   >
                     <img src={item.image} alt="" />
-                  </button>
+                  </Link>
                 ))
               : null}
           </div>
@@ -634,7 +624,6 @@ function ShopHome({
               key={product.id}
               product={product}
               promotionUnlocked={promotionUnlocked}
-              onDetail={onDetail}
             />
           ))}
         </div>
@@ -915,23 +904,19 @@ function CheckoutView({
 
 function ProductDetail({
   onAdd,
-  onBack,
   onBuyNow,
   onHome,
   onSelectProduct,
   product,
   promotionUnlocked,
-  quantity,
   relatedProducts,
 }: {
   onAdd: (productId: string, quantity?: number) => void;
-  onBack: () => void;
   onBuyNow: (productId: string, quantity: number) => void;
   onHome: () => void;
   onSelectProduct: (product: Product) => void;
   product: Product;
   promotionUnlocked: boolean;
-  quantity: number;
   relatedProducts: Product[];
 }): React.ReactElement {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
@@ -1102,22 +1087,22 @@ function ProductDetail({
             </div>
           </div>
           <button
-            className="nik-add-button"
-            type="button"
-            onClick={() => {
-              addSelectedQuantityToCart();
-            }}
-          >
-            {quantity > 0 ? `Thêm vào giỏ (${quantity} sản phẩm)` : "Thêm vào giỏ hàng"}
-          </button>
-          <button
             className="nik-buy-button"
             type="button"
             onClick={() => {
               onBuyNow(product.id, selectedQuantity);
             }}
           >
-            Mua ngay
+            Đặt hàng ngay
+          </button>
+          <button
+            className="nik-add-button"
+            type="button"
+            onClick={() => {
+              addSelectedQuantityToCart();
+            }}
+          >
+            Thêm vào giỏ hàng
           </button>
         </div>
       </aside>
@@ -1125,16 +1110,18 @@ function ProductDetail({
       <section className="nik-detail-content" aria-label="Mô tả sản phẩm">
         {product.reviewRating !== null ||
         product.reviewTags.length > 0 ||
-        product.reviewImageUrls.length > 0 ? (
+        product.reviewImageUrls.length > 0 ||
+        hasReviewSample(product) ? (
           <section className="nik-review-section" aria-label="Đánh giá sản phẩm">
-            <div className="nik-detail-heading">
+            <div className="nik-review-header">
               <h3>Đánh giá sản phẩm</h3>
-              <span>
-                {product.reviewRating !== null
-                  ? `${product.reviewRating.toFixed(1)} / 5`
-                  : "Đang cập nhật"}
-                {product.reviewCount !== null ? ` (${product.reviewCount} đánh giá)` : ""}
-              </span>
+              <div className="nik-review-score">
+                <ReviewStars rating={product.reviewRating ?? 0} />
+                {product.reviewRating !== null ? (
+                  <strong>{product.reviewRating.toFixed(1)}</strong>
+                ) : null}
+                <span>({product.reviewCount ?? 0} đánh giá)</span>
+              </div>
             </div>
             {product.reviewTags.length > 0 ? (
               <div className="nik-review-tags">
@@ -1145,17 +1132,42 @@ function ProductDetail({
                 ))}
               </div>
             ) : null}
+            {hasReviewSample(product) ? (
+              <article className="nik-review-sample">
+                <div className="nik-review-buyer">
+                  {product.reviewSample.buyerAvatarUrl ? (
+                    <img src={product.reviewSample.buyerAvatarUrl} alt="" />
+                  ) : (
+                    <span aria-hidden="true">
+                      {(product.reviewSample.buyerName.trim() || "A").slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                  <strong>{product.reviewSample.buyerName.trim() || "Ẩn danh mua"}</strong>
+                  {product.reviewSample.purchasedSummary ? (
+                    <>
+                      <i aria-hidden="true" />
+                      <em>{product.reviewSample.purchasedSummary}</em>
+                    </>
+                  ) : null}
+                </div>
+                {product.reviewSample.content ? <p>{product.reviewSample.content}</p> : null}
+              </article>
+            ) : null}
             {product.reviewImageUrls.length > 0 ? (
               <div className="nik-review-images">
                 {product.reviewImageUrls.map((reviewImageUrl, index) => (
-                  <img
-                    key={`${reviewImageUrl}-${index}`}
-                    src={reviewImageUrl}
-                    alt={`${product.name} đánh giá ${index + 1}`}
-                  />
+                  <figure key={`${reviewImageUrl}-${index}`}>
+                    {index === 0 && product.reviewSample.imageBadge ? (
+                      <figcaption>{product.reviewSample.imageBadge}</figcaption>
+                    ) : null}
+                    <img src={reviewImageUrl} alt={`${product.name} đánh giá ${index + 1}`} />
+                  </figure>
                 ))}
               </div>
             ) : null}
+            <button className="nik-review-more-button" type="button">
+              Xem tất cả đánh giá
+            </button>
           </section>
         ) : null}
 
@@ -1249,6 +1261,31 @@ function ProductDetail({
         ) : null}
       </section>
     </section>
+  );
+}
+
+function hasReviewSample(product: Product): boolean {
+  return [
+    product.reviewSample.buyerName,
+    product.reviewSample.buyerAvatarUrl ?? "",
+    product.reviewSample.purchasedSummary,
+    product.reviewSample.content,
+    product.reviewSample.imageBadge,
+  ].some((value) => value.trim().length > 0);
+}
+
+function ReviewStars({ rating }: { rating: number }): React.ReactElement {
+  return (
+    <span className="nik-review-stars" aria-label={`${rating.toFixed(1)} trên 5 sao`}>
+      {Array.from({ length: 5 }, (_, index) => (
+        <Star
+          aria-hidden="true"
+          className={index < Math.round(rating) ? "filled" : undefined}
+          key={index}
+          size={20}
+        />
+      ))}
+    </span>
   );
 }
 

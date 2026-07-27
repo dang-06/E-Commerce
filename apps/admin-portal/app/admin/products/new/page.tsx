@@ -54,6 +54,13 @@ export default function NewProductPage() {
     reviewCount: "",
     reviewTagsText: "",
     reviewImageUrlsText: "",
+    reviewSample: {
+      buyerAvatarUrl: "",
+      buyerName: "",
+      content: "",
+      imageBadge: "买家实拍",
+      purchasedSummary: "",
+    },
     qualityCertificationsText: "",
     packagingAttributesText: "",
     stock: "",
@@ -168,6 +175,7 @@ export default function NewProductPage() {
         reviewCount: formData.reviewCount ? Number(formData.reviewCount) : undefined,
         reviewTags: parseAttributeLines(formData.reviewTagsText),
         reviewImageUrls: parseUrlLines(formData.reviewImageUrlsText),
+        reviewSample: formData.reviewSample,
         qualityCertifications: parseAttributeLines(formData.qualityCertificationsText),
         packagingAttributes: parseAttributeLines(formData.packagingAttributesText),
         isActive: formData.isActive,
@@ -478,6 +486,94 @@ export default function NewProductPage() {
                   <p className="mt-1 text-xs text-muted-foreground">
                     Mỗi dòng là một URL http(s) hoặc đường dẫn public bắt đầu bằng /.
                   </p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <Label htmlFor="reviewBuyerName">Tên người mua hiển thị</Label>
+                    <Input
+                      id="reviewBuyerName"
+                      placeholder="Ẩn danh mua"
+                      value={formData.reviewSample.buyerName}
+                      onChange={(event) => {
+                        setFormData({
+                          ...formData,
+                          reviewSample: {
+                            ...formData.reviewSample,
+                            buyerName: event.target.value,
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="reviewPurchasedSummary">Số lượng đã mua</Label>
+                    <Input
+                      id="reviewPurchasedSummary"
+                      placeholder="6 kiện"
+                      value={formData.reviewSample.purchasedSummary}
+                      onChange={(event) => {
+                        setFormData({
+                          ...formData,
+                          reviewSample: {
+                            ...formData.reviewSample,
+                            purchasedSummary: event.target.value,
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="reviewImageBadge">Nhãn ảnh review</Label>
+                    <Input
+                      id="reviewImageBadge"
+                      placeholder="买家实拍"
+                      value={formData.reviewSample.imageBadge}
+                      onChange={(event) => {
+                        setFormData({
+                          ...formData,
+                          reviewSample: {
+                            ...formData.reviewSample,
+                            imageBadge: event.target.value,
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="reviewBuyerAvatarUrl">Avatar người mua</Label>
+                  <Input
+                    id="reviewBuyerAvatarUrl"
+                    placeholder="/placeholder-user.jpg"
+                    value={formData.reviewSample.buyerAvatarUrl}
+                    onChange={(event) => {
+                      setFormData({
+                        ...formData,
+                        reviewSample: {
+                          ...formData.reviewSample,
+                          buyerAvatarUrl: event.target.value,
+                        },
+                      });
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="reviewContent">Nội dung review mẫu</Label>
+                  <Textarea
+                    id="reviewContent"
+                    rows={3}
+                    placeholder="We got samples and these are looking nice packing 13533445404"
+                    value={formData.reviewSample.content}
+                    onChange={(event) => {
+                      setFormData({
+                        ...formData,
+                        reviewSample: {
+                          ...formData.reviewSample,
+                          content: event.target.value,
+                        },
+                      });
+                    }}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="qualityCertificationsText">Chứng nhận chất lượng</Label>

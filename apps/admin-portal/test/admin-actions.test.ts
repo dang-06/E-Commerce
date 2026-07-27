@@ -83,6 +83,13 @@ void test("product sheet export includes extended 1688 detail attributes", () =>
     reviewCount: 70,
     reviewTags: [{ label: "Chất lượng khá tốt", value: "8" }],
     reviewImageUrls: ["https://cdn.example.com/review.jpg"],
+    reviewSample: {
+      buyerAvatarUrl: "https://cdn.example.com/avatar.jpg",
+      buyerName: "Ẩn danh mua",
+      content: "We got samples and these are looking nice packing 13533445404",
+      imageBadge: "买家实拍",
+      purchasedSummary: "6 kiện",
+    },
     qualityCertifications: [{ label: "Số đăng ký", value: "2025056915" }],
     packagingAttributes: [{ label: "Khối lượng (g)", value: "70" }],
     category: "hair-care",

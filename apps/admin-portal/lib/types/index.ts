@@ -25,6 +25,14 @@ export interface ProductAttribute {
   value: string;
 }
 
+export interface ProductReviewSample {
+  buyerName: string;
+  buyerAvatarUrl: string;
+  purchasedSummary: string;
+  content: string;
+  imageBadge: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -48,6 +56,7 @@ export interface Product {
   reviewCount?: number;
   reviewTags: ProductAttribute[];
   reviewImageUrls: string[];
+  reviewSample: ProductReviewSample;
   qualityCertifications: ProductAttribute[];
   packagingAttributes: ProductAttribute[];
   category: string;

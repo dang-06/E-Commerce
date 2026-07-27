@@ -21,6 +21,13 @@ export function sampleProduct(overrides: Partial<Product> = {}): Product {
     reviewCount: null,
     reviewTags: [],
     reviewImageUrls: [],
+    reviewSample: {
+      buyerAvatarUrl: null,
+      buyerName: "",
+      content: "",
+      imageBadge: "",
+      purchasedSummary: "",
+    },
     qualityCertifications: [],
     packagingAttributes: [],
     listedPrice: "99000",

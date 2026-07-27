@@ -49,6 +49,13 @@ interface ProductSeed {
   reviewCount: number;
   reviewTags: AttributeSeed[];
   reviewImageUrls: string[];
+  reviewSample?: {
+    buyerAvatarUrl: string;
+    buyerName: string;
+    content: string;
+    imageBadge: string;
+    purchasedSummary: string;
+  };
   qualityCertifications: AttributeSeed[];
   packagingAttributes: AttributeSeed[];
   images: ProductImageSeed[];
@@ -225,6 +232,13 @@ async function main(): Promise<void> {
     { label: "Chất lượng khá tốt", value: "8" },
     { label: "Vận chuyển nhanh", value: "6" },
   ];
+  const sharedReviewSample = {
+    buyerAvatarUrl: "/placeholder-user.jpg",
+    buyerName: "Ẩn danh mua",
+    content: "We got samples and these are looking nice packing 13533445404",
+    imageBadge: "买家实拍",
+    purchasedSummary: "6 kiện",
+  };
   const sharedCertifications = [
     {
       label: "Cảnh báo",
@@ -683,6 +697,7 @@ async function main(): Promise<void> {
         reviewCount: product.reviewCount,
         reviewTags: json(product.reviewTags),
         reviewImageUrls: json(product.reviewImageUrls),
+        reviewSample: json(product.reviewSample ?? sharedReviewSample),
         qualityCertifications: json(product.qualityCertifications),
         packagingAttributes: json(product.packagingAttributes),
         listedPrice: product.listedPrice,
@@ -711,6 +726,7 @@ async function main(): Promise<void> {
         reviewCount: product.reviewCount,
         reviewTags: json(product.reviewTags),
         reviewImageUrls: json(product.reviewImageUrls),
+        reviewSample: json(product.reviewSample ?? sharedReviewSample),
         qualityCertifications: json(product.qualityCertifications),
         packagingAttributes: json(product.packagingAttributes),
         listedPrice: product.listedPrice,

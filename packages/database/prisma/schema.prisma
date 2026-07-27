@@ -146,6 +146,7 @@ model Product {
   reviewCount           Int?      @map("review_count")
   reviewTags            Json      @default("[]") @map("review_tags") @db.JsonB
   reviewImageUrls       Json      @default("[]") @map("review_image_urls") @db.JsonB
+  reviewSample          Json      @default("{}") @map("review_sample") @db.JsonB
   qualityCertifications Json      @default("[]") @map("quality_certifications") @db.JsonB
   packagingAttributes   Json      @default("[]") @map("packaging_attributes") @db.JsonB
   listedPrice           BigInt    @map("listed_price") @db.BigInt

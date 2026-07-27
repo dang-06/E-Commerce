@@ -19,6 +19,14 @@ export interface ProductAttribute {
   value: string;
 }
 
+export interface ProductReviewSample {
+  buyerName: string;
+  buyerAvatarUrl: string | null;
+  purchasedSummary: string;
+  content: string;
+  imageBadge: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
@@ -39,6 +47,7 @@ export interface Product {
   reviewCount: number | null;
   reviewTags: ProductAttribute[];
   reviewImageUrls: string[];
+  reviewSample: ProductReviewSample;
   qualityCertifications: ProductAttribute[];
   packagingAttributes: ProductAttribute[];
   listedPrice: string;

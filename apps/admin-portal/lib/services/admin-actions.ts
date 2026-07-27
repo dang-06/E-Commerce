@@ -136,6 +136,7 @@ export function buildProductsCsv(products: Product[]): string {
     "review_count",
     "review_tags",
     "review_image_urls",
+    "review_sample",
     "quality_certifications",
     "packaging_attributes",
   ];
@@ -166,6 +167,7 @@ export function buildProductsCsv(products: Product[]): string {
     product.reviewCount === undefined ? "" : String(product.reviewCount),
     attributeCell(product.reviewTags),
     jsonCell(product.reviewImageUrls),
+    jsonCell(product.reviewSample),
     attributeCell(product.qualityCertifications),
     attributeCell(product.packagingAttributes),
   ]);

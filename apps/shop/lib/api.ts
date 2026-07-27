@@ -53,6 +53,10 @@ export function fetchProducts(): Promise<Product[]> {
   return requestJson<Product[]>("/products", { cache: "no-store" });
 }
 
+export function fetchProductBySlug(slug: string): Promise<Product> {
+  return requestJson<Product>(`/products/${encodeURIComponent(slug)}`, { cache: "no-store" });
+}
+
 export function fetchSiteSettings(): Promise<SiteSettings> {
   return requestJson<SiteSettings>("/site-settings", { cache: "no-store" });
 }

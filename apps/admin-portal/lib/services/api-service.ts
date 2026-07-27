@@ -45,6 +45,13 @@ interface ApiProduct {
   reviewCount: number | null;
   reviewTags: { label: string; value: string }[];
   reviewImageUrls: string[];
+  reviewSample: {
+    buyerName: string;
+    buyerAvatarUrl: string | null;
+    purchasedSummary: string;
+    content: string;
+    imageBadge: string;
+  };
   qualityCertifications: { label: string; value: string }[];
   packagingAttributes: { label: string; value: string }[];
   listedPrice: string;
@@ -577,6 +584,13 @@ function toProduct(product: ApiProduct): Product {
     reviewCount: product.reviewCount ?? undefined,
     reviewImageUrls: product.reviewImageUrls,
     reviewRating: product.reviewRating ?? undefined,
+    reviewSample: {
+      buyerAvatarUrl: product.reviewSample.buyerAvatarUrl ?? "",
+      buyerName: product.reviewSample.buyerName,
+      content: product.reviewSample.content,
+      imageBadge: product.reviewSample.imageBadge,
+      purchasedSummary: product.reviewSample.purchasedSummary,
+    },
     reviewTags: product.reviewTags,
     sellerName: product.sellerName ?? "",
     sellerPrimaryCategory: product.sellerPrimaryCategory ?? "",
@@ -633,6 +647,19 @@ function toProductPayload(product: Partial<Product>): Record<string, unknown> {
           reviewImageUrls: product.reviewImageUrls
             .map((imageUrl) => imageUrl.trim())
             .filter(Boolean),
+        }
+      : {}),
+    ...(product.reviewSample !== undefined
+      ? {
+          reviewSample: {
+            ...(product.reviewSample.buyerAvatarUrl.trim()
+              ? { buyerAvatarUrl: product.reviewSample.buyerAvatarUrl.trim() }
+              : {}),
+            buyerName: product.reviewSample.buyerName.trim(),
+            content: product.reviewSample.content.trim(),
+            imageBadge: product.reviewSample.imageBadge.trim(),
+            purchasedSummary: product.reviewSample.purchasedSummary.trim(),
+          },
         }
       : {}),
     ...(product.qualityCertifications !== undefined

@@ -1,13 +1,13 @@
+import Link from "next/link";
 import { formatVnd, parseVnd } from "../lib/money";
 import type { Product } from "../lib/types";
 import { PriceBlock } from "./PriceBlock";
 
 export function ProductCard({
-  onDetail,
   product,
   promotionUnlocked,
 }: {
-  onDetail: (product: Product) => void;
+  onDetail?: (product: Product) => void;
   product: Product;
   promotionUnlocked: boolean;
 }): React.ReactElement {
@@ -19,13 +19,10 @@ export function ProductCard({
 
   return (
     <article className="product-card">
-      <button
+      <Link
         aria-label={`Xem chi tiết ${product.name}`}
         className="image-button"
-        type="button"
-        onClick={() => {
-          onDetail(product);
-        }}
+        href={`/products/${product.slug}`}
       >
         {discountLabel ? <span className="discount-badge">{discountLabel}</span> : null}
         {imageUrl ? (
@@ -35,7 +32,7 @@ export function ProductCard({
             {product.name.slice(0, 1).toUpperCase()}
           </span>
         )}
-      </button>
+      </Link>
       <div className="product-info">
         <p className="sku">{product.sku}</p>
         <h3>{product.name}</h3>
@@ -57,15 +54,12 @@ export function ProductCard({
         ) : null}
         {discountPerItem > 0 ? <p className="saving-inline">Giảm {formatVnd(discountPerItem)} / sản phẩm</p> : null}
         <div className="product-actions">
-          <button
+          <Link
             className="secondary-button"
-            type="button"
-            onClick={() => {
-              onDetail(product);
-            }}
+            href={`/products/${product.slug}`}
           >
             Chi tiết
-          </button>
+          </Link>
         </div>
       </div>
     </article>

@@ -417,6 +417,92 @@ export default function EditProductPage() {
                 Mỗi dòng là một URL http(s) hoặc đường dẫn public bắt đầu bằng /.
               </p>
             </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <Label htmlFor="reviewBuyerName">Tên người mua hiển thị</Label>
+                <Input
+                  id="reviewBuyerName"
+                  value={product.reviewSample.buyerName}
+                  onChange={(event) => {
+                    setProduct({
+                      ...product,
+                      reviewSample: {
+                        ...product.reviewSample,
+                        buyerName: event.target.value,
+                      },
+                    });
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="reviewPurchasedSummary">Số lượng đã mua</Label>
+                <Input
+                  id="reviewPurchasedSummary"
+                  placeholder="6 kiện"
+                  value={product.reviewSample.purchasedSummary}
+                  onChange={(event) => {
+                    setProduct({
+                      ...product,
+                      reviewSample: {
+                        ...product.reviewSample,
+                        purchasedSummary: event.target.value,
+                      },
+                    });
+                  }}
+                />
+              </div>
+              <div>
+                <Label htmlFor="reviewImageBadge">Nhãn ảnh review</Label>
+                <Input
+                  id="reviewImageBadge"
+                  placeholder="买家实拍"
+                  value={product.reviewSample.imageBadge}
+                  onChange={(event) => {
+                    setProduct({
+                      ...product,
+                      reviewSample: {
+                        ...product.reviewSample,
+                        imageBadge: event.target.value,
+                      },
+                    });
+                  }}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="reviewBuyerAvatarUrl">Avatar người mua</Label>
+              <Input
+                id="reviewBuyerAvatarUrl"
+                placeholder="/placeholder-user.jpg"
+                value={product.reviewSample.buyerAvatarUrl}
+                onChange={(event) => {
+                  setProduct({
+                    ...product,
+                    reviewSample: {
+                      ...product.reviewSample,
+                      buyerAvatarUrl: event.target.value,
+                    },
+                  });
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="reviewContent">Nội dung review mẫu</Label>
+              <Textarea
+                id="reviewContent"
+                rows={3}
+                value={product.reviewSample.content}
+                onChange={(event) => {
+                  setProduct({
+                    ...product,
+                    reviewSample: {
+                      ...product.reviewSample,
+                      content: event.target.value,
+                    },
+                  });
+                }}
+              />
+            </div>
             <div>
               <Label htmlFor="qualityCertificationsText">Chứng nhận chất lượng</Label>
               <Textarea

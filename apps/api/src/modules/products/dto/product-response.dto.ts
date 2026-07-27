@@ -42,6 +42,23 @@ export class ProductAttributeResponseDto {
   value!: string;
 }
 
+export class ProductReviewSampleResponseDto {
+  @ApiProperty({ example: "Ẩn danh mua", type: String })
+  buyerName!: string;
+
+  @ApiPropertyOptional({ example: "/placeholder-user.jpg", nullable: true, type: String })
+  buyerAvatarUrl!: string | null;
+
+  @ApiProperty({ example: "6 kiện", type: String })
+  purchasedSummary!: string;
+
+  @ApiProperty({ example: "We got samples and these are looking nice packing 13533445404", type: String })
+  content!: string;
+
+  @ApiProperty({ example: "买家实拍", type: String })
+  imageBadge!: string;
+}
+
 export class ProductResponseDto {
   @ApiProperty({ example: "1", type: String })
   id!: string;
@@ -103,6 +120,9 @@ export class ProductResponseDto {
 
   @ApiProperty({ example: ["/products/review-1.png"], type: [String] })
   reviewImageUrls!: string[];
+
+  @ApiProperty({ type: ProductReviewSampleResponseDto })
+  reviewSample!: ProductReviewSampleResponseDto;
 
   @ApiProperty({ type: [ProductAttributeResponseDto] })
   qualityCertifications!: ProductAttributeResponseDto[];

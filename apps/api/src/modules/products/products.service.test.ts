@@ -10,6 +10,22 @@ interface ProductRecord {
   slug: string;
   description: string | null;
   imageUrl: string | null;
+  productAttributes: unknown[];
+  detailImageUrls: string[];
+  sellerName: string | null;
+  sellerYears: number | null;
+  sellerPrimaryCategory: string | null;
+  minimumOrderQuantity: number;
+  shippingOrigin: string | null;
+  shippingLeadTime: string | null;
+  returnPolicy: string | null;
+  reviewRating: { toNumber: () => number } | null;
+  reviewCount: number | null;
+  reviewTags: unknown[];
+  reviewImageUrls: string[];
+  reviewSample: Record<string, unknown>;
+  qualityCertifications: unknown[];
+  packagingAttributes: unknown[];
   listedPrice: bigint;
   stockQuantity: number | null;
   isPromotionEligible: boolean;
@@ -54,6 +70,22 @@ function createProduct(overrides: Partial<ProductRecord>): ProductRecord {
     slug: "product-1",
     description: null,
     imageUrl: null,
+    productAttributes: [],
+    detailImageUrls: [],
+    sellerName: null,
+    sellerYears: null,
+    sellerPrimaryCategory: null,
+    minimumOrderQuantity: 1,
+    shippingOrigin: null,
+    shippingLeadTime: null,
+    returnPolicy: null,
+    reviewRating: null,
+    reviewCount: null,
+    reviewTags: [],
+    reviewImageUrls: [],
+    reviewSample: {},
+    qualityCertifications: [],
+    packagingAttributes: [],
     listedPrice: 99000n,
     stockQuantity: null,
     isPromotionEligible: true,

@@ -6,6 +6,7 @@ import type {
   CreateProductDto,
   ProductColorVariantInputDto,
   ProductImageInputDto,
+  ProductReviewSampleInputDto,
   UpdateProductDto,
 } from "./dto/product.dto.js";
 
@@ -33,6 +34,7 @@ export interface ProductResponse {
   reviewCount: number | null;
   reviewTags: ProductAttributeResponse[];
   reviewImageUrls: string[];
+  reviewSample: ProductReviewSampleResponse;
   qualityCertifications: ProductAttributeResponse[];
   packagingAttributes: ProductAttributeResponse[];
   listedPrice: string;
@@ -58,6 +60,14 @@ export interface ProductImageResponse {
 export interface ProductAttributeResponse {
   label: string;
   value: string;
+}
+
+export interface ProductReviewSampleResponse {
+  buyerName: string;
+  buyerAvatarUrl: string | null;
+  purchasedSummary: string;
+  content: string;
+  imageBadge: string;
 }
 
 export interface ProductColorVariantResponse {
@@ -122,6 +132,7 @@ export class ProductsService {
         reviewCount: dto.reviewCount ?? null,
         reviewTags: this.mapAttributes(dto.reviewTags ?? []),
         reviewImageUrls: this.mapDetailImageUrls(dto.reviewImageUrls ?? []),
+        reviewSample: this.mapReviewSample(dto.reviewSample),
         qualityCertifications: this.mapAttributes(dto.qualityCertifications ?? []),
         packagingAttributes: this.mapAttributes(dto.packagingAttributes ?? []),
         listedPrice: BigInt(dto.listedPrice),
@@ -198,6 +209,9 @@ export class ProductsService {
             : {}),
           ...(dto.reviewImageUrls !== undefined
             ? { reviewImageUrls: this.mapDetailImageUrls(dto.reviewImageUrls) }
+            : {}),
+          ...(dto.reviewSample !== undefined
+            ? { reviewSample: this.mapReviewSample(dto.reviewSample) }
             : {}),
           ...(dto.qualityCertifications !== undefined
             ? { qualityCertifications: this.mapAttributes(dto.qualityCertifications) }
@@ -304,6 +318,21 @@ export class ProductsService {
     return imageUrls.map((imageUrl) => imageUrl.trim()).filter(Boolean);
   }
 
+  private mapReviewSample(
+    sample: ProductReviewSampleInputDto | null | undefined,
+  ): Prisma.InputJsonValue {
+    if (!sample) {
+      return {};
+    }
+    return {
+      buyerName: this.optionalText(sample.buyerName) ?? "",
+      buyerAvatarUrl: this.optionalText(sample.buyerAvatarUrl),
+      purchasedSummary: this.optionalText(sample.purchasedSummary) ?? "",
+      content: this.optionalText(sample.content) ?? "",
+      imageBadge: this.optionalText(sample.imageBadge) ?? "",
+    };
+  }
+
   private mapColorVariants(
     variants: ProductColorVariantInputDto[],
   ): Prisma.ProductColorVariantCreateManyProductInput[] {
@@ -350,6 +379,7 @@ export class ProductsService {
       reviewCount: product.reviewCount,
       reviewTags: this.toAttributeResponse(product.reviewTags),
       reviewImageUrls: this.toDetailImageUrls(product.reviewImageUrls),
+      reviewSample: this.toReviewSampleResponse(product.reviewSample),
       qualityCertifications: this.toAttributeResponse(product.qualityCertifications),
       packagingAttributes: this.toAttributeResponse(product.packagingAttributes),
       listedPrice: product.listedPrice.toString(),
@@ -403,5 +433,38 @@ export class ProductsService {
     return value.filter(
       (item): item is string => typeof item === "string" && item.trim().length > 0,
     );
+  }
+
+  private toReviewSampleResponse(value: Prisma.JsonValue): ProductReviewSampleResponse {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return this.emptyReviewSample();
+    }
+    const candidate = value as Record<string, unknown>;
+    return {
+      buyerName: this.stringValue(candidate.buyerName),
+      buyerAvatarUrl: this.optionalStringValue(candidate.buyerAvatarUrl),
+      purchasedSummary: this.stringValue(candidate.purchasedSummary),
+      content: this.stringValue(candidate.content),
+      imageBadge: this.stringValue(candidate.imageBadge),
+    };
+  }
+
+  private emptyReviewSample(): ProductReviewSampleResponse {
+    return {
+      buyerName: "",
+      buyerAvatarUrl: null,
+      purchasedSummary: "",
+      content: "",
+      imageBadge: "",
+    };
+  }
+
+  private stringValue(value: unknown): string {
+    return typeof value === "string" ? value.trim() : "";
+  }
+
+  private optionalStringValue(value: unknown): string | null {
+    const text = this.stringValue(value);
+    return text.length > 0 ? text : null;
   }
 }
