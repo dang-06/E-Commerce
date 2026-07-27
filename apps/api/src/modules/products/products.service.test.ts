@@ -12,6 +12,7 @@ interface ProductRecord {
   imageUrl: string | null;
   productAttributes: unknown[];
   detailImageUrls: string[];
+  introVideoUrls: string[];
   sellerName: string | null;
   sellerYears: number | null;
   sellerPrimaryCategory: string | null;
@@ -72,6 +73,7 @@ function createProduct(overrides: Partial<ProductRecord>): ProductRecord {
     imageUrl: null,
     productAttributes: [],
     detailImageUrls: [],
+    introVideoUrls: [],
     sellerName: null,
     sellerYears: null,
     sellerPrimaryCategory: null,

@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { FieldError } from '@/components/shared/FieldError'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { login, setStoredAuth } from '@/lib/services/auth'
+import { validateLoginForm, type FieldErrors } from '@/lib/validation/admin-forms'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,10 +19,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
 
   async function handleSubmit(e: SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     setError('')
+    const nextFieldErrors = validateLoginForm(email, password)
+    setFieldErrors(nextFieldErrors)
+    if (Object.keys(nextFieldErrors).length > 0) {
+      return
+    }
     setLoading(true)
 
     try {
@@ -90,7 +98,10 @@ export default function LoginPage() {
                 onChange={(e) => { setEmail(e.target.value); }}
                 required
                 disabled={loading}
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? 'email-error' : undefined}
               />
+              <FieldError id="email-error" message={fieldErrors.email} />
             </div>
 
             <div className="space-y-2">
@@ -103,6 +114,8 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); }}
                   disabled={loading}
+                  aria-invalid={Boolean(fieldErrors.password)}
+                  aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                 />
                 <button
                   type="button"
@@ -113,6 +126,7 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <FieldError id="password-error" message={fieldErrors.password} />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading} size="lg">

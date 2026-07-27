@@ -45,6 +45,7 @@ export interface Product {
   image: string;
   productAttributes: ProductAttribute[];
   detailImageUrls: string[];
+  introVideoUrls: string[];
   sellerName: string;
   sellerYears?: number;
   sellerPrimaryCategory: string;

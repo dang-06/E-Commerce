@@ -5,6 +5,7 @@ import { getConfig } from "../../config/app.config.js";
 export interface UploadedProductImage {
   imageUrl: string;
   publicId: string;
+  videoUrl?: string;
   width: number | null;
   height: number | null;
   format: string | null;
@@ -68,10 +69,78 @@ export class CloudinaryImageService {
     };
   }
 
+  async uploadProductVideo(file: Express.Multer.File | undefined): Promise<UploadedProductImage> {
+    if (!file) {
+      throw new BadRequestException("Product video file is required");
+    }
+    this.validateVideo(file);
+
+    const uploaded = await this.uploadToCloudinary(file, "video");
+    return {
+      ...uploaded,
+      videoUrl: uploaded.imageUrl,
+    };
+  }
+
+  private async uploadToCloudinary(
+    file: Express.Multer.File,
+    resourceType: "image" | "video",
+  ): Promise<UploadedProductImage> {
+    const config = getConfig().cloudinary;
+    if (!config.cloudName || !config.apiKey || !config.apiSecret) {
+      throw new InternalServerErrorException("Cloudinary is not configured");
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000).toString();
+    const signature = this.sign(
+      {
+        folder: config.productImageFolder,
+        timestamp,
+      },
+      config.apiSecret,
+    );
+
+    const form = new FormData();
+    const fileBytes = new Uint8Array(file.buffer);
+    form.set("file", new Blob([fileBytes], { type: file.mimetype }), file.originalname);
+    form.set("api_key", config.apiKey);
+    form.set("folder", config.productImageFolder);
+    form.set("timestamp", timestamp);
+    form.set("signature", signature);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${config.cloudName}/${resourceType}/upload`,
+      {
+        body: form,
+        method: "POST",
+      },
+    );
+    const body = (await response.json().catch(() => null)) as CloudinaryUploadResponse | null;
+
+    if (!response.ok || !body?.secure_url || !body.public_id) {
+      throw new BadRequestException(body?.error?.message ?? `Could not upload product ${resourceType}`);
+    }
+
+    return {
+      format: body.format ?? null,
+      height: body.height ?? null,
+      imageUrl: body.secure_url,
+      publicId: body.public_id,
+      width: body.width ?? null,
+    };
+  }
+
   private validateImage(file: Express.Multer.File): void {
     const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
     if (!allowedMimeTypes.has(file.mimetype)) {
       throw new BadRequestException("Only JPG, PNG, WEBP, or GIF images are supported");
+    }
+  }
+
+  private validateVideo(file: Express.Multer.File): void {
+    const allowedMimeTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
+    if (!allowedMimeTypes.has(file.mimetype)) {
+      throw new BadRequestException("Only MP4, WEBM, or MOV videos are supported");
     }
   }
 

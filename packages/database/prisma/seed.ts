@@ -38,6 +38,7 @@ interface ProductSeed {
   sortOrder: number;
   productAttributes: AttributeSeed[];
   detailImageUrls: string[];
+  introVideoUrls?: string[];
   sellerName: string;
   sellerYears: number;
   sellerPrimaryCategory: string;
@@ -252,10 +253,14 @@ async function main(): Promise<void> {
   const sharedReviewSample = {
     buyerAvatarUrl: "/placeholder-user.jpg",
     buyerName: "Ẩn danh mua",
-    content: "We got samples and these are looking nice packing 13533445404",
+    content: "Mình đã nhận được hàng và thực sự rất ưng ý! Sản phẩm đẹp, chất lượng tốt, đúng như mong đợi. Đặc biệt, shop đóng gói rất cẩn thận, chắc chắn và chuyên nghiệp nên hàng đến tay vẫn nguyên vẹn. Shop tư vấn nhiệt tình, giao hàng nhanh. Chắc chắn mình sẽ tiếp tục ủng hộ và giới thiệu cho bạn bè!",
     imageBadge: "买家实拍",
     purchasedSummary: "6 kiện",
   };
+  const sharedIntroVideoUrls = [
+    "https://res.cloudinary.com/demo/video/upload/product-gallery-tutorial_hlk0na.mp4",
+    "https://res.cloudinary.com/prod/video/upload/video/examples/big_buck_bunny_trailer_720p.mp4",
+  ];
   const sharedCertifications = [
     {
       label: "Cảnh báo",
@@ -703,6 +708,7 @@ async function main(): Promise<void> {
         description: product.description,
         productAttributes: json(product.productAttributes),
         detailImageUrls: json(product.detailImageUrls),
+        introVideoUrls: json(product.introVideoUrls ?? sharedIntroVideoUrls),
         sellerName: product.sellerName,
         sellerYears: product.sellerYears,
         sellerPrimaryCategory: product.sellerPrimaryCategory,

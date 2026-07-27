@@ -135,6 +135,7 @@ model Product {
   imageUrl              String?   @map("image_url")
   productAttributes     Json      @default("[]") @map("product_attributes") @db.JsonB
   detailImageUrls       Json      @default("[]") @map("detail_image_urls") @db.JsonB
+  introVideoUrls        Json      @default("[]") @map("intro_video_urls") @db.JsonB
   sellerName            String?   @map("seller_name") @db.VarChar(255)
   sellerYears           Int?      @map("seller_years")
   sellerPrimaryCategory String?   @map("seller_primary_category") @db.VarChar(255)

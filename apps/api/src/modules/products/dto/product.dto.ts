@@ -9,6 +9,7 @@ import {
   IsString,
   Matches,
   Max,
+  ArrayMaxSize,
   MaxLength,
   Min,
   ValidateNested,
@@ -78,7 +79,7 @@ export class ProductReviewSampleInputDto {
   purchasedSummary?: string;
 
   @ApiPropertyOptional({
-    example: "We got samples and these are looking nice packing 13533445404",
+    example: "Mình đã nhận được hàng và thực sự rất ưng ý! Sản phẩm đẹp, chất lượng tốt, đúng như mong đợi. Đặc biệt, shop đóng gói rất cẩn thận, chắc chắn và chuyên nghiệp nên hàng đến tay vẫn nguyên vẹn. Shop tư vấn nhiệt tình, giao hàng nhanh. Chắc chắn mình sẽ tiếp tục ủng hộ và giới thiệu cho bạn bè!",
     maxLength: 1000,
     type: String,
   })
@@ -182,6 +183,18 @@ export class CreateProductDto {
     message: "detailImageUrls must contain http(s) URLs or absolute public paths",
   })
   detailImageUrls?: string[];
+
+  @ApiPropertyOptional({ example: ["/products/demo-1.mp4"], maxItems: 2, type: [String] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(2)
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  @Matches(imagePathPattern, {
+    each: true,
+    message: "introVideoUrls must contain http(s) URLs or absolute public paths",
+  })
+  introVideoUrls?: string[];
 
   @ApiPropertyOptional({ example: "Công ty TNHH Công nghệ", maxLength: 255, type: String })
   @IsOptional()
@@ -388,6 +401,18 @@ export class UpdateProductDto {
     message: "detailImageUrls must contain http(s) URLs or absolute public paths",
   })
   detailImageUrls?: string[];
+
+  @ApiPropertyOptional({ example: ["/products/demo-1.mp4"], maxItems: 2, type: [String] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(2)
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  @Matches(imagePathPattern, {
+    each: true,
+    message: "introVideoUrls must contain http(s) URLs or absolute public paths",
+  })
+  introVideoUrls?: string[];
 
   @ApiPropertyOptional({ example: "Công ty TNHH Công nghệ", nullable: true, type: String })
   @IsOptional()

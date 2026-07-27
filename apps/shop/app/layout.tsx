@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { PromotionGate } from "../components/PromotionGate";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>): React.ReactElement {
   return (
     <html lang="vi">
-      <body>{children}</body>
+      <body>
+        <PromotionGate>{children}</PromotionGate>
+      </body>
     </html>
   );
 }

@@ -110,6 +110,35 @@ export class AdminProductsController {
     return this.images.uploadProductImage(file);
   }
 
+  @Post("videos")
+  @Roles("admin")
+  @UseInterceptors(
+    FileInterceptor("file", {
+      limits: { fileSize: 50 * 1024 * 1024 },
+      fileFilter: (_request, file, callback) => {
+        if (!["video/mp4", "video/webm", "video/quicktime"].includes(file.mimetype)) {
+          callback(new BadRequestException("Only MP4, WEBM, or MOV videos are supported"), false);
+          return;
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["file"],
+      properties: {
+        file: { type: "string", format: "binary" },
+      },
+    },
+  })
+  @ApiCreatedResponse({ type: UploadedProductImageResponseDto })
+  uploadVideo(@UploadedFile() file: Express.Multer.File | undefined): Promise<UploadedProductImage> {
+    return this.images.uploadProductVideo(file);
+  }
+
   @Patch(":id")
   @Roles("admin")
   @ApiParam({ name: "id", example: "1" })

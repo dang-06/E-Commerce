@@ -14,10 +14,12 @@ export function OrderSummary({ totals }: { totals: CartTotals }): React.ReactEle
           <dt>Tổng giá gốc</dt>
           <dd>{formatVnd(totals.subtotal)}</dd>
         </div>
-        <div>
-          <dt>Tổng giảm giá</dt>
-          <dd>-{formatVnd(totals.discountAmount)}</dd>
-        </div>
+        {totals.discountAmount > 0 ? (
+          <div>
+            <dt>Tổng giảm giá</dt>
+            <dd>-{formatVnd(totals.discountAmount)}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>Phí vận chuyển</dt>
           <dd>

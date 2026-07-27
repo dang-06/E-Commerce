@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
+import { FieldError } from '@/components/shared/FieldError'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ImageIcon, Key, Link2, Save, Table2, Upload } from 'lucide-react'
 import { getErrorMessage, integrationService, productService, siteSettingsService } from '@/lib/services/api-service'
 import { GoogleSheetConfig } from '@/lib/types'
+import { validateBannerForm, validateSheetForm, type FieldErrors } from '@/lib/validation/admin-forms'
 
 interface SheetFormState {
   sheetUrl: string
@@ -65,6 +67,8 @@ export default function SettingsPage() {
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [bannerMessage, setBannerMessage] = useState<string | null>(null)
   const [bannerError, setBannerError] = useState<string | null>(null)
+  const [bannerFieldErrors, setBannerFieldErrors] = useState<FieldErrors>({})
+  const [sheetFieldErrors, setSheetFieldErrors] = useState<FieldErrors>({})
   const googleSheetConfigured =
     (eligibleSheet.isActive && eligibleSheet.sheetUrl.trim().length > 0) ||
     (orderSheet.isActive && orderSheet.sheetUrl.trim().length > 0)
@@ -138,6 +142,13 @@ export default function SettingsPage() {
   }
 
   async function saveBanner(): Promise<void> {
+    const nextFieldErrors = validateBannerForm(bannerForm)
+    setBannerFieldErrors(nextFieldErrors)
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setBannerError('Vui lòng kiểm tra các trường đang báo lỗi.')
+      setBannerMessage(null)
+      return
+    }
     setSavingBanner(true)
     setBannerError(null)
     setBannerMessage(null)
@@ -198,6 +209,16 @@ export default function SettingsPage() {
   }
 
   async function saveSheet(purpose: 'eligible_customers' | 'orders', form: SheetFormState): Promise<void> {
+    const nextFieldErrors = validateSheetForm(purpose, form)
+    setSheetFieldErrors((current) => ({
+      ...Object.fromEntries(Object.entries(current).filter(([field]) => !field.startsWith(`${purpose}.`))),
+      ...nextFieldErrors,
+    }))
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setSheetError('Vui lòng kiểm tra các trường đang báo lỗi.')
+      setSheetMessage(null)
+      return
+    }
     setSaving(purpose)
     setSheetError(null)
     setSheetMessage(null)
@@ -265,7 +286,10 @@ export default function SettingsPage() {
                       onChange={(event) => {
                         setBannerForm({ ...bannerForm, logoText: event.target.value })
                       }}
+                      aria-invalid={Boolean(bannerFieldErrors.logoText)}
+                      aria-describedby={bannerFieldErrors.logoText ? 'logo-text-error' : undefined}
                     />
+                    <FieldError id="logo-text-error" message={bannerFieldErrors.logoText} />
                   </div>
                   <div>
                     <Label htmlFor="logo-image-file">Tải ảnh logo</Label>
@@ -289,7 +313,10 @@ export default function SettingsPage() {
                       onChange={(event) => {
                         setBannerForm({ ...bannerForm, logoImageUrl: event.target.value })
                       }}
+                      aria-invalid={Boolean(bannerFieldErrors.logoImageUrl)}
+                      aria-describedby={bannerFieldErrors.logoImageUrl ? 'logo-image-url-error' : undefined}
                     />
+                    <FieldError id="logo-image-url-error" message={bannerFieldErrors.logoImageUrl} />
                   </div>
                 </div>
               </div>
@@ -323,7 +350,10 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setBannerForm({ ...bannerForm, bannerImageUrl: event.target.value })
                   }}
+                  aria-invalid={Boolean(bannerFieldErrors.bannerImageUrl)}
+                  aria-describedby={bannerFieldErrors.bannerImageUrl ? 'banner-image-url-error' : undefined}
                 />
+                <FieldError id="banner-image-url-error" message={bannerFieldErrors.bannerImageUrl} />
               </div>
               <div>
                 <Label htmlFor="banner-eyebrow">Dòng nhãn nhỏ</Label>
@@ -343,7 +373,10 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setBannerForm({ ...bannerForm, bannerTitle: event.target.value })
                   }}
+                  aria-invalid={Boolean(bannerFieldErrors.bannerTitle)}
+                  aria-describedby={bannerFieldErrors.bannerTitle ? 'banner-title-error' : undefined}
                 />
+                <FieldError id="banner-title-error" message={bannerFieldErrors.bannerTitle} />
               </div>
               <div>
                 <Label htmlFor="banner-subtitle">Mô tả banner</Label>
@@ -354,7 +387,10 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setBannerForm({ ...bannerForm, bannerSubtitle: event.target.value })
                   }}
+                  aria-invalid={Boolean(bannerFieldErrors.bannerSubtitle)}
+                  aria-describedby={bannerFieldErrors.bannerSubtitle ? 'banner-subtitle-error' : undefined}
                 />
+                <FieldError id="banner-subtitle-error" message={bannerFieldErrors.bannerSubtitle} />
               </div>
               <div>
                 <Label htmlFor="banner-button">Text nút</Label>
@@ -364,7 +400,10 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setBannerForm({ ...bannerForm, bannerButtonText: event.target.value })
                   }}
+                  aria-invalid={Boolean(bannerFieldErrors.bannerButtonText)}
+                  aria-describedby={bannerFieldErrors.bannerButtonText ? 'banner-button-error' : undefined}
                 />
+                <FieldError id="banner-button-error" message={bannerFieldErrors.bannerButtonText} />
               </div>
               <div>
                 <Label htmlFor="catalog-title">Tiêu đề catalog</Label>
@@ -375,7 +414,10 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setBannerForm({ ...bannerForm, catalogTitle: event.target.value })
                   }}
+                  aria-invalid={Boolean(bannerFieldErrors.catalogTitle)}
+                  aria-describedby={bannerFieldErrors.catalogTitle ? 'catalog-title-error' : undefined}
                 />
+                <FieldError id="catalog-title-error" message={bannerFieldErrors.catalogTitle} />
               </div>
               <Button
                 className="gap-2"
@@ -411,7 +453,12 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setEligibleSheet({ ...eligibleSheet, sheetUrl: event.target.value })
                   }}
+                  aria-invalid={Boolean(sheetFieldErrors['eligible_customers.sheetUrl'])}
+                  aria-describedby={
+                    sheetFieldErrors['eligible_customers.sheetUrl'] ? 'eligible-sheet-url-error' : undefined
+                  }
                 />
+                <FieldError id="eligible-sheet-url-error" message={sheetFieldErrors['eligible_customers.sheetUrl']} />
               </div>
               <div>
                 <Label htmlFor="eligible-worksheet">Tên tab</Label>
@@ -433,6 +480,14 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setEligibleSheet({ ...eligibleSheet, phoneColumn: event.target.value })
                   }}
+                  aria-invalid={Boolean(sheetFieldErrors['eligible_customers.phoneColumn'])}
+                  aria-describedby={
+                    sheetFieldErrors['eligible_customers.phoneColumn'] ? 'eligible-phone-column-error' : undefined
+                  }
+                />
+                <FieldError
+                  id="eligible-phone-column-error"
+                  message={sheetFieldErrors['eligible_customers.phoneColumn']}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -477,7 +532,10 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setOrderSheet({ ...orderSheet, sheetUrl: event.target.value })
                   }}
+                  aria-invalid={Boolean(sheetFieldErrors['orders.sheetUrl'])}
+                  aria-describedby={sheetFieldErrors['orders.sheetUrl'] ? 'orders-sheet-url-error' : undefined}
                 />
+                <FieldError id="orders-sheet-url-error" message={sheetFieldErrors['orders.sheetUrl']} />
               </div>
               <div>
                 <Label htmlFor="orders-worksheet">Tên tab</Label>
@@ -500,7 +558,12 @@ export default function SettingsPage() {
                   onChange={(event) => {
                     setOrderSheet({ ...orderSheet, orderMappingText: event.target.value })
                   }}
+                  aria-invalid={Boolean(sheetFieldErrors['orders.orderMappingText'])}
+                  aria-describedby={
+                    sheetFieldErrors['orders.orderMappingText'] ? 'orders-mapping-error' : undefined
+                  }
                 />
+                <FieldError id="orders-mapping-error" message={sheetFieldErrors['orders.orderMappingText']} />
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox

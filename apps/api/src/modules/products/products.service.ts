@@ -23,6 +23,7 @@ export interface ProductResponse {
   imageUrl: string | null;
   productAttributes: ProductAttributeResponse[];
   detailImageUrls: string[];
+  introVideoUrls: string[];
   sellerName: string | null;
   sellerYears: number | null;
   sellerPrimaryCategory: string | null;
@@ -121,6 +122,7 @@ export class ProductsService {
         imageUrl: this.optionalText(dto.imageUrl),
         productAttributes: this.mapAttributes(dto.productAttributes ?? []),
         detailImageUrls: this.mapDetailImageUrls(dto.detailImageUrls ?? []),
+        introVideoUrls: this.mapIntroVideoUrls(dto.introVideoUrls ?? []),
         sellerName: this.optionalText(dto.sellerName),
         sellerYears: dto.sellerYears ?? null,
         sellerPrimaryCategory: this.optionalText(dto.sellerPrimaryCategory),
@@ -177,6 +179,9 @@ export class ProductsService {
             : {}),
           ...(dto.detailImageUrls !== undefined
             ? { detailImageUrls: this.mapDetailImageUrls(dto.detailImageUrls) }
+            : {}),
+          ...(dto.introVideoUrls !== undefined
+            ? { introVideoUrls: this.mapIntroVideoUrls(dto.introVideoUrls) }
             : {}),
           ...(dto.sellerName !== undefined
             ? { sellerName: this.optionalText(dto.sellerName) }
@@ -318,6 +323,13 @@ export class ProductsService {
     return imageUrls.map((imageUrl) => imageUrl.trim()).filter(Boolean);
   }
 
+  private mapIntroVideoUrls(videoUrls: string[]): Prisma.InputJsonValue {
+    return videoUrls
+      .map((videoUrl) => videoUrl.trim())
+      .filter(Boolean)
+      .slice(0, 2);
+  }
+
   private mapReviewSample(
     sample: ProductReviewSampleInputDto | null | undefined,
   ): Prisma.InputJsonValue {
@@ -368,6 +380,7 @@ export class ProductsService {
       imageUrl: product.imageUrl,
       productAttributes: this.toAttributeResponse(product.productAttributes),
       detailImageUrls: this.toDetailImageUrls(product.detailImageUrls),
+      introVideoUrls: this.toDetailImageUrls(product.introVideoUrls).slice(0, 2),
       sellerName: product.sellerName,
       sellerYears: product.sellerYears,
       sellerPrimaryCategory: product.sellerPrimaryCategory,

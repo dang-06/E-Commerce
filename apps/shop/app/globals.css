@@ -2105,10 +2105,24 @@ h2 {
 }
 
 .nik-review-section,
+.nik-video-section,
 .nik-certificate-section,
 .nik-packaging-section,
 .nik-related-section {
   margin-bottom: 30px;
+}
+
+.nik-video-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.nik-video-grid video {
+  aspect-ratio: 16 / 9;
+  background: #111111;
+  display: block;
+  width: 100%;
 }
 
 .nik-review-section {
@@ -2942,6 +2956,10 @@ h2 {
     align-items: start;
     flex-direction: column;
     gap: 5px;
+  }
+
+  .nik-video-grid {
+    grid-template-columns: 1fr;
   }
 
   .nik-review-header {

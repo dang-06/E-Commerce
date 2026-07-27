@@ -52,7 +52,7 @@ export class ProductReviewSampleResponseDto {
   @ApiProperty({ example: "6 kiện", type: String })
   purchasedSummary!: string;
 
-  @ApiProperty({ example: "We got samples and these are looking nice packing 13533445404", type: String })
+  @ApiProperty({ example: "Mình đã nhận được hàng và thực sự rất ưng ý! Sản phẩm đẹp, chất lượng tốt, đúng như mong đợi. Đặc biệt, shop đóng gói rất cẩn thận, chắc chắn và chuyên nghiệp nên hàng đến tay vẫn nguyên vẹn. Shop tư vấn nhiệt tình, giao hàng nhanh. Chắc chắn mình sẽ tiếp tục ủng hộ và giới thiệu cho bạn bè!", type: String })
   content!: string;
 
   @ApiProperty({ example: "买家实拍", type: String })
@@ -87,6 +87,9 @@ export class ProductResponseDto {
 
   @ApiProperty({ example: ["/products/detail-1.png"], type: [String] })
   detailImageUrls!: string[];
+
+  @ApiProperty({ example: ["/products/demo-1.mp4"], type: [String] })
+  introVideoUrls!: string[];
 
   @ApiPropertyOptional({ example: "Công ty TNHH Công nghệ", nullable: true, type: String })
   sellerName!: string | null;
@@ -178,6 +181,12 @@ export class UploadedProductImageResponseDto {
     type: String,
   })
   imageUrl!: string;
+
+  @ApiPropertyOptional({
+    example: "https://res.cloudinary.com/demo/video/upload/v123/ecommerce-products/item.mp4",
+    type: String,
+  })
+  videoUrl?: string;
 
   @ApiProperty({ example: "ecommerce-products/item", type: String })
   publicId!: string;

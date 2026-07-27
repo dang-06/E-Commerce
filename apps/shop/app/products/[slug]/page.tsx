@@ -7,7 +7,8 @@ import { Search, ShoppingCart, Star } from "lucide-react";
 import { fetchProductBySlug, fetchProducts, fetchSiteSettings } from "../../../lib/api";
 import { readCart, setCartQuantity, writeCart } from "../../../lib/cart";
 import { formatVnd, parseVnd } from "../../../lib/money";
-import type { CartItem, Product, SiteSettings } from "../../../lib/types";
+import { readPromotionSession } from "../../../lib/promotion-session";
+import type { CartItem, Product, PromotionSession, SiteSettings } from "../../../lib/types";
 
 const emptySiteSettings: SiteSettings = {
   bannerButtonText: "",
@@ -40,9 +41,22 @@ export default function ProductRoutePage(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cartNotice, setCartNotice] = useState<string | null>(null);
+  const [promotionSession, setPromotionSession] = useState<PromotionSession | null>(null);
 
   useEffect(() => {
     setCartItems(readCart(globalThis.localStorage));
+    setPromotionSession(readPromotionSession(globalThis.localStorage));
+  }, []);
+
+  useEffect(() => {
+    function syncPromotionSession(): void {
+      setPromotionSession(readPromotionSession(globalThis.localStorage));
+    }
+
+    globalThis.addEventListener("promotion-session-updated", syncPromotionSession);
+    return () => {
+      globalThis.removeEventListener("promotion-session-updated", syncPromotionSession);
+    };
   }, []);
 
   useEffect(() => {
@@ -147,6 +161,11 @@ export default function ProductRoutePage(): React.ReactElement {
       ? product.productAttributes
       : [{ label: "Mô tả", value: product.description ?? "Sản phẩm đang được cập nhật mô tả." }];
   const detailImageUrls = product.detailImageUrls.filter((item) => item.trim().length > 0);
+  const discount =
+    promotionSession?.eligible === true && product.isPromotionEligible
+      ? Math.min(parseVnd(product.discountAmount), listedPrice)
+      : 0;
+  const finalPrice = listedPrice - discount;
 
   return (
     <main className="app-shell">
@@ -200,8 +219,14 @@ export default function ProductRoutePage(): React.ReactElement {
           <div className="nik-product-price-panel">
             <div className="nik-price-row">
               <span>Giá bán</span>
-              <strong>{formatVnd(listedPrice)}</strong>
+              <strong>{formatVnd(finalPrice)}</strong>
             </div>
+            {discount > 0 ? (
+              <div className="nik-price-row nik-listed-price-row">
+                <span>Giá gốc</span>
+                <del>{formatVnd(listedPrice)}</del>
+              </div>
+            ) : null}
             <p className="nik-moq-line">Tối thiểu {product.minimumOrderQuantity} sản phẩm.</p>
             <div className="nik-policy-strip">
               {product.returnPolicy ? <span>{product.returnPolicy}</span> : null}
@@ -276,6 +301,25 @@ export default function ProductRoutePage(): React.ReactElement {
         </aside>
 
         <section className="nik-detail-content" aria-label="Mô tả sản phẩm">
+          {product.introVideoUrls.length > 0 ? (
+            <section className="nik-video-section" aria-label="Video giới thiệu sản phẩm">
+              <div className="nik-detail-heading">
+                <h3>Video giới thiệu</h3>
+                <span>{product.introVideoUrls.length} video</span>
+              </div>
+              <div className="nik-video-grid">
+                {product.introVideoUrls.slice(0, 2).map((videoUrl, index) => (
+                  <video
+                    key={`${videoUrl}-${index}`}
+                    src={videoUrl}
+                    controls
+                    playsInline
+                    preload="metadata"
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
           <ReviewSection product={product} />
           <section className="nik-attributes-panel" aria-label="Thuộc tính sản phẩm">
             <h3>Thuộc tính sản phẩm</h3>

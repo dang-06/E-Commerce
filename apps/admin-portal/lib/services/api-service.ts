@@ -34,6 +34,7 @@ interface ApiProduct {
   imageUrl: string | null;
   productAttributes: { label: string; value: string }[];
   detailImageUrls: string[];
+  introVideoUrls: string[];
   sellerName: string | null;
   sellerYears: number | null;
   sellerPrimaryCategory: string | null;
@@ -76,6 +77,7 @@ interface ApiProductColorVariant {
 
 interface ApiProductImageUpload {
   imageUrl: string;
+  videoUrl?: string;
   publicId: string;
   width: number | null;
   height: number | null;
@@ -309,6 +311,15 @@ export const productService = {
     const form = new FormData();
     form.set("file", file);
     return requestJson<ApiProductImageUpload>("/admin/products/images", {
+      body: form,
+      method: "POST",
+    });
+  },
+
+  async uploadProductVideo(file: File): Promise<ApiProductImageUpload> {
+    const form = new FormData();
+    form.set("file", file);
+    return requestJson<ApiProductImageUpload>("/admin/products/videos", {
       body: form,
       method: "POST",
     });
@@ -570,6 +581,7 @@ function toProduct(product: ApiProduct): Product {
     description,
     discountAmount: Number(product.discountAmount),
     detailImageUrls: product.detailImageUrls,
+    introVideoUrls: product.introVideoUrls,
     id: product.id,
     image: product.imageUrl ?? "",
     isActive: product.isActive,
@@ -622,6 +634,14 @@ function toProductPayload(product: Partial<Product>): Record<string, unknown> {
           detailImageUrls: product.detailImageUrls
             .map((imageUrl) => imageUrl.trim())
             .filter(Boolean),
+        }
+      : {}),
+    ...(product.introVideoUrls !== undefined
+      ? {
+          introVideoUrls: product.introVideoUrls
+            .map((videoUrl) => videoUrl.trim())
+            .filter(Boolean)
+            .slice(0, 2),
         }
       : {}),
     ...(product.sellerName !== undefined ? { sellerName: product.sellerName } : {}),

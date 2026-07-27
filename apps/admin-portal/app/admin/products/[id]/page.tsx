@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, EyeOff, Save } from "lucide-react";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { FieldError } from "@/components/shared/FieldError";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { getErrorMessage, getErrorMessages, productService } from "@/lib/services/api-service";
 import type { Product, ProductAttribute, ProductColorVariant } from "@/lib/types";
 import { slugifyVietnamese } from "@/lib/utils/vietnamese";
+import {
+  collectFieldErrorMessages,
+  toProductValidationInput,
+  validateProductForm,
+  type FieldErrors,
+} from "@/lib/validation/admin-forms";
 
 const emptyVariant = (): ProductColorVariant => ({
   colorCode: "#f2d4d7",
@@ -38,9 +45,11 @@ export default function EditProductPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState("");
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [imageError, setImageError] = useState("");
   const [uploadingVariantIndex, setUploadingVariantIndex] = useState<number | null>(null);
   const [uploadingDetailImage, setUploadingDetailImage] = useState(false);
+  const [uploadingIntroVideoIndex, setUploadingIntroVideoIndex] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadProduct() {
@@ -70,6 +79,13 @@ export default function EditProductPage() {
           sortOrder: index,
         })),
       };
+      const nextFieldErrors = validateProductForm(toProductValidationInput(normalizedProduct));
+      setFieldErrors(nextFieldErrors);
+      if (Object.keys(nextFieldErrors).length > 0) {
+        setFormErrors(collectFieldErrorMessages(nextFieldErrors));
+        setSaving(false);
+        return;
+      }
       await productService.updateProduct(product.id, normalizedProduct);
       setProduct(normalizedProduct);
       setMessage("Đã lưu sản phẩm.");
@@ -134,6 +150,28 @@ export default function EditProductPage() {
       setImageError(getErrorMessage(error));
     } finally {
       setUploadingDetailImage(false);
+    }
+  }
+
+  async function handleIntroVideoUpload(index: number, file: File | undefined) {
+    if (!file || !product) {
+      return;
+    }
+    setUploadingIntroVideoIndex(index);
+    setImageError("");
+    try {
+      const uploaded = await productService.uploadProductVideo(file);
+      const videoUrl = uploaded.videoUrl ?? uploaded.imageUrl;
+      setProduct({
+        ...product,
+        introVideoUrls: Array.from({ length: 2 }, (_, itemIndex) =>
+          itemIndex === index ? videoUrl : product.introVideoUrls[itemIndex] ?? "",
+        ).filter(Boolean),
+      });
+    } catch (error) {
+      setImageError(getErrorMessage(error));
+    } finally {
+      setUploadingIntroVideoIndex(null);
     }
   }
 
@@ -229,7 +267,10 @@ export default function EditProductPage() {
               onChange={(event) => {
                 setProduct({ ...product, name: event.target.value });
               }}
+              aria-invalid={Boolean(fieldErrors.name)}
+              aria-describedby={fieldErrors.name ? "name-error" : undefined}
             />
+            <FieldError id="name-error" message={fieldErrors.name} />
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -240,7 +281,10 @@ export default function EditProductPage() {
                 onChange={(event) => {
                   setProduct({ ...product, sku: event.target.value });
                 }}
+                aria-invalid={Boolean(fieldErrors.sku)}
+                aria-describedby={fieldErrors.sku ? "sku-error" : undefined}
               />
+              <FieldError id="sku-error" message={fieldErrors.sku} />
             </div>
             <div>
               <Label htmlFor="slug">Slug</Label>
@@ -250,7 +294,10 @@ export default function EditProductPage() {
                 onChange={(event) => {
                   setProduct({ ...product, slug: slugifyVietnamese(event.target.value) });
                 }}
+                aria-invalid={Boolean(fieldErrors.slug)}
+                aria-describedby={fieldErrors.slug ? "slug-error" : undefined}
               />
+              <FieldError id="slug-error" message={fieldErrors.slug} />
               <p className="mt-1 text-xs text-muted-foreground">
                 Chỉ dùng chữ thường, số và dấu gạch ngang.
               </p>
@@ -294,7 +341,10 @@ export default function EditProductPage() {
                       sellerYears: event.target.value ? Number(event.target.value) : undefined,
                     });
                   }}
+                  aria-invalid={Boolean(fieldErrors.sellerYears)}
+                  aria-describedby={fieldErrors.sellerYears ? "sellerYears-error" : undefined}
                 />
+                <FieldError id="sellerYears-error" message={fieldErrors.sellerYears} />
               </div>
               <div>
                 <Label htmlFor="sellerPrimaryCategory">Ngành hàng chính</Label>
@@ -321,7 +371,10 @@ export default function EditProductPage() {
                       minimumOrderQuantity: Number(event.target.value || 1),
                     });
                   }}
+                  aria-invalid={Boolean(fieldErrors.minimumOrderQuantity)}
+                  aria-describedby={fieldErrors.minimumOrderQuantity ? "minimumOrderQuantity-error" : undefined}
                 />
+                <FieldError id="minimumOrderQuantity-error" message={fieldErrors.minimumOrderQuantity} />
               </div>
               <div>
                 <Label htmlFor="shippingOrigin">Nơi gửi hàng</Label>
@@ -370,7 +423,10 @@ export default function EditProductPage() {
                       reviewRating: event.target.value ? Number(event.target.value) : undefined,
                     });
                   }}
+                  aria-invalid={Boolean(fieldErrors.reviewRating)}
+                  aria-describedby={fieldErrors.reviewRating ? "reviewRating-error" : undefined}
                 />
+                <FieldError id="reviewRating-error" message={fieldErrors.reviewRating} />
               </div>
               <div>
                 <Label htmlFor="reviewCount">Số đánh giá</Label>
@@ -385,7 +441,10 @@ export default function EditProductPage() {
                       reviewCount: event.target.value ? Number(event.target.value) : undefined,
                     });
                   }}
+                  aria-invalid={Boolean(fieldErrors.reviewCount)}
+                  aria-describedby={fieldErrors.reviewCount ? "reviewCount-error" : undefined}
                 />
+                <FieldError id="reviewCount-error" message={fieldErrors.reviewCount} />
               </div>
             </div>
             <div>
@@ -412,6 +471,16 @@ export default function EditProductPage() {
                     reviewImageUrls: parseUrlLines(event.target.value),
                   });
                 }}
+                aria-invalid={Object.keys(fieldErrors).some((field) => field.startsWith("reviewImageUrls."))}
+                aria-describedby={
+                  Object.keys(fieldErrors).some((field) => field.startsWith("reviewImageUrls."))
+                    ? "reviewImageUrls-error"
+                    : undefined
+                }
+              />
+              <FieldError
+                id="reviewImageUrls-error"
+                message={Object.entries(fieldErrors).find(([field]) => field.startsWith("reviewImageUrls."))?.[1]}
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 Mỗi dòng là một URL http(s) hoặc đường dẫn public bắt đầu bằng /.
@@ -542,7 +611,10 @@ export default function EditProductPage() {
                 onChange={(event) => {
                   setProduct({ ...product, listedPrice: Number(event.target.value) });
                 }}
+                aria-invalid={Boolean(fieldErrors.listedPrice)}
+                aria-describedby={fieldErrors.listedPrice ? "listedPrice-error" : undefined}
               />
+              <FieldError id="listedPrice-error" message={fieldErrors.listedPrice} />
             </div>
             <div>
               <Label htmlFor="discountAmount">Giảm giá</Label>
@@ -553,7 +625,10 @@ export default function EditProductPage() {
                 onChange={(event) => {
                   setProduct({ ...product, discountAmount: Number(event.target.value) });
                 }}
+                aria-invalid={Boolean(fieldErrors.discountAmount)}
+                aria-describedby={fieldErrors.discountAmount ? "discountAmount-error" : undefined}
               />
+              <FieldError id="discountAmount-error" message={fieldErrors.discountAmount} />
             </div>
           </div>
           <div className="space-y-4 rounded-lg border border-border p-4">
@@ -592,21 +667,24 @@ export default function EditProductPage() {
                   <Input
                     id={`attribute-label-${index}`}
                     value={attribute.label}
-                    onChange={(event) => {
-                      updateAttribute(index, { label: event.target.value });
-                    }}
-                  />
-                </div>
+                  onChange={(event) => {
+                    updateAttribute(index, { label: event.target.value });
+                  }}
+                  aria-invalid={Boolean(fieldErrors[`productAttributes.${index}`])}
+                />
+              </div>
                 <div>
                   <Label htmlFor={`attribute-value-${index}`}>Giá trị</Label>
                   <Input
                     id={`attribute-value-${index}`}
                     value={attribute.value}
-                    onChange={(event) => {
-                      updateAttribute(index, { value: event.target.value });
-                    }}
-                  />
-                </div>
+                  onChange={(event) => {
+                    updateAttribute(index, { value: event.target.value });
+                  }}
+                  aria-invalid={Boolean(fieldErrors[`productAttributes.${index}`])}
+                />
+                <FieldError id={`attribute-${index}-error`} message={fieldErrors[`productAttributes.${index}`]} />
+              </div>
                 <div className="flex items-end">
                   <Button
                     type="button"
@@ -659,8 +737,105 @@ export default function EditProductPage() {
                 onChange={(event) => {
                   setProduct({ ...product, image: event.target.value });
                 }}
+                aria-invalid={Boolean(fieldErrors.image)}
+                aria-describedby={fieldErrors.image ? "image-url-error" : undefined}
               />
+              <FieldError id="image-url-error" message={fieldErrors.image} />
             </div>
+          </div>
+          <div className="space-y-4 rounded-lg border border-border p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Video giới thiệu</h2>
+                <p className="text-sm text-muted-foreground">
+                  Mỗi sản phẩm được lưu tối đa 2 video giới thiệu.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={product.introVideoUrls.length >= 2}
+                onClick={() => {
+                  setProduct({
+                    ...product,
+                    introVideoUrls: [...product.introVideoUrls, ""].slice(0, 2),
+                  });
+                }}
+              >
+                Thêm video
+              </Button>
+            </div>
+            {product.introVideoUrls.length === 0 ? (
+              <p className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+                Chưa có video giới thiệu.
+              </p>
+            ) : null}
+            {product.introVideoUrls.map((videoUrl, index) => (
+              <div key={index} className="grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto]">
+                <div className="overflow-hidden rounded-md border border-border bg-muted">
+                  {videoUrl ? (
+                    <video src={videoUrl} className="h-32 w-full object-cover" controls muted />
+                  ) : (
+                    <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
+                      Chưa có video
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor={`intro-video-upload-${index}`}>Tải video {index + 1}</Label>
+                    <Input
+                      id={`intro-video-upload-${index}`}
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime"
+                      disabled={uploadingIntroVideoIndex === index}
+                      onChange={(event) => {
+                        void handleIntroVideoUpload(index, event.target.files?.[0]);
+                      }}
+                    />
+                    {uploadingIntroVideoIndex === index ? (
+                      <p className="mt-1 text-sm text-muted-foreground">Đang tải video...</p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <Label htmlFor={`intro-video-url-${index}`}>URL video {index + 1}</Label>
+                    <Input
+                      id={`intro-video-url-${index}`}
+                      value={videoUrl}
+                      onChange={(event) => {
+                        setProduct({
+                          ...product,
+                          introVideoUrls: product.introVideoUrls.map((item, itemIndex) =>
+                            itemIndex === index ? event.target.value : item,
+                          ),
+                        });
+                      }}
+                      aria-invalid={Boolean(fieldErrors[`introVideoUrls.${index}`])}
+                    />
+                    <FieldError
+                      id={`intro-video-url-${index}-error`}
+                      message={fieldErrors[`introVideoUrls.${index}`]}
+                    />
+                  </div>
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      setProduct({
+                        ...product,
+                        introVideoUrls: product.introVideoUrls.filter(
+                          (_, itemIndex) => itemIndex !== index,
+                        ),
+                      });
+                    }}
+                  >
+                    Xóa
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
           <div className="space-y-4 rounded-lg border border-border p-4">
             <div>
@@ -726,6 +901,11 @@ export default function EditProductPage() {
                         ),
                       });
                     }}
+                    aria-invalid={Boolean(fieldErrors[`detailImageUrls.${index}`])}
+                  />
+                  <FieldError
+                    id={`detail-image-url-${index}-error`}
+                    message={fieldErrors[`detailImageUrls.${index}`]}
                   />
                 </div>
                 <div className="flex items-end">
@@ -787,6 +967,11 @@ export default function EditProductPage() {
                       onChange={(event) => {
                         updateVariant(index, { name: event.target.value });
                       }}
+                      aria-invalid={Boolean(fieldErrors[`colorVariants.${index}.name`])}
+                    />
+                    <FieldError
+                      id={`variant-name-${index}-error`}
+                      message={fieldErrors[`colorVariants.${index}.name`]}
                     />
                   </div>
                   <div>
@@ -798,6 +983,7 @@ export default function EditProductPage() {
                         onChange={(event) => {
                           updateVariant(index, { colorCode: event.target.value });
                         }}
+                        aria-invalid={Boolean(fieldErrors[`colorVariants.${index}.colorCode`])}
                       />
                       <Input
                         aria-label={`Chọn màu ${index + 1}`}
@@ -856,6 +1042,11 @@ export default function EditProductPage() {
                         onChange={(event) => {
                           updateVariant(index, { imageUrl: event.target.value });
                         }}
+                        aria-invalid={Boolean(fieldErrors[`colorVariants.${index}.imageUrl`])}
+                      />
+                      <FieldError
+                        id={`variant-url-${index}-error`}
+                        message={fieldErrors[`colorVariants.${index}.imageUrl`]}
                       />
                     </div>
                     <Button

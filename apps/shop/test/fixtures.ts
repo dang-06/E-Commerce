@@ -10,6 +10,7 @@ export function sampleProduct(overrides: Partial<Product> = {}): Product {
     imageUrl: null,
     productAttributes: [],
     detailImageUrls: [],
+    introVideoUrls: [],
     sellerName: null,
     sellerYears: null,
     sellerPrimaryCategory: null,

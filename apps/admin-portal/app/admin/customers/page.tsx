@@ -6,6 +6,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Breadcrumbs } from '@/components/shared/Breadcrumbs'
 import { DataTable } from '@/components/shared/DataTable'
 import { PhoneMask } from '@/components/shared/PhoneMask'
+import { FieldError } from '@/components/shared/FieldError'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,7 @@ import { Plus, FileUp, Save, X } from 'lucide-react'
 import { EligibleCustomer } from '@/lib/types'
 import { eligibleCustomerService, getErrorMessage } from '@/lib/services/api-service'
 import { formatVietnameseDate } from '@/lib/utils/vietnamese'
+import { validateCustomerForm, type FieldErrors } from '@/lib/validation/admin-forms'
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<EligibleCustomer[]>([])
@@ -25,6 +27,7 @@ export default function CustomersPage() {
   const [savingCustomer, setSavingCustomer] = useState(false)
   const [customerError, setCustomerError] = useState('')
   const [customerMessage, setCustomerMessage] = useState('')
+  const [customerFieldErrors, setCustomerFieldErrors] = useState<FieldErrors>({})
 
   useEffect(() => {
     async function loadCustomers() {
@@ -49,6 +52,11 @@ export default function CustomersPage() {
   }
 
   const createCustomer = async () => {
+    const nextFieldErrors = validateCustomerForm(newPhone)
+    setCustomerFieldErrors(nextFieldErrors)
+    if (Object.keys(nextFieldErrors).length > 0) {
+      return
+    }
     setSavingCustomer(true)
     setCustomerError('')
     setCustomerMessage('')
@@ -165,9 +173,15 @@ export default function CustomersPage() {
                 value={newPhone}
                 onChange={(event) => {
                   setNewPhone(event.target.value)
+                  if (customerFieldErrors.phone) {
+                    setCustomerFieldErrors((current) => ({ ...current, phone: '' }))
+                  }
                 }}
                 required
+                aria-invalid={Boolean(customerFieldErrors.phone)}
+                aria-describedby={customerFieldErrors.phone ? 'customer-phone-error' : undefined}
               />
+              <FieldError id="customer-phone-error" message={customerFieldErrors.phone} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="customer-source-id">Mã khách/Nguồn</Label>

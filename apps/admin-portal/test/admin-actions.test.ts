@@ -72,6 +72,7 @@ void test("product sheet export includes extended 1688 detail attributes", () =>
     image: "https://cdn.example.com/product.jpg",
     productAttributes: [{ label: "Thương hiệu", value: "Han zini" }],
     detailImageUrls: ["https://cdn.example.com/detail.jpg"],
+    introVideoUrls: ["https://cdn.example.com/intro-1.mp4"],
     sellerName: "Công ty TNHH Công nghệ",
     sellerYears: 3,
     sellerPrimaryCategory: "Sản phẩm chăm sóc tóc",
@@ -86,7 +87,7 @@ void test("product sheet export includes extended 1688 detail attributes", () =>
     reviewSample: {
       buyerAvatarUrl: "https://cdn.example.com/avatar.jpg",
       buyerName: "Ẩn danh mua",
-      content: "We got samples and these are looking nice packing 13533445404",
+      content: "Mình đã nhận được hàng và thực sự rất ưng ý! Sản phẩm đẹp, chất lượng tốt, đúng như mong đợi. Đặc biệt, shop đóng gói rất cẩn thận, chắc chắn và chuyên nghiệp nên hàng đến tay vẫn nguyên vẹn. Shop tư vấn nhiệt tình, giao hàng nhanh. Chắc chắn mình sẽ tiếp tục ủng hộ và giới thiệu cho bạn bè!",
       imageBadge: "买家实拍",
       purchasedSummary: "6 kiện",
     },

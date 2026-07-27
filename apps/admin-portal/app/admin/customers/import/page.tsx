@@ -30,6 +30,20 @@ export default function ImportWizardPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
+      if (!/\.(csv|tsv|txt|xlsx|xls)$/i.test(selectedFile.name)) {
+        setError('File không đúng định dạng. Vui lòng chọn CSV, TSV, TXT, XLS hoặc XLSX.')
+        setFile(null)
+        setFileName('')
+        setRows([])
+        return
+      }
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        setError('File vượt quá 10MB. Vui lòng chọn file nhỏ hơn.')
+        setFile(null)
+        setFileName('')
+        setRows([])
+        return
+      }
       setFile(selectedFile)
       setFileName(selectedFile.name)
       setError('')

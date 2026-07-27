@@ -36,6 +36,7 @@ export interface Product {
   imageUrl: string | null;
   productAttributes: ProductAttribute[];
   detailImageUrls: string[];
+  introVideoUrls: string[];
   sellerName: string | null;
   sellerYears: number | null;
   sellerPrimaryCategory: string | null;

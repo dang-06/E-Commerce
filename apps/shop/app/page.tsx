@@ -17,13 +17,12 @@ import { OrderSummary } from "../components/OrderSummary";
 import { ProductCard } from "../components/ProductCard";
 import { RecipientFields } from "../components/RecipientFields";
 import {
-  checkPromotion,
   createOrder,
   fetchProducts,
   fetchSiteSettings,
   quoteOrder,
 } from "../lib/api";
-import { normalizeVietnamesePhone } from "../lib/phone";
+import { readPromotionSession } from "../lib/promotion-session";
 import {
   calculateCartTotals,
   freeShippingMinQuantity,
@@ -70,9 +69,7 @@ const emptySiteSettings: SiteSettings = {
 
 export default function ShopPage(): React.ReactElement {
   const [step, setStep] = useState<Step>("intro");
-  const [phoneInput, setPhoneInput] = useState("");
   const [promotionSession, setPromotionSession] = useState<PromotionSession | null>(null);
-  const [promotionError, setPromotionError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [productsError, setProductsError] = useState<string | null>(null);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -92,7 +89,31 @@ export default function ShopPage(): React.ReactElement {
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(emptySiteSettings);
 
   useEffect(() => {
-    setCartItems(readCart(globalThis.localStorage));
+    const storedCart = readCart(globalThis.localStorage);
+    const storedSession = readPromotionSession(globalThis.localStorage);
+    setCartItems(storedCart);
+    if (storedSession) {
+      setPromotionSession(storedSession);
+      const shouldCheckout = new URLSearchParams(globalThis.location.search).get("checkout") === "1";
+      setStep(shouldCheckout && storedCart.length > 0 ? "checkout" : "catalog");
+      void loadProducts();
+    }
+  }, []);
+
+  useEffect(() => {
+    function syncPromotionSession(): void {
+      const storedSession = readPromotionSession(globalThis.localStorage);
+      setPromotionSession(storedSession);
+      if (storedSession) {
+        setStep((currentStep) => (currentStep === "intro" || currentStep === "checking" ? "catalog" : currentStep));
+        void loadProducts();
+      }
+    }
+
+    globalThis.addEventListener("promotion-session-updated", syncPromotionSession);
+    return () => {
+      globalThis.removeEventListener("promotion-session-updated", syncPromotionSession);
+    };
   }, []);
 
   useEffect(() => {
@@ -138,34 +159,6 @@ export default function ShopPage(): React.ReactElement {
     setCheckoutIdempotencyKey(null);
     setServerQuote(null);
   }, [cartItems]);
-
-  async function handlePromotionCheck(): Promise<void> {
-    setPromotionError(null);
-    let normalizedPhone: string;
-    try {
-      normalizedPhone = normalizeVietnamesePhone(phoneInput);
-    } catch {
-      setPromotionError("Số điện thoại chưa đúng định dạng. Vui lòng kiểm tra lại.");
-      return;
-    }
-
-    setStep("checking");
-    try {
-      const result = await checkPromotion(normalizedPhone);
-      setPromotionSession({
-        eligible: result.eligible && Boolean(result.promotionToken && result.expiresAt),
-        phone: normalizedPhone,
-        ...(result.expiresAt ? { expiresAt: result.expiresAt } : {}),
-        ...(result.promotionToken ? { promotionToken: result.promotionToken } : {}),
-      });
-      await loadProducts();
-      const shouldCheckout = new URLSearchParams(globalThis.location.search).get("checkout") === "1";
-      setStep(shouldCheckout && cartItems.length > 0 ? "checkout" : "catalog");
-    } catch {
-      setPromotionError("Không thể kiểm tra ưu đãi lúc này. Vui lòng thử lại.");
-      setStep("intro");
-    }
-  }
 
   async function loadProducts(): Promise<void> {
     setProductsLoading(true);
@@ -290,38 +283,8 @@ export default function ShopPage(): React.ReactElement {
       />
 
       {step === "intro" || step === "checking" ? (
-        <section className="phone-panel" aria-labelledby="phone-title">
-          <p className="eyebrow">{displayBrandName(siteSettings)}</p>
-          <h1 id="phone-title">Nhập số điện thoại để vào cửa hàng</h1>
-          <p className="intro-copy">
-            Nếu số điện thoại có ưu đãi, sản phẩm sẽ tự hiện giá giảm. Nếu chưa có ưu đãi, bạn vẫn
-            xem và đặt hàng với giá gốc.
-          </p>
-          <label className="field" htmlFor="promotion-phone">
-            <span>Số điện thoại</span>
-            <input
-              autoComplete="tel"
-              id="promotion-phone"
-              inputMode="tel"
-              placeholder="Ví dụ: 0901234567"
-              value={phoneInput}
-              onChange={(event) => {
-                setPhoneInput(event.target.value);
-              }}
-            />
-          </label>
-          {promotionError ? <p className="status error">{promotionError}</p> : null}
-          {step === "checking" ? <p className="status">Đang kiểm tra ưu đãi...</p> : null}
-          <button
-            className="primary-button full-width"
-            disabled={step === "checking"}
-            type="button"
-            onClick={() => {
-              void handlePromotionCheck();
-            }}
-          >
-            Vào cửa hàng
-          </button>
+        <section className="shop-section">
+          <p className="status">Đang vào cửa hàng...</p>
         </section>
       ) : null}
 
@@ -1115,6 +1078,25 @@ function ProductDetail({
       </aside>
 
       <section className="nik-detail-content" aria-label="Mô tả sản phẩm">
+        {product.introVideoUrls.length > 0 ? (
+          <section className="nik-video-section" aria-label="Video giới thiệu sản phẩm">
+            <div className="nik-detail-heading">
+              <h3>Video giới thiệu</h3>
+              <span>{product.introVideoUrls.length} video</span>
+            </div>
+            <div className="nik-video-grid">
+              {product.introVideoUrls.slice(0, 2).map((videoUrl, index) => (
+                <video
+                  key={`${videoUrl}-${index}`}
+                  src={videoUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
         {product.reviewRating !== null ||
         product.reviewTags.length > 0 ||
         product.reviewImageUrls.length > 0 ||
