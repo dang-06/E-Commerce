@@ -1,5 +1,10 @@
 import { createHash } from "node:crypto";
-import { BadRequestException, Injectable, InternalServerErrorException } from "@nestjs/common";
+import {
+  BadGatewayException,
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from "@nestjs/common";
 import { getConfig } from "../../config/app.config.js";
 
 export interface UploadedProductImage {
@@ -19,6 +24,8 @@ interface CloudinaryUploadResponse {
   format?: string;
   error?: { message?: string };
 }
+
+const cloudinaryUploadTimeoutMs = 120_000;
 
 @Injectable()
 export class CloudinaryImageService {
@@ -50,10 +57,11 @@ export class CloudinaryImageService {
     form.set("timestamp", timestamp);
     form.set("signature", signature);
 
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`, {
-      body: form,
-      method: "POST",
-    });
+    const response = await this.postCloudinary(
+      `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
+      form,
+      "image",
+    );
     const body = (await response.json().catch(() => null)) as CloudinaryUploadResponse | null;
 
     if (!response.ok || !body?.secure_url || !body.public_id) {
@@ -108,12 +116,10 @@ export class CloudinaryImageService {
     form.set("timestamp", timestamp);
     form.set("signature", signature);
 
-    const response = await fetch(
+    const response = await this.postCloudinary(
       `https://api.cloudinary.com/v1_1/${config.cloudName}/${resourceType}/upload`,
-      {
-        body: form,
-        method: "POST",
-      },
+      form,
+      resourceType,
     );
     const body = (await response.json().catch(() => null)) as CloudinaryUploadResponse | null;
 
@@ -134,6 +140,27 @@ export class CloudinaryImageService {
     const allowedMimeTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
     if (!allowedMimeTypes.has(file.mimetype)) {
       throw new BadRequestException("Only JPG, PNG, WEBP, or GIF images are supported");
+    }
+  }
+
+  private async postCloudinary(
+    url: string,
+    form: FormData,
+    resourceType: "image" | "video",
+  ): Promise<Response> {
+    try {
+      return await fetch(url, {
+        body: form,
+        method: "POST",
+        signal: AbortSignal.timeout(cloudinaryUploadTimeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "TimeoutError") {
+        throw new BadGatewayException(`Cloudinary ${resourceType} upload timed out. Please try a smaller file.`);
+      }
+      throw new BadGatewayException(
+        `Could not connect to Cloudinary for ${resourceType} upload. Please check API container network and Cloudinary configuration.`,
+      );
     }
   }
 
