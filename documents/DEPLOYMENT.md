@@ -1,6 +1,6 @@
 # Deployment
 
-Ngay cap nhat: 2026-07-15
+Ngay cap nhat: 2026-07-27
 
 ## Muc tieu
 
@@ -52,6 +52,44 @@ Start HTTPS/reverse proxy:
 ```bash
 docker compose --profile edge up -d caddy
 ```
+
+## Staging/production voi PostgreSQL ngoai
+
+Neu server dung PostgreSQL host/managed DB, dung override `docker-compose.host-db.yml`. Service buyer web ten la `web`.
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml build api worker web admin-portal
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml run --rm --no-deps api npm run db:migrate:deploy
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps api worker web admin-portal caddy
+```
+
+Dung `--no-deps` de compose khong start container `postgres` noi bo. Neu da start nham va bi loi port `5432` dang dung:
+
+```bash
+docker rm -f runtime-postgres-1
+```
+
+Host DB can cho phep Docker bridge connect trong `pg_hba.conf`, vi container co the den tu IP dang `172.21.0.2`:
+
+```conf
+host    ecommerce    ecommerce    172.16.0.0/12    md5
+```
+
+Neu PostgreSQL dung SCRAM password, thay `md5` bang `scram-sha-256`.
+
+Test connection tu container:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml run --rm --no-deps api node -e "const {Client}=require('pg'); const c=new Client({connectionString:process.env.DATABASE_URL}); c.connect().then(()=>c.query('select current_user,current_database()')).then(r=>console.log(r.rows)).finally(()=>c.end()).catch(e=>{console.error(e.message); process.exit(1)})"
+```
+
+Chi chay seed neu muon reset du lieu demo/staging:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml run --rm --no-deps api npm run db:seed
+```
+
+`db:seed` xoa du lieu cu va tao lai du lieu seed.
 
 Check health:
 

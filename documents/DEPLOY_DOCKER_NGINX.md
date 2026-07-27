@@ -146,22 +146,96 @@ Kiem tra compose:
 docker compose config
 ```
 
-Neu server da co PostgreSQL host dang chay tren port `5432`, dung file override `docker-compose.host-db.yml` va khong start container `postgres`:
+### 4.1. Server dung PostgreSQL ngoai/host DB
+
+Neu server da co PostgreSQL host dang chay tren port `5432`, dung file override `docker-compose.host-db.yml`. Service buyer web trong compose ten la `web`, khong phai `shop`.
+
+Voi che do host DB, khong start container `postgres`. Khi `up` app, luon dung `--no-deps` de compose khong keo `postgres` noi bo len:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.host-db.yml config
 docker compose -f docker-compose.yml -f docker-compose.host-db.yml build api worker web admin-portal
-docker compose -f docker-compose.yml -f docker-compose.host-db.yml --profile migration run --rm --no-deps migrate
-docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps api worker web admin-portal
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml run --rm --no-deps api npm run db:migrate:deploy
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps api worker web admin-portal caddy
 ```
 
 Voi che do nay, `.env` can co:
 
 ```env
 DATABASE_URL=postgresql://ecommerce:<password>@host.docker.internal:5432/ecommerce?schema=public
+API_CORS_ORIGINS=https://shop.example.com,https://admin.example.com
+NEXT_PUBLIC_API_BASE_URL=https://shop.example.com/api/v1
 ```
 
-Neu PostgreSQL host chi listen `127.0.0.1:5432`, container co the chua ket noi duoc. Khi do can cau hinh PostgreSQL listen them Docker bridge va mo `pg_hba.conf` cho subnet Docker.
+Neu tung start nham container `postgres` noi bo va bi loi bind port `5432`, xoa container do:
+
+```bash
+docker rm -f runtime-postgres-1
+```
+
+Neu PostgreSQL host chi listen `127.0.0.1:5432`, container co the chua ket noi duoc. Khi do can cau hinh PostgreSQL listen them Docker bridge va mo `pg_hba.conf` cho subnet Docker. Trieu chung thuong gap:
+
+```text
+P1010: User was denied access on the database `172.21.0.2`
+```
+
+Tren server DB, mo file `pg_hba.conf`:
+
+```bash
+sudo -u postgres psql -c "SHOW hba_file;"
+sudo nano /path/to/pg_hba.conf
+```
+
+Them mot trong hai dong sau vao cuoi file, tuy theo phuong thuc password cua PostgreSQL:
+
+```conf
+host    ecommerce    ecommerce    172.16.0.0/12    md5
+host    ecommerce    ecommerce    172.16.0.0/12    scram-sha-256
+```
+
+Reload PostgreSQL:
+
+```bash
+sudo systemctl reload postgresql
+```
+
+Dam bao user app co quyen tren database/schema:
+
+```sql
+ALTER DATABASE ecommerce OWNER TO ecommerce;
+\connect ecommerce
+ALTER SCHEMA public OWNER TO ecommerce;
+GRANT ALL PRIVILEGES ON DATABASE ecommerce TO ecommerce;
+GRANT ALL ON SCHEMA public TO ecommerce;
+
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+    EXECUTE format('ALTER TABLE public.%I OWNER TO ecommerce', r.tablename);
+  END LOOP;
+
+  FOR r IN SELECT sequencename FROM pg_sequences WHERE schemaname = 'public' LOOP
+    EXECUTE format('ALTER SEQUENCE public.%I OWNER TO ecommerce', r.sequencename);
+  END LOOP;
+END $$;
+```
+
+Test connection tu container API:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml run --rm --no-deps api node -e "const {Client}=require('pg'); const c=new Client({connectionString:process.env.DATABASE_URL}); c.connect().then(()=>c.query('select current_user,current_database()')).then(r=>console.log(r.rows)).finally(()=>c.end()).catch(e=>{console.error(e.message); process.exit(1)})"
+```
+
+Seed demo/staging voi host DB:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml run --rm --no-deps api npm run db:seed
+```
+
+Canh bao: `db:seed` xoa du lieu cu va tao lai seed product/order/customer demo. Khong chay tren production co du lieu that neu chua backup va chua chap nhan reset.
+
+### 4.2. Server dung PostgreSQL container noi bo
 
 Build image:
 
@@ -193,6 +267,13 @@ docker compose run --rm --no-deps api npm run db:seed
 ```bash
 docker compose up -d api worker web admin-portal
 docker compose ps
+```
+
+Neu dang dung host DB override:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps api worker web admin-portal caddy
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml ps
 ```
 
 Health check noi bo tren server:
@@ -368,6 +449,37 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
+Neu deploy tren server dung host DB override:
+
+```bash
+cd /opt/ecommerce
+git fetch origin
+git checkout main
+git pull --ff-only
+
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml build api worker web admin-portal
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml run --rm --no-deps api npm run db:migrate:deploy
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps api worker web admin-portal caddy
+
+curl -fsS http://127.0.0.1:31082/api/v1/health/ready
+curl -fsS http://127.0.0.1:31080/api/health
+curl -fsS http://127.0.0.1:31081/api/health
+```
+
+Neu chi sua `.env` CORS/API URL:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps api
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml exec api node -e "console.log(process.env.API_CORS_ORIGINS)"
+```
+
+Neu sua `NEXT_PUBLIC_API_BASE_URL`, can rebuild frontend vi day la bien build-time:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml build web admin-portal
+docker compose -f docker-compose.yml -f docker-compose.host-db.yml up -d --no-deps web admin-portal
+```
+
 ## 10. Rollback
 
 Rollback app khi migration khong doi schema phuc tap:
@@ -399,6 +511,26 @@ docker compose exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 df -h
 free -m
 ```
+
+Don Docker cache/unused artifacts:
+
+```bash
+docker system df
+docker builder prune -f
+docker image prune -f
+docker container prune -f
+docker network prune -f
+docker system df
+```
+
+Chi chay cac lenh manh hon sau khi chac khong can image/cache cu:
+
+```bash
+docker image prune -a -f
+docker builder prune -a -f
+```
+
+Khong chay `docker volume prune` neu chua chac chan, vi co the xoa volume du lieu PostgreSQL/Caddy.
 
 ## 12. Luu y bao mat
 

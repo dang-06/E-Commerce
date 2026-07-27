@@ -1,6 +1,6 @@
 # Environment Variables
 
-Ngay cap nhat: 2026-07-15
+Ngay cap nhat: 2026-07-27
 
 Khong commit secret that. File `.env.example` chi dung placeholder; moi truong staging/production phai luu secret trong secret manager, CI/CD secrets hoac file `.env` nam ngoai Git.
 
@@ -40,6 +40,12 @@ Khong commit secret that. File `.env.example` chi dung placeholder; moi truong s
 | `CLOUDINARY_API_SECRET` | Khi upload anh | secret manager | Khong log, khong dua xuong frontend |
 | `CLOUDINARY_PRODUCT_IMAGE_FOLDER` | Khong | `ecommerce-products` | Folder upload anh san pham |
 
+Luu y:
+
+- Neu frontend/admin goi API bi CORS, them dung origin that vao `API_CORS_ORIGINS`, sau do restart `api`.
+- Neu sua `NEXT_PUBLIC_API_BASE_URL`, can rebuild `web` va `admin-portal` vi day la bien build-time cua Next.js.
+- Upload anh/video qua Cloudinary can `CLOUDINARY_*` trong container `api`. Video ho tro MP4, WEBM, MOV, toi da 50MB.
+
 ## Integration worker
 
 | Bien | Bat buoc | Vi du | Ghi chu |
@@ -65,6 +71,14 @@ Khong commit secret that. File `.env.example` chi dung placeholder; moi truong s
 | `POSTGRES_USER` | Co | `ecommerce` | User app |
 | `POSTGRES_PASSWORD` | Co | secret manager | Khong dung gia tri mau |
 | `DATABASE_URL` | Co | `postgresql://...` | Dung cho Prisma migrate/API/worker |
+
+Neu dung PostgreSQL host/managed DB voi `docker-compose.host-db.yml`, vi du:
+
+```env
+DATABASE_URL=postgresql://ecommerce:<password>@host.docker.internal:5432/ecommerce?schema=public
+```
+
+PostgreSQL host can mo `pg_hba.conf` cho Docker bridge, vi container thuong ket noi tu subnet `172.16.0.0/12`.
 
 ## Backup and alerting
 
