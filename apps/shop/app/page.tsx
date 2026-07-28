@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { OrderSummary } from "../components/OrderSummary";
+import { IntroVideoPlayer } from "../components/IntroVideoPlayer";
 import { ProductCard } from "../components/ProductCard";
 import { RecipientFields } from "../components/RecipientFields";
 import {
@@ -23,6 +24,7 @@ import {
   quoteOrder,
 } from "../lib/api";
 import { readPromotionSession } from "../lib/promotion-session";
+import { noDistrictValue } from "../lib/vietnam-address";
 import {
   calculateCartTotals,
   freeShippingMinQuantity,
@@ -272,7 +274,6 @@ export default function ShopPage(): React.ReactElement {
       <AnnouncementBar />
       <ShopHeader
         cartQuantity={totals.totalQuantity}
-        cartTotal={totals.payableAmount ?? totals.subtotal - totals.discountAmount}
         searchTerm={searchTerm}
         siteSettings={siteSettings}
         onCartClick={() => {
@@ -336,7 +337,7 @@ export default function ShopPage(): React.ReactElement {
             setStep("catalog");
           }}
           onChange={(field, value) => {
-            setRecipient({ ...recipient, [field]: value });
+            setRecipient((current) => ({ ...current, [field]: value }));
           }}
           onReview={() => {
             void reviewOrder();
@@ -356,8 +357,7 @@ export default function ShopPage(): React.ReactElement {
               <strong>Điện thoại:</strong> {recipient.recipientPhone}
             </p>
             <p>
-              <strong>Địa chỉ:</strong> {recipient.address}, {recipient.ward}, {recipient.district},{" "}
-              {recipient.province}
+              <strong>Địa chỉ:</strong> {formatRecipientAddress(recipient)}
             </p>
           </div>
           {orderError ? <p className="status error">{orderError}</p> : null}
@@ -435,7 +435,6 @@ function AnnouncementBar(): React.ReactElement {
 
 function ShopHeader({
   cartQuantity,
-  cartTotal,
   onCartClick,
   onHome,
   onSearchChange,
@@ -443,7 +442,6 @@ function ShopHeader({
   siteSettings,
 }: {
   cartQuantity: number;
-  cartTotal: number;
   onCartClick: () => void;
   onHome: () => void;
   onSearchChange: (value: string) => void;
@@ -452,36 +450,71 @@ function ShopHeader({
 }): React.ReactElement {
   const logoText = displayBrandName(siteSettings);
   const logoImage = siteSettings.logoImageUrl;
+  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
-    <header className="shop-header">
-      <button className="brand-lockup" type="button" aria-label="Về trang chính" onClick={onHome}>
-        {logoImage ? <img src={logoImage} alt="" /> : null}
-        {logoText ? <span>{logoText}</span> : null}
-      </button>
-      <label className="search-box">
-        <span className="sr-only">Tìm sản phẩm</span>
-        <input
-          placeholder="Tìm sản phẩm của bạn"
-          value={searchTerm}
-          onChange={(event) => {
-            onSearchChange(event.target.value);
-          }}
-        />
-        <Search aria-hidden="true" size={25} />
-      </label>
-      <button
-        className="cart-status"
-        type="button"
-        onClick={onCartClick}
-        aria-label={`${cartQuantity} sản phẩm trong giỏ`}
-      >
-        <ShoppingBag aria-hidden="true" size={31} />
-        <div>
-          <strong>{formatVnd(cartTotal)}</strong>
-          <span>{cartQuantity} sản phẩm</span>
+    <header className={searchOpen ? "shop-header search-open" : "shop-header"}>
+      <div className="lux-header-bar">
+        <div className="lux-header-left">
+          <button className="lux-header-action" type="button" aria-label="Mở menu">
+            <span>Menu</span>
+          </button>
+          <button
+            className="lux-header-action"
+            type="button"
+            aria-expanded={searchOpen}
+            aria-controls="shop-search-panel"
+            onClick={() => {
+              setSearchOpen((open) => !open);
+            }}
+          >
+            <Search aria-hidden="true" size={28} />
+            <span>Search</span>
+          </button>
         </div>
-      </button>
+
+        <button className="lux-brand" type="button" aria-label="Về trang chính" onClick={onHome}>
+          {logoImage ? <img src={logoImage} alt="" /> : null}
+          <span>{logoText}</span>
+        </button>
+
+        <div className="lux-header-right">
+          <a className="lux-contact-link" href="tel:0901234567">
+            Contact us
+          </a>
+          <button
+            className="lux-cart-button"
+            type="button"
+            onClick={onCartClick}
+            aria-label={`${cartQuantity} sản phẩm trong giỏ`}
+          >
+            <ShoppingBag aria-hidden="true" size={23} />
+            {cartQuantity > 0 ? <em>{cartQuantity}</em> : null}
+          </button>
+        </div>
+      </div>
+      <div className="lux-search-panel" id="shop-search-panel" aria-hidden={!searchOpen}>
+        <label className="lux-search-field">
+          <span>Search on {logoText}</span>
+          <input
+            autoFocus={searchOpen}
+            placeholder="Tìm sản phẩm của bạn"
+            value={searchTerm}
+            onChange={(event) => {
+              onSearchChange(event.target.value);
+            }}
+          />
+        </label>
+        <button
+          className="lux-search-close"
+          type="button"
+          onClick={() => {
+            setSearchOpen(false);
+          }}
+        >
+          Close
+        </button>
+      </div>
     </header>
   );
 }
@@ -1086,12 +1119,10 @@ function ProductDetail({
             </div>
             <div className="nik-video-grid">
               {product.introVideoUrls.slice(0, 2).map((videoUrl, index) => (
-                <video
+                <IntroVideoPlayer
                   key={`${videoUrl}-${index}`}
-                  src={videoUrl}
-                  controls
-                  playsInline
-                  preload="metadata"
+                  title={`${product.name} video ${index + 1}`}
+                  videoUrl={videoUrl}
                 />
               ))}
             </div>
@@ -1338,4 +1369,10 @@ function buildProductDetailRows(description: string): { label: string; value: st
   });
 
   return parsedRows;
+}
+
+function formatRecipientAddress(recipient: RecipientForm): string {
+  return [recipient.address, recipient.ward, recipient.district, recipient.province]
+    .filter((part) => part.trim() && part !== noDistrictValue)
+    .join(", ");
 }

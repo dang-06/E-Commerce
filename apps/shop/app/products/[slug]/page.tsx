@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Search, ShoppingCart, Star } from "lucide-react";
+import { IntroVideoPlayer } from "../../../components/IntroVideoPlayer";
 import { fetchProductBySlug, fetchProducts, fetchSiteSettings } from "../../../lib/api";
 import { readCart, setCartQuantity, writeCart } from "../../../lib/cart";
 import { formatVnd, parseVnd } from "../../../lib/money";
@@ -309,12 +310,10 @@ export default function ProductRoutePage(): React.ReactElement {
               </div>
               <div className="nik-video-grid">
                 {product.introVideoUrls.slice(0, 2).map((videoUrl, index) => (
-                  <video
+                  <IntroVideoPlayer
                     key={`${videoUrl}-${index}`}
-                    src={videoUrl}
-                    controls
-                    playsInline
-                    preload="metadata"
+                    title={`${product.name} video ${index + 1}`}
+                    videoUrl={videoUrl}
                   />
                 ))}
               </div>
@@ -377,20 +376,53 @@ function ProductRouteHeader({
   cartQuantity: number;
   siteSettings: SiteSettings;
 }): React.ReactElement {
+  const logoText = displayBrandName(siteSettings);
+  const [searchOpen, setSearchOpen] = useState(false);
   return (
-    <header className="shop-header">
-      <Link className="brand-lockup" href="/">
-        {siteSettings.logoImageUrl ? <img src={siteSettings.logoImageUrl} alt="" /> : null}
-        <span>{displayBrandName(siteSettings)}</span>
-      </Link>
-      <Link className="search-box product-route-search-link" href="/">
-        <span>Về cửa hàng</span>
-        <Search aria-hidden="true" size={20} />
-      </Link>
-      <Link className="cart-status" href="/?checkout=1" aria-label={`${cartQuantity} sản phẩm trong giỏ`}>
-        <ShoppingCart aria-hidden="true" size={20} />
-        <span>{cartQuantity} sản phẩm</span>
-      </Link>
+    <header className={searchOpen ? "shop-header search-open" : "shop-header"}>
+      <div className="lux-header-bar">
+        <div className="lux-header-left">
+          <Link className="lux-header-action" href="/">
+            <span>Menu</span>
+          </Link>
+          <button
+            className="lux-header-action"
+            type="button"
+            aria-expanded={searchOpen}
+            aria-controls="product-search-panel"
+            onClick={() => {
+              setSearchOpen((open) => !open);
+            }}
+          >
+            <Search aria-hidden="true" size={28} />
+            <span>Search</span>
+          </button>
+        </div>
+
+        <Link className="lux-brand" href="/">
+          {siteSettings.logoImageUrl ? <img src={siteSettings.logoImageUrl} alt="" /> : null}
+          <span>{logoText}</span>
+        </Link>
+
+        <div className="lux-header-right">
+          <a className="lux-contact-link" href="tel:0901234567">
+            Contact us
+          </a>
+          <Link className="lux-cart-button" href="/?checkout=1" aria-label={`${cartQuantity} sản phẩm trong giỏ`}>
+            <ShoppingCart aria-hidden="true" size={23} />
+            {cartQuantity > 0 ? <em>{cartQuantity}</em> : null}
+          </Link>
+        </div>
+      </div>
+      <div className="lux-search-panel" id="product-search-panel" aria-hidden={!searchOpen}>
+        <label className="lux-search-field">
+          <span>Search on {logoText}</span>
+          <input placeholder="Về cửa hàng để tìm sản phẩm" readOnly />
+        </label>
+        <Link className="lux-search-close" href="/">
+          Search
+        </Link>
+      </div>
     </header>
   );
 }

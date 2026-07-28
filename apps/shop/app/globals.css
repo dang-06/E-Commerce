@@ -83,131 +83,176 @@ a:focus-visible {
 }
 
 .shop-header {
-  align-items: center;
   animation: header-reveal 420ms var(--ease-out) both;
-  background: #ffffff;
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06);
-  display: grid;
-  column-gap: clamp(18px, 5vw, 72px);
-  grid-template-columns: minmax(120px, 1fr) minmax(260px, 520px) minmax(120px, 1fr);
-  min-height: 78px;
-  padding: 10px clamp(16px, 7vw, 120px);
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid #141414;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 30;
 }
 
-.brand-lockup {
+.lux-header-bar {
   align-items: center;
-  background: transparent;
-  border: 0;
-  color: var(--gold);
-  cursor: pointer;
   display: grid;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 0.72rem;
-  justify-items: center;
-  letter-spacing: 0.03em;
-  text-align: center;
-  transition: transform var(--motion-medium) var(--ease-out);
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  margin: 0 auto;
+  min-height: 76px;
+  padding: 0 clamp(18px, 2.4vw, 42px);
+  width: 100%;
 }
 
-.brand-lockup img {
-  height: 42px;
-  object-fit: contain;
-  width: 54px;
-}
-
-.brand-lockup:hover {
-  transform: translateY(-1px);
-}
-
-.search-box {
-  align-items: center;
-  border: 2px solid var(--line);
-  display: grid;
-  grid-template-columns: 1fr 52px;
-  min-height: 52px;
-  justify-self: center;
-  width: min(100%, 520px);
-  transition:
-    border-color var(--motion-fast) ease,
-    box-shadow var(--motion-fast) ease,
-    transform var(--motion-fast) ease;
-}
-
-.search-box:focus-within {
-  border-color: #111111;
-  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
-}
-
-.search-box input {
-  border: 0;
-  color: var(--ink);
-  min-width: 0;
-  padding: 0 22px;
-}
-
-.search-box svg {
-  align-items: center;
-  background: #000000;
-  color: #ffffff;
-  display: block;
-  height: 52px;
-  justify-self: stretch;
-  padding: 14px;
-  width: 52px;
-  transition: background var(--motion-fast) ease;
-}
-
-.search-box:focus-within svg,
-.search-box:hover svg {
-  background: var(--accent);
-}
-
-.cart-status {
+.lux-header-left,
+.lux-header-right {
   align-items: center;
   display: flex;
-  gap: 12px;
-  white-space: nowrap;
+  gap: clamp(14px, 1.9vw, 28px);
+}
+
+.lux-header-right {
   justify-self: end;
 }
 
-.cart-status {
+.lux-header-action,
+.lux-contact-link,
+.lux-cart-button,
+.lux-search-close,
+.lux-brand {
+  align-items: center;
   background: transparent;
   border: 0;
-  color: #8a8a8a;
+  color: #141414;
   cursor: pointer;
-  padding: 0;
-  text-align: left;
+  display: inline-flex;
+  text-decoration: none;
   transition:
-    color var(--motion-fast) ease,
-    transform var(--motion-fast) var(--ease-out);
+    opacity 180ms ease,
+    transform 260ms var(--ease-out);
 }
 
-.cart-status:hover {
-  color: #111111;
+.lux-header-action,
+.lux-contact-link,
+.lux-search-close {
+  font-size: clamp(0.88rem, 0.96vw, 1rem);
+  font-weight: 700;
+}
+
+.lux-header-action {
+  gap: 9px;
+}
+
+.lux-header-action svg {
+  height: 22px;
+  width: 22px;
+}
+
+.lux-header-action:hover,
+.lux-contact-link:hover,
+.lux-cart-button:hover,
+.lux-search-close:hover,
+.lux-brand:hover {
+  opacity: 0.68;
   transform: translateY(-1px);
 }
 
-.cart-status svg {
-  transition: transform var(--motion-medium) var(--ease-out);
+.lux-brand {
+  color: #000000;
+  font-family: Georgia, "Times New Roman", serif;
+  display: inline-flex;
+  flex-direction: column;
+  font-size: clamp(0.92rem, 1.3vw, 1.28rem);
+  font-weight: 800;
+  justify-self: center;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
-.cart-status:hover svg {
-  transform: rotate(-5deg) scale(1.06);
-}
-
-.cart-status strong {
-  color: #f0a21a;
+.lux-brand img {
   display: block;
+  margin-bottom: 1px;
+  max-height: 56px;
+  max-width: 230px;
+  object-fit: contain;
 }
 
-.cart-status span {
-  display: block;
-  margin-top: 4px;
+.lux-cart-button {
+  position: relative;
+}
+
+.lux-cart-button em {
+  align-items: center;
+  background: #111111;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 800;
+  height: 17px;
+  justify-content: center;
+  min-width: 17px;
+  padding: 0 5px;
+  position: absolute;
+  right: -10px;
+  top: -9px;
+}
+
+.lux-search-panel {
+  align-items: start;
+  background: #ffffff;
+  border-bottom: 1px solid #141414;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 clamp(18px, 2.4vw, 42px);
+  transform: translateY(-8px);
+  transition:
+    max-height 360ms var(--ease-out),
+    opacity 260ms ease,
+    padding 360ms var(--ease-out),
+    transform 360ms var(--ease-out);
+}
+
+.shop-header.search-open .lux-search-panel {
+  max-height: 118px;
+  opacity: 1;
+  padding-bottom: 20px;
+  padding-top: 20px;
+  transform: translateY(0);
+}
+
+.lux-search-field {
+  display: grid;
+  gap: 16px;
+}
+
+.lux-search-field span {
+  color: #333333;
+  font-size: clamp(0.92rem, 1.12vw, 1.05rem);
+  font-weight: 800;
+}
+
+.lux-search-field input {
+  border: 0;
+  border-bottom: 1px solid #141414;
+  color: #141414;
+  font-size: clamp(1rem, 1.35vw, 1.22rem);
+  outline: 0;
+  padding: 0 0 9px;
+  width: min(100%, 760px);
+}
+
+.lux-search-field input::placeholder {
+  color: #a0a0a0;
+}
+
+.lux-search-close {
+  align-self: start;
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  text-decoration: underline;
 }
 
 .phone-panel,
@@ -282,8 +327,28 @@ h2 {
   width: 100%;
 }
 
+.field input:disabled {
+  background: #f4f4f4;
+  color: #777777;
+  cursor: not-allowed;
+}
+
+.field input[aria-invalid="true"],
+.field textarea[aria-invalid="true"] {
+  border-color: #d92d20;
+}
+
 .field-error,
 .status.error {
+  color: #b42318;
+}
+
+.field-helper {
+  font-size: 0.86rem;
+  margin: -3px 0 12px;
+}
+
+.field-helper.error {
   color: #b42318;
 }
 
@@ -882,7 +947,7 @@ h2 {
   inset: 0;
   padding: 0;
   position: fixed;
-  z-index: 20;
+  z-index: 80;
 }
 
 .cart-drawer {
@@ -2118,9 +2183,11 @@ h2 {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
-.nik-video-grid video {
+.nik-video-grid video,
+.nik-video-grid iframe {
   aspect-ratio: 16 / 9;
   background: #111111;
+  border: 0;
   display: block;
   width: 100%;
 }
@@ -2721,40 +2788,44 @@ h2 {
 
 @media (max-width: 700px) {
   .shop-header {
-    gap: 10px;
-    grid-template-columns: 72px minmax(0, 1fr) auto;
-    min-height: 62px;
-    padding: 8px 10px;
+    min-height: auto;
   }
 
-  .brand-lockup {
-    justify-items: start;
+  .lux-header-bar {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    min-height: 58px;
+    padding: 0 14px;
   }
 
-  .brand-lockup img {
-    height: 30px;
-    width: 38px;
+  .lux-header-left {
+    gap: 12px;
   }
 
-  .brand-lockup span {
-    font-size: 0.58rem;
+  .lux-header-action {
+    gap: 8px;
+    font-size: 0.82rem;
   }
 
-  .cart-status strong {
-    font-size: 0.78rem;
+  .lux-header-action svg {
+    height: 22px;
+    width: 22px;
   }
 
-  .cart-status span {
-    font-size: 0.72rem;
+  .lux-brand {
+    font-size: clamp(0.78rem, 3.6vw, 0.98rem);
   }
 
-  .cart-status svg {
+  .lux-brand img {
+    max-height: 42px;
+    max-width: 165px;
+  }
+
+  .lux-contact-link {
     display: none;
   }
 
-  .search-box {
-    grid-template-columns: 1fr 42px;
-    min-height: 42px;
+  .lux-header-right {
+    gap: 0;
   }
 
   .promotion-banner {
@@ -2762,15 +2833,32 @@ h2 {
     padding: 8px 14px;
   }
 
-  .search-box input {
-    padding: 0 10px;
-    font-size: 0.88rem;
+  .lux-search-panel {
+    grid-template-columns: 1fr;
+    padding-left: 14px;
+    padding-right: 14px;
   }
 
-  .search-box svg {
-    height: 42px;
-    padding: 10px;
-    width: 42px;
+  .shop-header.search-open .lux-search-panel {
+    padding-bottom: 20px;
+    padding-top: 18px;
+  }
+
+  .lux-search-field {
+    gap: 12px;
+  }
+
+  .lux-search-field span {
+    font-size: 0.9rem;
+  }
+
+  .lux-search-field input {
+    font-size: 1rem;
+  }
+
+  .lux-search-close {
+    justify-self: end;
+    margin-top: 14px;
   }
 
   .phone-panel,

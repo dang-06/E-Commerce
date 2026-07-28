@@ -8,6 +8,7 @@ import type {
   RecipientForm,
   SiteSettings,
 } from "./types";
+import { noDistrictValue } from "./vietnam-address";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
 
@@ -101,7 +102,7 @@ export function createOrder(input: {
       ...(input.session.promotionToken ? { promotionToken: input.session.promotionToken } : {}),
       recipient: {
         address: input.recipient.address,
-        district: input.recipient.district,
+        district: input.recipient.district || noDistrictValue,
         name: input.recipient.recipientName,
         phone: input.recipient.recipientPhone,
         province: input.recipient.province,

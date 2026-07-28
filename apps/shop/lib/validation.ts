@@ -19,7 +19,7 @@ export function validateRecipientForm(form: RecipientForm): ValidationResult {
     errors.recipientPhone = "Số điện thoại người nhận chưa đúng định dạng.";
   }
 
-  for (const field of ["province", "district", "ward", "address"] as const) {
+  for (const field of ["province", "ward", "address"] as const) {
     if (form[field].trim().length < 2) {
       errors[field] = "Vui lòng nhập thông tin này.";
     }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { FieldError } from "@/components/shared/FieldError";
+import { VideoPreview } from "@/components/shared/VideoPreview";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1029,7 +1030,7 @@ export default function NewProductPage() {
                   <div key={index} className="grid gap-3 md:grid-cols-[180px_minmax(0,1fr)_auto]">
                     <div className="overflow-hidden rounded-md border border-border bg-muted">
                       {videoUrl ? (
-                        <video src={videoUrl} className="h-32 w-full object-cover" controls muted />
+                        <VideoPreview title={`Video giới thiệu ${index + 1}`} videoUrl={videoUrl} />
                       ) : (
                         <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">
                           Chưa có video
