@@ -93,6 +93,40 @@ void test("buyer flow allows non-eligible phone session with normal pricing", as
   assert.equal(result.order?.totalAmount, "129000");
 });
 
+void test("buyer flow submits only products still visible in the shop catalog", async () => {
+  const visibleProduct = sampleProduct({ id: "3", name: "Kem dưỡng sáng da 377" });
+  const hiddenCartItem = sampleProduct({ id: "53", isActive: false });
+
+  const result = await submitCheckout({
+    cartItems: [
+      { productId: visibleProduct.id, quantity: 1 },
+      { productId: hiddenCartItem.id, quantity: 1 },
+    ],
+    createOrder: (payload) => {
+      assert.deepEqual(payload.cartItems, [{ productId: "3", quantity: 1 }]);
+      return Promise.resolve({
+        status: "created",
+        orderCode: "ORD-FILTERED-1",
+        createdAt: new Date("2026-07-15T00:00:00.000Z").toISOString(),
+        totalQuantity: 1,
+        subtotal: "79000",
+        discountAmount: "0",
+        shippingFee: "30000",
+        totalAmount: "109000",
+      });
+    },
+    idempotencyKey: "idem-filtered-1",
+    products: [visibleProduct],
+    recipient: validRecipient(),
+    session: {
+      eligible: false,
+      phone: "0329277160",
+    },
+  });
+
+  assert.equal(result.ok, true);
+});
+
 void test("buyer flow blocks checkout without promotion session or valid recipient", async () => {
   const product = sampleProduct();
   const noSession = await submitCheckout({

@@ -47,6 +47,11 @@ export function setCartQuantity(items: CartItem[], productId: string, quantity: 
   return [...rest, { productId, quantity: Math.min(maxQuantity, Math.floor(quantity)) }];
 }
 
+export function filterCartItemsForProducts(items: CartItem[], products: Product[]): CartItem[] {
+  const productIds = new Set(products.map((product) => product.id));
+  return sanitizeCartItems(items).filter((item) => productIds.has(item.productId));
+}
+
 export function getProduct(products: Product[], productId: string): Product | undefined {
   return products.find((product) => product.id === productId);
 }

@@ -1,3 +1,4 @@
+import { filterCartItemsForProducts } from "./cart";
 import { calculateCartTotals } from "./pricing";
 import { validateRecipientForm } from "./validation";
 import type { CartItem, OrderResult, Product, PromotionSession, RecipientForm } from "./types";
@@ -25,7 +26,8 @@ export async function submitCheckout(input: {
     return { ok: false, error: "Vui lòng nhập số điện thoại trước khi đặt hàng." };
   }
 
-  const totals = calculateCartTotals(input.products, input.cartItems, input.session.eligible, null);
+  const cartItems = filterCartItemsForProducts(input.cartItems, input.products);
+  const totals = calculateCartTotals(input.products, cartItems, input.session.eligible, null);
   if (totals.totalQuantity <= 0) {
     return { ok: false, error: "Giỏ hàng đang trống." };
   }
@@ -38,7 +40,7 @@ export async function submitCheckout(input: {
   let order: OrderResult;
   try {
     order = await input.createOrder({
-      cartItems: input.cartItems,
+      cartItems,
       idempotencyKey: input.idempotencyKey,
       recipient: input.recipient,
       session: input.session,

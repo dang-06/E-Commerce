@@ -6,8 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, ShoppingCart, Star } from "lucide-react";
 import { IntroVideoPlayer } from "../../../components/IntroVideoPlayer";
 import { fetchProductBySlug, fetchProducts, fetchSiteSettings } from "../../../lib/api";
-import { readCart, setCartQuantity, writeCart } from "../../../lib/cart";
+import { filterCartItemsForProducts, readCart, setCartQuantity, writeCart } from "../../../lib/cart";
 import { formatVnd, parseVnd } from "../../../lib/money";
+import { visibleShopProducts } from "../../../lib/public-catalog";
 import { readPromotionSession } from "../../../lib/promotion-session";
 import type { CartItem, Product, PromotionSession, SiteSettings } from "../../../lib/types";
 
@@ -80,6 +81,7 @@ export default function ProductRoutePage(): React.ReactElement {
         }
         setProduct(detail);
         setProducts(list);
+        setCartItems((currentItems) => filterCartItemsForProducts(currentItems, list));
         setSiteSettings(settings);
         setSelectedVariantId(detail.colorVariants[0]?.id ?? null);
         setSelectedImageUrl(productImage(detail));
@@ -103,7 +105,7 @@ export default function ProductRoutePage(): React.ReactElement {
   const galleryImages = product ? buildProductGallery(product, selectedVariant?.id ?? null) : [];
   const imageUrl = selectedImageUrl ?? selectedVariant?.imageUrl ?? (product ? productImage(product) : null);
   const relatedProducts = product
-    ? products.filter((item) => item.id !== product.id).slice(0, 8)
+    ? visibleShopProducts(products).filter((item) => item.id !== product.id).slice(0, 8)
     : [];
   const cartQuantity = useMemo(
     () => cartItems.reduce((total, item) => total + item.quantity, 0),

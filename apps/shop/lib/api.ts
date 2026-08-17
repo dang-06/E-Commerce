@@ -8,6 +8,7 @@ import type {
   RecipientForm,
   SiteSettings,
 } from "./types";
+import { isVisibleShopProduct, visibleShopProducts } from "./public-catalog";
 import { noDistrictValue } from "./vietnam-address";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
@@ -50,12 +51,17 @@ async function readResponseBody(response: Response): Promise<unknown> {
   }
 }
 
-export function fetchProducts(): Promise<Product[]> {
-  return requestJson<Product[]>("/products", { cache: "no-store" });
+export async function fetchProducts(): Promise<Product[]> {
+  const products = await requestJson<Product[]>("/products", { cache: "no-store" });
+  return visibleShopProducts(products);
 }
 
-export function fetchProductBySlug(slug: string): Promise<Product> {
-  return requestJson<Product>(`/products/${encodeURIComponent(slug)}`, { cache: "no-store" });
+export async function fetchProductBySlug(slug: string): Promise<Product> {
+  const product = await requestJson<Product>(`/products/${encodeURIComponent(slug)}`, { cache: "no-store" });
+  if (!isVisibleShopProduct(product)) {
+    throw new ApiRequestError("Product is not visible in shop", 404, null);
+  }
+  return product;
 }
 
 export function fetchSiteSettings(): Promise<SiteSettings> {

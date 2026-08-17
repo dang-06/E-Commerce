@@ -5,6 +5,7 @@ import { OrderSummary } from "../../components/OrderSummary";
 import { PriceBlock } from "../../components/PriceBlock";
 import { ProductCard } from "../../components/ProductCard";
 import { calculateCartTotals } from "../../lib/pricing";
+import { visibleShopProducts } from "../../lib/public-catalog";
 import { sampleProduct } from "../fixtures";
 
 void test("PriceBlock renders listed price, promotion price and saving", () => {
@@ -43,6 +44,25 @@ void test("ProductCard escapes product names rendered from API data", () => {
 
   assert.doesNotMatch(html, /<script>/);
   assert.match(html, /&lt;script&gt;/);
+});
+
+void test("shop catalog filters inactive products before rendering", () => {
+  const visible = sampleProduct({ id: "1", name: "Sản phẩm đang bán", isActive: true });
+  const hidden = sampleProduct({ id: "2", name: "Sản phẩm đã ẩn", isActive: false });
+  const html = renderToStaticMarkup(
+    <>
+      {visibleShopProducts([visible, hidden]).map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          promotionUnlocked={false}
+        />
+      ))}
+    </>,
+  );
+
+  assert.match(html, /Sản phẩm đang bán/);
+  assert.doesNotMatch(html, /Sản phẩm đã ẩn/);
 });
 
 void test("OrderSummary renders live totals and free shipping state", () => {

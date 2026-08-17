@@ -31,7 +31,7 @@ import {
   singleItemShippingFee,
   type CartTotals,
 } from "../lib/pricing";
-import { readCart, setCartQuantity, writeCart } from "../lib/cart";
+import { filterCartItemsForProducts, readCart, setCartQuantity, writeCart } from "../lib/cart";
 import { formatVnd, parseVnd } from "../lib/money";
 import { submitCheckout } from "../lib/checkout-flow";
 import { validateRecipientForm } from "../lib/validation";
@@ -142,9 +142,13 @@ export default function ShopPage(): React.ReactElement {
     writeCart(globalThis.localStorage, cartItems);
   }, [cartItems]);
 
+  const availableCartItems = useMemo(
+    () => filterCartItemsForProducts(cartItems, products),
+    [cartItems, products],
+  );
   const totals = useMemo(
-    () => calculateCartTotals(products, cartItems, promotionSession?.eligible === true, null),
-    [cartItems, products, promotionSession],
+    () => calculateCartTotals(products, availableCartItems, promotionSession?.eligible === true, null),
+    [availableCartItems, products, promotionSession],
   );
   const displayTotals = serverQuote ? totalsFromQuote(serverQuote) : totals;
   const filteredProducts = useMemo(() => {
@@ -166,7 +170,9 @@ export default function ShopPage(): React.ReactElement {
     setProductsLoading(true);
     setProductsError(null);
     try {
-      setProducts(await fetchProducts());
+      const nextProducts = await fetchProducts();
+      setProducts(nextProducts);
+      setCartItems((currentItems) => filterCartItemsForProducts(currentItems, nextProducts));
     } catch {
       setProductsError("Không tải được danh sách sản phẩm.");
     } finally {
@@ -228,7 +234,7 @@ export default function ShopPage(): React.ReactElement {
     const idempotencyKey = checkoutIdempotencyKey ?? crypto.randomUUID();
     try {
       const quote = await quoteOrder({
-        cartItems,
+        cartItems: availableCartItems,
         idempotencyKey,
         session: promotionSession,
       });
@@ -250,7 +256,7 @@ export default function ShopPage(): React.ReactElement {
     setSubmitting(true);
     setOrderError(null);
     const result = await submitCheckout({
-      cartItems,
+      cartItems: availableCartItems,
       createOrder,
       idempotencyKey: checkoutIdempotencyKey,
       products,
@@ -405,7 +411,7 @@ export default function ShopPage(): React.ReactElement {
 
       {cartOpen ? (
         <CartDrawer
-          cartItems={cartItems}
+          cartItems={availableCartItems}
           onCheckout={goToCheckout}
           onClose={() => {
             setCartOpen(false);
