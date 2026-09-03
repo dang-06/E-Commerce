@@ -11,6 +11,8 @@ import {
   Order,
   Product,
   SiteSettings,
+  SpxAccount,
+  SpxShipmentListItem,
 } from "@/lib/types";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000/api/v1";
@@ -94,6 +96,32 @@ interface ApiOrderLine {
   quantity: number;
 }
 
+interface ApiShippingEvent {
+  id: string;
+  eventType: string;
+  statusCode: string | null;
+  occurredAt: string | null;
+  receivedAt: string;
+}
+
+interface ApiShippingShipment {
+  id: string;
+  provider: string;
+  trackingNo: string | null;
+  trackingLink: string | null;
+  batchNo: string | null;
+  consignmentNo: string | null;
+  statusCode: string | null;
+  status: string | null;
+  awbLink: string | null;
+  awbExpiresAt: string | null;
+  estimatedShippingFee: string | null;
+  actualShippingFee: string | null;
+  chargeableWeight: string | null;
+  updatedAt: string;
+  events: ApiShippingEvent[];
+}
+
 interface ApiOrder {
   id: string;
   orderCode: string;
@@ -116,6 +144,7 @@ interface ApiOrder {
   note: string | null;
   pancakeOrderId: string | null;
   shippingOrderId: string | null;
+  shipments: ApiShippingShipment[];
   items: ApiOrderLine[];
 }
 
@@ -176,6 +205,36 @@ interface ApiGoogleSheetConfigs {
   orders: ApiGoogleSheetConfig | null;
 }
 
+interface ApiSpxAccount {
+  id: string;
+  phone: string;
+  email: string | null;
+  userId: string;
+  isActive: boolean;
+  verifiedAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ApiSpxShipmentListItem {
+  id: string;
+  orderId: string;
+  orderCode: string;
+  recipientName: string;
+  recipientPhone: string;
+  trackingNo: string | null;
+  trackingLink: string | null;
+  statusCode: string | null;
+  status: string | null;
+  awbLink: string | null;
+  awbExpiresAt: string | null;
+  estimatedShippingFee: string | null;
+  actualShippingFee: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface ApiSiteSettings {
   bannerButtonText: string;
   bannerEyebrow: string;
@@ -222,20 +281,44 @@ async function readResponseBody(response: Response): Promise<unknown> {
 }
 
 function extractApiErrorMessage(body: unknown, status: number): string {
+  const message = extractMessageValue(body);
+  if (message) {
+    const requestId = extractRequestId(body);
+    return requestId ? `${message} (requestId: ${requestId})` : message;
+  }
   if (!body || typeof body !== "object") {
     return `API request failed: ${status}`;
   }
-  const candidate = body as { message?: unknown; error?: unknown };
-  if (Array.isArray(candidate.message)) {
-    return candidate.message.filter((item): item is string => typeof item === "string").join("\n");
-  }
-  if (typeof candidate.message === "string") {
-    return candidate.message;
-  }
-  if (typeof candidate.error === "string") {
-    return candidate.error;
-  }
   return `API request failed: ${status}`;
+}
+
+function extractMessageValue(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) {
+    return value;
+  }
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as { error?: unknown; message?: unknown };
+  if (Array.isArray(record.message)) {
+    const messages = record.message.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+    return messages.length > 0 ? messages.join("\n") : null;
+  }
+  if (typeof record.message === "string" && record.message.trim()) {
+    return record.message;
+  }
+  return extractMessageValue(record.error);
+}
+
+function extractRequestId(value: unknown): string | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as { error?: unknown; requestId?: unknown };
+  if (typeof record.requestId === "string" && record.requestId.trim()) {
+    return record.requestId;
+  }
+  return extractRequestId(record.error);
 }
 
 export function getErrorMessage(error: unknown): string {
@@ -369,6 +452,21 @@ export const orderService = {
   async addOrderNote(id: string): Promise<Order | null> {
     return this.getOrderById(id);
   },
+
+  async getSpxAwb(shipmentId: string): Promise<{
+    shipmentId: string;
+    trackingNo: string;
+    awbLink: string;
+    awbExpiresAt: Date;
+  }> {
+    const result = await requestJson<{
+      shipmentId: string;
+      trackingNo: string;
+      awbLink: string;
+      awbExpiresAt: string;
+    }>(`/admin/integrations/spx/shipments/${shipmentId}/awb`, { method: "POST" });
+    return { ...result, awbExpiresAt: new Date(result.awbExpiresAt) };
+  },
 };
 
 export const eligibleCustomerService = {
@@ -448,12 +546,48 @@ export const integrationService = {
     };
   },
 
+  async getSpxAccounts(): Promise<SpxAccount[]> {
+    return (await requestJson<ApiSpxAccount[]>("/admin/integrations/spx/accounts")).map(toSpxAccount);
+  },
+
+  async createSpxAccount(payload: { phone: string; email?: string }): Promise<SpxAccount> {
+    return toSpxAccount(
+      await requestJson<ApiSpxAccount>("/admin/integrations/spx/accounts", {
+        body: JSON.stringify(payload),
+        method: "POST",
+      }),
+    );
+  },
+
+  async verifySpxAccount(id: string): Promise<SpxAccount> {
+    return toSpxAccount(
+      await requestJson<ApiSpxAccount>(`/admin/integrations/spx/accounts/${id}/verify`, {
+        method: "POST",
+      }),
+    );
+  },
+
+  async activateSpxAccount(id: string): Promise<SpxAccount> {
+    return toSpxAccount(
+      await requestJson<ApiSpxAccount>(`/admin/integrations/spx/accounts/${id}/activate`, {
+        method: "POST",
+      }),
+    );
+  },
+
+  async getSpxShipments(limit = 100): Promise<SpxShipmentListItem[]> {
+    return (await requestJson<ApiSpxShipmentListItem[]>(`/admin/integrations/spx/shipments?limit=${limit}`)).map(
+      toSpxShipmentListItem,
+    );
+  },
+
   async getIntegrationStatus(): Promise<Record<string, "connected" | "degraded" | "disconnected">> {
     const logs = await this.getLogs();
     return {
       best: statusForIntegration(logs, "best"),
       google_sheet: statusForIntegration(logs, "google_sheet"),
       pancake: statusForIntegration(logs, "pancake"),
+      spx: statusForIntegration(logs, "spx"),
     };
   },
 
@@ -753,6 +887,29 @@ function toOrder(order: ApiOrder): Order {
     recipientName: order.recipientName,
     shipping: Number(order.shippingFee),
     shippingId: order.shippingOrderId ?? undefined,
+    shipments: order.shipments.map((shipment) => ({
+      actualShippingFee: shipment.actualShippingFee ? Number(shipment.actualShippingFee) : null,
+      awbExpiresAt: shipment.awbExpiresAt ? new Date(shipment.awbExpiresAt) : null,
+      awbLink: shipment.awbLink,
+      batchNo: shipment.batchNo,
+      chargeableWeight: shipment.chargeableWeight,
+      consignmentNo: shipment.consignmentNo,
+      estimatedShippingFee: shipment.estimatedShippingFee ? Number(shipment.estimatedShippingFee) : null,
+      events: shipment.events.map((event) => ({
+        eventType: event.eventType,
+        id: event.id,
+        occurredAt: event.occurredAt ? new Date(event.occurredAt) : null,
+        receivedAt: new Date(event.receivedAt),
+        statusCode: event.statusCode,
+      })),
+      id: shipment.id,
+      provider: shipment.provider,
+      status: shipment.status,
+      statusCode: shipment.statusCode,
+      trackingLink: shipment.trackingLink,
+      trackingNo: shipment.trackingNo,
+      updatedAt: new Date(shipment.updatedAt),
+    })),
     status: toUiOrderStatus(order.orderStatus),
     subtotal: Number(order.subtotal),
     syncStatus: toUiSyncStatus(order.syncStatus),
@@ -828,6 +985,40 @@ function toGoogleSheetConfig(config: ApiGoogleSheetConfig): GoogleSheetConfig {
   };
 }
 
+function toSpxAccount(account: ApiSpxAccount): SpxAccount {
+  return {
+    createdAt: new Date(account.createdAt),
+    email: account.email,
+    id: account.id,
+    isActive: account.isActive,
+    lastError: account.lastError,
+    phone: account.phone,
+    updatedAt: new Date(account.updatedAt),
+    userId: account.userId,
+    verifiedAt: account.verifiedAt ? new Date(account.verifiedAt) : null,
+  };
+}
+
+function toSpxShipmentListItem(shipment: ApiSpxShipmentListItem): SpxShipmentListItem {
+  return {
+    actualShippingFee: shipment.actualShippingFee ? Number(shipment.actualShippingFee) : null,
+    awbExpiresAt: shipment.awbExpiresAt ? new Date(shipment.awbExpiresAt) : null,
+    awbLink: shipment.awbLink,
+    createdAt: new Date(shipment.createdAt),
+    estimatedShippingFee: shipment.estimatedShippingFee ? Number(shipment.estimatedShippingFee) : null,
+    id: shipment.id,
+    orderCode: shipment.orderCode,
+    orderId: shipment.orderId,
+    recipientName: shipment.recipientName,
+    recipientPhone: shipment.recipientPhone,
+    status: shipment.status,
+    statusCode: shipment.statusCode,
+    trackingLink: shipment.trackingLink,
+    trackingNo: shipment.trackingNo,
+    updatedAt: new Date(shipment.updatedAt),
+  };
+}
+
 function toUiOrderStatus(status: string): Order["status"] {
   const map: Record<string, Order["status"]> = {
     cancelled: "cancelled",
@@ -868,6 +1059,7 @@ function toUiSyncStatus(status: string): Order["syncStatus"] {
 function toUiCustomerSource(source: string): EligibleCustomer["source"] {
   const map: Record<string, EligibleCustomer["source"]> = {
     best: "best",
+    spx: "spx",
     import: "excel",
     manual: "manual",
     pancake: "pancake",
@@ -879,6 +1071,7 @@ function toUiCustomerSource(source: string): EligibleCustomer["source"] {
 function toUiIntegration(integration: string): IntegrationLog["integration"] {
   if (integration === "sheet") return "google_sheet";
   if (integration === "best") return "best";
+  if (integration === "spx") return "spx";
   return "pancake";
 }
 

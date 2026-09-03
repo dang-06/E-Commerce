@@ -110,6 +110,7 @@ Chi trien khai khi duoc bo sung va xac nhan: tai khoan nguoi mua, tich diem, nhi
 - Pancake tiep nhan/van hanh don qua API.
 - Google Sheet dung de import, export hoac doi soat.
 - BEST Express la he thong van chuyen hay nguon khach cu, tich hop API hay thao tac thu cong.
+- SPX da co tai lieu API test va thiet ke luong tich hop trong `documents/spx-delivery/`; cac tham so van hanh nhu pickup/dropoff, payment role, sender address, kich thuoc/trong luong mac dinh van can xac nhan truoc production.
 
 ### 4.2. Business rule
 
@@ -758,3 +759,10 @@ De xuat bo sung khi thiet ke chi tiet:
 - [x] Them nut xuat `products-sheet-data.csv` trong admin products voi tat ca thuoc tinh san pham moi de nap/doi chieu sheet data.
 - [x] Cap nhat database seed voi day du product detail metadata moi, site banner/logo/catalog, gallery images, color variants va mot san pham demo phu du tat ca tinh nang moi.
 - [x] API/shop/admin lint, typecheck, admin tests va build thanh cong cho pham vi vua thay doi.
+
+### 2026-08-25 - SPX admin shipment visibility
+
+- [x] Admin order list hien thi ma van don SPX theo tung don va cho tim kiem theo tracking number.
+- [x] API `GET /api/v1/admin/integrations/spx/shipments` tra danh sach van don SPX da tao tu `shipping_shipments` kem ma don, nguoi nhan, trang thai va phi.
+- [x] Admin trang Dong bo co bang "Don da tao o SPX" de theo doi ma van don, trang thai giao hang, phi SPX va link ve chi tiet don.
+- [x] API/admin lint va typecheck thanh cong cho pham vi thay doi.

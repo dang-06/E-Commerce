@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { PhoneMask } from '@/components/shared/PhoneMask'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Eye, Download } from 'lucide-react'
+import { Eye, Download, ExternalLink } from 'lucide-react'
 import { Order } from '@/lib/types'
 import { orderService } from '@/lib/services/api-service'
 import { formatVietnameseDate } from '@/lib/utils/vietnamese'
@@ -35,11 +35,19 @@ export default function OrdersPage() {
     void loadOrders()
   }, [])
 
-  const filteredOrders = orders.filter((o) =>
-    o.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.recipientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.phone.includes(searchTerm)
-  )
+  const filteredOrders = orders.filter((o) => {
+    const keyword = searchTerm.toLowerCase()
+    const trackingText = o.shipments
+      .map((shipment) => shipment.trackingNo ?? '')
+      .join(' ')
+      .toLowerCase()
+    return (
+      o.code.toLowerCase().includes(keyword) ||
+      o.recipientName.toLowerCase().includes(keyword) ||
+      o.phone.includes(searchTerm) ||
+      trackingText.includes(keyword)
+    )
+  })
 
   const columns: ColumnDef<Order>[] = [
     {
@@ -51,6 +59,35 @@ export default function OrdersPage() {
       accessorKey: 'date',
       header: 'Ngày tạo',
       cell: ({ row }) => <span className="text-sm">{formatVietnameseDate(row.original.date)}</span>,
+    },
+    {
+      id: 'spxTracking',
+      header: 'Mã vận đơn',
+      cell: ({ row }) => {
+        const shipment = row.original.shipments.find((item) => item.provider === 'spx' && item.trackingNo)
+        if (!shipment?.trackingNo) {
+          return <span className="text-xs text-muted-foreground">Chưa có</span>
+        }
+        const tracking = shipment.trackingNo
+        return (
+          <div className="flex min-w-[150px] flex-col gap-1">
+            {shipment.trackingLink ? (
+              <a
+                href={shipment.trackingLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-mono text-sm font-semibold text-primary hover:underline"
+              >
+                {tracking}
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            ) : (
+              <span className="font-mono text-sm font-semibold text-foreground">{tracking}</span>
+            )}
+            {shipment.status ? <span className="text-xs text-muted-foreground">{shipment.status}</span> : null}
+          </div>
+        )
+      },
     },
     {
       accessorKey: 'recipientName',
@@ -115,7 +152,7 @@ export default function OrdersPage() {
       {/* Search & Filters */}
       <div className="flex gap-2">
         <Input
-          placeholder="Tìm kiếm theo mã đơn, tên khách hoặc số điện thoại..."
+          placeholder="Tìm kiếm theo mã đơn, mã vận đơn, tên khách hoặc số điện thoại..."
           value={searchTerm}
           onChange={(e) => { setSearchTerm(e.target.value); }}
           className="max-w-sm"

@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay'
 import { PhoneMask } from '@/components/shared/PhoneMask'
-import { ArrowLeft, Copy, Printer } from 'lucide-react'
+import { ArrowLeft, Copy, ExternalLink, FileText, Printer, RefreshCw } from 'lucide-react'
 import { Order } from '@/lib/types'
 import { orderService } from '@/lib/services/api-service'
 import { formatVietnameseDateTimeWithDay } from '@/lib/utils/vietnamese'
@@ -22,6 +22,7 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [notes, setNotes] = useState('')
   const [success, setSuccess] = useState('')
+  const [awbLoading, setAwbLoading] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadOrder() {
@@ -56,6 +57,25 @@ export default function OrderDetailPage() {
         </Link>
       </div>
     )
+  }
+
+  const spxShipments = order.shipments.filter((shipment) => shipment.provider === 'spx')
+  const refreshOrder = async () => {
+    const data = await orderService.getOrderById(orderId)
+    setOrder(data)
+  }
+
+  const getAwb = async (shipmentId: string) => {
+    setAwbLoading(shipmentId)
+    setSuccess('')
+    try {
+      const result = await orderService.getSpxAwb(shipmentId)
+      setSuccess('Đã lấy link AWB từ SPX.')
+      await refreshOrder()
+      window.open(result.awbLink, '_blank', 'noopener,noreferrer')
+    } finally {
+      setAwbLoading(null)
+    }
   }
 
   return (
@@ -230,10 +250,10 @@ export default function OrderDetailPage() {
           </Card>
 
           {/* Sync Info */}
-          {order.pancakeOrderId && (
-            <Card className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Đồng bộ</h2>
-              <div className="space-y-2 text-sm">
+          <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Đồng bộ</h2>
+            <div className="space-y-4 text-sm">
+              {order.pancakeOrderId ? (
                 <div>
                   <p className="text-muted-foreground">Pancake</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -243,9 +263,120 @@ export default function OrderDetailPage() {
                     </Button>
                   </div>
                 </div>
-              </div>
-            </Card>
-          )}
+              ) : null}
+
+              {spxShipments.length === 0 ? (
+                <div>
+                  <p className="text-muted-foreground">SPX</p>
+                  <p className="mt-1 text-sm">Chưa có vận đơn SPX hoặc job đang chờ xử lý.</p>
+                </div>
+              ) : (
+                spxShipments.map((shipment) => (
+                  <div key={shipment.id} className="space-y-3 border-t border-border pt-4 first:border-t-0 first:pt-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-muted-foreground">SPX</p>
+                        <p className="font-semibold">{shipment.status ?? 'Đã tạo vận đơn'}</p>
+                      </div>
+                      {shipment.statusCode ? (
+                        <code className="rounded bg-muted px-2 py-1 text-xs">{shipment.statusCode}</code>
+                      ) : null}
+                    </div>
+
+                    {shipment.trackingNo ? (
+                      <div>
+                        <p className="text-muted-foreground">Mã vận đơn</p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <code className="rounded bg-muted px-2 py-1 text-xs">{shipment.trackingNo}</code>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(shipment.trackingNo ?? '')
+                            }}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                          {shipment.trackingLink ? (
+                            <a href={shipment.trackingLink} target="_blank" rel="noreferrer">
+                              <Button variant="ghost" size="sm">
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </a>
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-muted-foreground">Phí ước tính</p>
+                        <p className="font-semibold">
+                          {shipment.estimatedShippingFee !== null ? (
+                            <MoneyDisplay amount={shipment.estimatedShippingFee} />
+                          ) : (
+                            'Chưa có'
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Phí thực tế</p>
+                        <p className="font-semibold">
+                          {shipment.actualShippingFee !== null ? (
+                            <MoneyDisplay amount={shipment.actualShippingFee} />
+                          ) : (
+                            'Chưa có'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {shipment.awbLink ? (
+                      <a href={shipment.awbLink} target="_blank" rel="noreferrer">
+                        <Button variant="outline" className="w-full gap-2">
+                          <FileText className="h-4 w-4" />
+                          Mở AWB
+                        </Button>
+                      </a>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        disabled={awbLoading === shipment.id || !shipment.trackingNo}
+                        onClick={() => void getAwb(shipment.id)}
+                      >
+                        {awbLoading === shipment.id ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileText className="h-4 w-4" />
+                        )}
+                        Lấy AWB
+                      </Button>
+                    )}
+
+                    {shipment.events.length > 0 ? (
+                      <div>
+                        <p className="text-muted-foreground">Sự kiện gần nhất</p>
+                        <div className="mt-2 space-y-2">
+                          {shipment.events.map((event) => (
+                            <div key={event.id} className="rounded border border-border p-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-medium">{event.eventType}</span>
+                                {event.statusCode ? <code className="text-xs">{event.statusCode}</code> : null}
+                              </div>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {formatVietnameseDateTimeWithDay(event.receivedAt)}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
         </div>
       </div>
     </div>

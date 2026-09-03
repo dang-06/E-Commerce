@@ -7,7 +7,7 @@ export class IntegrationJobListItemResponseDto {
   @ApiProperty({ example: "DH202607210001", type: String })
   orderCode!: string;
 
-  @ApiProperty({ enum: ["sheet", "pancake", "best"], example: "sheet", type: String })
+  @ApiProperty({ enum: ["sheet", "pancake", "best", "spx"], example: "spx", type: String })
   integration!: string;
 
   @ApiProperty({ example: "create", type: String })
@@ -79,4 +79,80 @@ export class GoogleSheetConfigsResponseDto {
 
   @ApiPropertyOptional({ type: GoogleSheetConfigResponseDto, nullable: true })
   orders!: GoogleSheetConfigResponseDto | null;
+}
+
+export class SpxAccountResponseDto {
+  @ApiProperty({ example: "1", type: String })
+  id!: string;
+
+  @ApiProperty({ example: "0901234567", type: String })
+  phone!: string;
+
+  @ApiPropertyOptional({ example: "shop@example.com", nullable: true, type: String })
+  email!: string | null;
+
+  @ApiProperty({ example: "110592440436149", type: String })
+  userId!: string;
+
+  @ApiProperty({ example: true, type: Boolean })
+  isActive!: boolean;
+
+  @ApiPropertyOptional({ example: "2026-08-25T09:00:00.000Z", nullable: true, type: String })
+  verifiedAt!: Date | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true, type: String })
+  lastError!: string | null;
+
+  @ApiProperty({ example: "2026-08-25T09:00:00.000Z", type: String })
+  createdAt!: Date;
+
+  @ApiProperty({ example: "2026-08-25T09:00:00.000Z", type: String })
+  updatedAt!: Date;
+}
+
+export class SpxShipmentListItemResponseDto {
+  @ApiProperty({ example: "1", type: String })
+  id!: string;
+
+  @ApiProperty({ example: "1", type: String })
+  orderId!: string;
+
+  @ApiProperty({ example: "DH202608250001", type: String })
+  orderCode!: string;
+
+  @ApiProperty({ example: "Nguyen Van A", type: String })
+  recipientName!: string;
+
+  @ApiProperty({ example: "0901234567", type: String })
+  recipientPhone!: string;
+
+  @ApiPropertyOptional({ example: "SPXVN04191983057C", nullable: true, type: String })
+  trackingNo!: string | null;
+
+  @ApiPropertyOptional({ example: "https://spx.vn/track?SPXVN04191983057C", nullable: true, type: String })
+  trackingLink!: string | null;
+
+  @ApiPropertyOptional({ example: "1001", nullable: true, type: String })
+  statusCode!: string | null;
+
+  @ApiPropertyOptional({ example: "Pending Pickup", nullable: true, type: String })
+  status!: string | null;
+
+  @ApiPropertyOptional({ example: "https://test-stable.spx.vn/downloads/resource/shipping_label/sample.pdf", nullable: true, type: String })
+  awbLink!: string | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true, type: String })
+  awbExpiresAt!: Date | null;
+
+  @ApiPropertyOptional({ example: "30000", nullable: true, type: String })
+  estimatedShippingFee!: string | null;
+
+  @ApiPropertyOptional({ example: "32000", nullable: true, type: String })
+  actualShippingFee!: string | null;
+
+  @ApiProperty({ example: "2026-08-25T09:00:00.000Z", type: String })
+  createdAt!: Date;
+
+  @ApiProperty({ example: "2026-08-25T09:00:00.000Z", type: String })
+  updatedAt!: Date;
 }

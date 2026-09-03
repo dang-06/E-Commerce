@@ -121,6 +121,7 @@ export interface Order {
   notes: string;
   pancakeOrderId?: string;
   shippingId?: string;
+  shipments: ShippingShipment[];
   externalSyncId?: string;
   lastSyncAttempt?: Date;
   syncError?: string;
@@ -128,11 +129,37 @@ export interface Order {
   updatedAt: Date;
 }
 
+export interface ShippingEvent {
+  id: string;
+  eventType: string;
+  statusCode: string | null;
+  occurredAt: Date | null;
+  receivedAt: Date;
+}
+
+export interface ShippingShipment {
+  id: string;
+  provider: string;
+  trackingNo: string | null;
+  trackingLink: string | null;
+  batchNo: string | null;
+  consignmentNo: string | null;
+  statusCode: string | null;
+  status: string | null;
+  awbLink: string | null;
+  awbExpiresAt: Date | null;
+  estimatedShippingFee: number | null;
+  actualShippingFee: number | null;
+  chargeableWeight: string | null;
+  updatedAt: Date;
+  events: ShippingEvent[];
+}
+
 // Eligible Customer
 export interface EligibleCustomer {
   id: string;
   phone: string;
-  source: "manual" | "excel" | "google_sheet" | "pancake" | "best";
+  source: "manual" | "excel" | "google_sheet" | "pancake" | "best" | "spx";
   reason: string;
   status: "active" | "inactive";
   usageCount: number;
@@ -143,7 +170,7 @@ export interface EligibleCustomer {
 }
 
 // Integration
-export type IntegrationType = "google_sheet" | "pancake" | "best";
+export type IntegrationType = "google_sheet" | "pancake" | "best" | "spx";
 
 export interface IntegrationLog {
   id: string;
@@ -157,6 +184,36 @@ export interface IntegrationLog {
   nextRetry?: Date;
   requestData?: Record<string, unknown>;
   responseData?: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SpxAccount {
+  id: string;
+  phone: string;
+  email: string | null;
+  userId: string;
+  isActive: boolean;
+  verifiedAt: Date | null;
+  lastError: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SpxShipmentListItem {
+  id: string;
+  orderId: string;
+  orderCode: string;
+  recipientName: string;
+  recipientPhone: string;
+  trackingNo: string | null;
+  trackingLink: string | null;
+  statusCode: string | null;
+  status: string | null;
+  awbLink: string | null;
+  awbExpiresAt: Date | null;
+  estimatedShippingFee: number | null;
+  actualShippingFee: number | null;
   createdAt: Date;
   updatedAt: Date;
 }

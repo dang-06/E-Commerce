@@ -65,6 +65,9 @@ export class PrismaIntegrationJobStore implements IntegrationJobStore {
           responsePayload: redactSensitive(responsePayload) as Prisma.InputJsonValue,
         },
       });
+      if (job.integration === "spx") {
+        await this.upsertSpxShipment(tx, job, responsePayload);
+      }
     });
   }
 
@@ -207,5 +210,77 @@ export class PrismaIntegrationJobStore implements IntegrationJobStore {
         })),
       },
     };
+  }
+
+  private async upsertSpxShipment(
+    tx: Prisma.TransactionClient,
+    job: ClaimedIntegrationJob,
+    responsePayload: unknown,
+  ): Promise<void> {
+    const payload = this.asRecord(responsePayload);
+    const trackingNo = this.asString(payload.trackingNo);
+    if (!trackingNo) {
+      return;
+    }
+    const estimatedShippingFee = this.asBigInt(payload.estimatedShippingFee);
+    const shipment = await tx.shippingShipment.upsert({
+      where: { provider_trackingNo: { provider: "spx", trackingNo } },
+      create: {
+        orderId: job.rawOrderId,
+        provider: "spx",
+        trackingNo,
+        trackingLink: this.asString(payload.trackingLink),
+        status: this.asString(payload.status) ?? "Created",
+        statusCode: this.asString(payload.statusCode),
+        ...(estimatedShippingFee !== null ? { estimatedShippingFee } : {}),
+        rawLastEvent: redactSensitive(responsePayload) as Prisma.InputJsonValue,
+      },
+      update: {
+        orderId: job.rawOrderId,
+        trackingLink: this.asString(payload.trackingLink),
+        status: this.asString(payload.status) ?? "Created",
+        statusCode: this.asString(payload.statusCode),
+        ...(estimatedShippingFee !== null ? { estimatedShippingFee } : {}),
+        rawLastEvent: redactSensitive(responsePayload) as Prisma.InputJsonValue,
+      },
+    });
+    await tx.order.update({
+      where: { id: job.rawOrderId },
+      data: {
+        orderStatus: "confirmed",
+        shippingOrderId: trackingNo,
+      },
+    });
+    await tx.shippingEvent.create({
+      data: {
+        eventType: "create_order",
+        payload: redactSensitive(responsePayload) as Prisma.InputJsonValue,
+        provider: "spx",
+        shipmentId: shipment.id,
+        trackingNo,
+      },
+    });
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  }
+
+  private asString(value: unknown): string | null {
+    return typeof value === "string" && value.trim() ? value : null;
+  }
+
+  private asBigInt(value: unknown): bigint | null {
+    if (typeof value === "bigint") {
+      return value;
+    }
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return BigInt(Math.round(value));
+    }
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? BigInt(Math.round(parsed)) : null;
+    }
+    return null;
   }
 }

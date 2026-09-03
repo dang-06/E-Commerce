@@ -116,7 +116,34 @@ export interface AdminOrderResponse {
   note: string | null;
   pancakeOrderId: string | null;
   shippingOrderId: string | null;
+  shipments: AdminShippingShipmentResponse[];
   items: OrderLineResponse[];
+}
+
+export interface AdminShippingEventResponse {
+  id: string;
+  eventType: string;
+  statusCode: string | null;
+  occurredAt: Date | null;
+  receivedAt: Date;
+}
+
+export interface AdminShippingShipmentResponse {
+  id: string;
+  provider: string;
+  trackingNo: string | null;
+  trackingLink: string | null;
+  batchNo: string | null;
+  consignmentNo: string | null;
+  statusCode: string | null;
+  status: string | null;
+  awbLink: string | null;
+  awbExpiresAt: Date | null;
+  estimatedShippingFee: string | null;
+  actualShippingFee: string | null;
+  chargeableWeight: string | null;
+  updatedAt: Date;
+  events: AdminShippingEventResponse[];
 }
 
 @Injectable()
@@ -244,6 +271,7 @@ export class OrdersService {
       include: {
         integrationJobs: { orderBy: { updatedAt: "desc" } },
         items: { orderBy: { id: "asc" } },
+        shipments: { include: { events: { orderBy: { receivedAt: "desc" }, take: 5 } }, orderBy: { updatedAt: "desc" } },
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit,
@@ -257,6 +285,7 @@ export class OrdersService {
       include: {
         integrationJobs: { orderBy: { updatedAt: "desc" } },
         items: { orderBy: { id: "asc" } },
+        shipments: { include: { events: { orderBy: { receivedAt: "desc" }, take: 10 } }, orderBy: { updatedAt: "desc" } },
       },
     });
     if (!order) {
@@ -272,6 +301,7 @@ export class OrdersService {
       include: {
         integrationJobs: { orderBy: { updatedAt: "desc" } },
         items: { orderBy: { id: "asc" } },
+        shipments: { include: { events: { orderBy: { receivedAt: "desc" }, take: 10 } }, orderBy: { updatedAt: "desc" } },
       },
     });
     return this.toAdminOrderResponse(order);
@@ -476,7 +506,11 @@ export class OrdersService {
 
   private toAdminOrderResponse(
     order: Prisma.OrderGetPayload<{
-      include: { integrationJobs: true; items: true };
+      include: {
+        integrationJobs: true;
+        items: true;
+        shipments: { include: { events: true } };
+      };
     }>,
   ): AdminOrderResponse {
     return {
@@ -501,6 +535,29 @@ export class OrdersService {
       note: order.note,
       pancakeOrderId: order.pancakeOrderId,
       shippingOrderId: order.shippingOrderId,
+      shipments: order.shipments.map((shipment) => ({
+        actualShippingFee: shipment.actualShippingFee?.toString() ?? null,
+        awbExpiresAt: shipment.awbExpiresAt,
+        awbLink: shipment.awbLink,
+        batchNo: shipment.batchNo,
+        chargeableWeight: shipment.chargeableWeight?.toString() ?? null,
+        consignmentNo: shipment.consignmentNo,
+        estimatedShippingFee: shipment.estimatedShippingFee?.toString() ?? null,
+        events: shipment.events.map((event) => ({
+          eventType: event.eventType,
+          id: event.id.toString(),
+          occurredAt: event.occurredAt,
+          receivedAt: event.receivedAt,
+          statusCode: event.statusCode,
+        })),
+        id: shipment.id.toString(),
+        provider: shipment.provider,
+        status: shipment.status,
+        statusCode: shipment.statusCode,
+        trackingLink: shipment.trackingLink,
+        trackingNo: shipment.trackingNo,
+        updatedAt: shipment.updatedAt,
+      })),
       items: order.items.map((item) =>
         this.toLineResponse({
           productId: item.productId.toString(),

@@ -90,6 +90,70 @@ export class CreateOrderResponseDto {
   items!: OrderLineResponseDto[];
 }
 
+export class AdminShippingEventResponseDto {
+  @ApiProperty({ example: "1", type: String })
+  id!: string;
+
+  @ApiProperty({ example: "tracking", type: String })
+  eventType!: string;
+
+  @ApiPropertyOptional({ example: "2001", nullable: true, type: String })
+  statusCode!: string | null;
+
+  @ApiPropertyOptional({ example: "2026-08-20T09:00:00.000Z", nullable: true, type: String })
+  occurredAt!: Date | null;
+
+  @ApiProperty({ example: "2026-08-20T09:00:03.000Z", type: String })
+  receivedAt!: Date;
+}
+
+export class AdminShippingShipmentResponseDto {
+  @ApiProperty({ example: "1", type: String })
+  id!: string;
+
+  @ApiProperty({ example: "spx", type: String })
+  provider!: string;
+
+  @ApiPropertyOptional({ example: "SPXVN04191983057C", nullable: true, type: String })
+  trackingNo!: string | null;
+
+  @ApiPropertyOptional({ example: "https://spx.vn/track?SPXVN04191983057C", nullable: true, type: String })
+  trackingLink!: string | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true, type: String })
+  batchNo!: string | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true, type: String })
+  consignmentNo!: string | null;
+
+  @ApiPropertyOptional({ example: "2001", nullable: true, type: String })
+  statusCode!: string | null;
+
+  @ApiPropertyOptional({ example: "In Transit", nullable: true, type: String })
+  status!: string | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true, type: String })
+  awbLink!: string | null;
+
+  @ApiPropertyOptional({ example: null, nullable: true, type: String })
+  awbExpiresAt!: Date | null;
+
+  @ApiPropertyOptional({ example: "30000", nullable: true, type: String })
+  estimatedShippingFee!: string | null;
+
+  @ApiPropertyOptional({ example: "32000", nullable: true, type: String })
+  actualShippingFee!: string | null;
+
+  @ApiPropertyOptional({ example: "0.500", nullable: true, type: String })
+  chargeableWeight!: string | null;
+
+  @ApiProperty({ example: "2026-08-20T09:00:00.000Z", type: String })
+  updatedAt!: Date;
+
+  @ApiProperty({ type: [AdminShippingEventResponseDto] })
+  events!: AdminShippingEventResponseDto[];
+}
+
 export class AdminOrderResponseDto {
   @ApiProperty({ example: "1", type: String })
   id!: string;
@@ -153,6 +217,9 @@ export class AdminOrderResponseDto {
 
   @ApiPropertyOptional({ example: null, nullable: true, type: String })
   shippingOrderId!: string | null;
+
+  @ApiProperty({ type: [AdminShippingShipmentResponseDto] })
+  shipments!: AdminShippingShipmentResponseDto[];
 
   @ApiProperty({ type: [OrderLineResponseDto] })
   items!: OrderLineResponseDto[];

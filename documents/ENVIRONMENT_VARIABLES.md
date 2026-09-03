@@ -61,6 +61,45 @@ Luu y:
 | `API_INTEGRATION_PANCAKE_*` | Khi dung Pancake | secret manager | Can API docs/credential xac nhan |
 | `API_INTEGRATION_BEST_*` | Khi dung BEST | secret manager | Chi bat neu nam trong MVP |
 
+## SPX delivery
+
+Bat SPX bang cach them `spx` vao `API_ORDER_INTEGRATIONS`, vi du `sheet,pancake,spx`.
+
+| Bien | Bat buoc | Vi du | Ghi chu |
+|---|---:|---|---|
+| `SPX_ENV` | Khong | `test` | `test` hoac `live` |
+| `SPX_TEST_BASE_URL` | Khong | `https://test-stable.spx.vn/` | Host sandbox VN |
+| `SPX_LIVE_BASE_URL` | Khi live | `https://spx.vn/` | Host production VN |
+| `SPX_APP_ID` | Co | `1000628` | AppID do SPX cap |
+| `SPX_APP_SECRET` | Co | secret manager | Khong commit, dung de ky `check-sign` |
+| `SPX_ACCOUNT_ENCRYPTION_KEY` | Co | secret manager | Key ma hoa `user_secret` luu trong bang `spx_accounts` |
+| `SPX_USER_ID` | Dev fallback | secret manager | Chi dung khi chua co account active trong DB |
+| `SPX_USER_SECRET` | Dev fallback | secret manager | Chi dung khi chua co account active trong DB |
+| `SPX_DEFAULT_SERVICE_TYPE` | Khong | `1` | `1` standard, `2` instant |
+| `SPX_DEFAULT_COLLECT_TYPE` | Khong | `1` | `1` pickup, `2` drop off |
+| `SPX_PAYMENT_ROLE` | Khong | `1` | `1` sender pay, `2` receiver pay |
+| `SPX_ENABLE_COD` | Khong | `true` | COD amount lay tu tong tien backend |
+| `SPX_ALLOW_MUTUAL_CHECK` | Khong | `false` | Chi bat khi SPX/VN shop xac nhan |
+| `SPX_ALLOW_TRY_ON` | Khong | `false` | Chi bat khi SPX/VN shop xac nhan |
+| `SPX_ALLOW_PARTIAL_DELIVERY` | Khong | `false` | Chi bat khi SPX/VN shop xac nhan |
+| `SPX_SENDER_NAME` | Co | `Shop ABC` | Ten nguoi gui |
+| `SPX_SENDER_PHONE` | Co | `0901234567` | SĐT nguoi gui |
+| `SPX_SENDER_STATE` | Co | `TP. Ho Chi Minh` | Province theo file address SPX |
+| `SPX_SENDER_CITY` | Co | `Quan 1` | District theo file address SPX |
+| `SPX_SENDER_DISTRICT` | Co | `Phuong Ben Nghe` | Ward theo file address SPX |
+| `SPX_SENDER_DETAIL_ADDRESS` | Co | `123 Nguyen Hue` | Dia chi chi tiet |
+| `SPX_DEFAULT_WEIGHT_KG` | Khong | `0.5` | Default khi product/order chua co can nang |
+| `SPX_DEFAULT_LENGTH_CM` | Khong | `10` | Default chieu dai kien hang |
+| `SPX_DEFAULT_WIDTH_CM` | Khong | `10` | Default chieu rong kien hang |
+| `SPX_DEFAULT_HEIGHT_CM` | Khong | `10` | Default chieu cao kien hang |
+
+Luu y:
+
+- Production nen tao `SPX_USER_ID`/`SPX_USER_SECRET` qua Admin > Dong bo > Tai khoan SPX; backend se luu `user_secret` dang ma hoa trong PostgreSQL.
+- `SPX_APP_SECRET` va `SPX_ACCOUNT_ENCRYPTION_KEY` phai co trong ca `api` va `worker`.
+- Webhook SPX can public HTTPS URL, vi du `https://api.example.com/api/v1/webhooks/spx/tracking`.
+- Sender address va buyer address nen dung gia tri tu file address SPX Vietnam.
+
 ## PostgreSQL
 
 | Bien | Bat buoc | Vi du | Ghi chu |

@@ -8,7 +8,7 @@ export interface AppConfig {
   host: string;
   loginRateLimitMax: number;
   loginRateLimitWindowMs: number;
-  orderIntegrationNames: ("sheet" | "pancake" | "best")[];
+  orderIntegrationNames: ("sheet" | "pancake" | "best" | "spx")[];
   integrationBackoffBaseMs: number;
   integrationBatchSize: number;
   integrationMaxAttempts: number;
@@ -19,12 +19,40 @@ export interface AppConfig {
     pancake: IntegrationEndpointConfig;
     sheet: IntegrationEndpointConfig;
   };
+  spx: SpxConfig;
   googleSheets: GoogleSheetsConfig;
   port: number;
   promotionRateLimitMax: number;
   promotionRateLimitWindowMs: number;
   promotionTokenTtlSeconds: number;
   swaggerEnabled: boolean;
+}
+
+export interface SpxConfig {
+  appId: number | undefined;
+  appSecret: string | undefined;
+  baseUrl: string;
+  defaultCollectType: 1 | 2;
+  defaultHeightCm: number;
+  defaultLengthCm: number;
+  defaultServiceType: 1 | 2;
+  defaultWeightKg: number;
+  defaultWidthCm: number;
+  accountEncryptionKey: string;
+  enableCod: boolean;
+  env: "test" | "live";
+  allowMutualCheck: boolean;
+  allowPartialDelivery: boolean;
+  allowTryOn: boolean;
+  paymentRole: 1 | 2;
+  senderCity: string | undefined;
+  senderDetailAddress: string | undefined;
+  senderDistrict: string | undefined;
+  senderName: string | undefined;
+  senderPhone: string | undefined;
+  senderState: string | undefined;
+  userId: number | undefined;
+  userSecret: string | undefined;
 }
 
 export interface CloudinaryConfig {
@@ -96,9 +124,9 @@ function parseNonNegativeInt(value: string | undefined, fallback: number, name: 
   return parsed;
 }
 
-function parseOrderIntegrationNames(value: string | undefined): ("sheet" | "pancake" | "best")[] {
+function parseOrderIntegrationNames(value: string | undefined): ("sheet" | "pancake" | "best" | "spx")[] {
   const raw = value ?? "sheet";
-  const allowed = new Set(["sheet", "pancake", "best"]);
+  const allowed = new Set(["sheet", "pancake", "best", "spx"]);
   const names = raw
     .split(",")
     .map((name) => name.trim())
@@ -110,7 +138,7 @@ function parseOrderIntegrationNames(value: string | undefined): ("sheet" | "panc
     }
   }
 
-  return names as ("sheet" | "pancake" | "best")[];
+  return names as ("sheet" | "pancake" | "best" | "spx")[];
 }
 
 export function getConfig(): AppConfig {
@@ -186,6 +214,7 @@ export function getConfig(): AppConfig {
       pancake: readIntegrationEndpoint("PANCAKE"),
       sheet: readIntegrationEndpoint("SHEET"),
     },
+    spx: readSpxConfig(),
     googleSheets: {
       cacheTtlSeconds: parsePositiveInt(
         process.env.GOOGLE_SHEETS_CACHE_TTL_SECONDS,
@@ -218,6 +247,70 @@ export function getConfig(): AppConfig {
     ),
     swaggerEnabled: parseBoolean(process.env.API_SWAGGER_ENABLED, true),
   };
+}
+
+function readSpxConfig(): SpxConfig {
+  const env = process.env.SPX_ENV === "live" ? "live" : "test";
+  const testBaseUrl = process.env.SPX_TEST_BASE_URL ?? "https://test-stable.spx.vn/";
+  const liveBaseUrl = process.env.SPX_LIVE_BASE_URL ?? "https://spx.vn/";
+  return {
+    allowMutualCheck: parseBoolean(process.env.SPX_ALLOW_MUTUAL_CHECK, false),
+    allowPartialDelivery: parseBoolean(process.env.SPX_ALLOW_PARTIAL_DELIVERY, false),
+    allowTryOn: parseBoolean(process.env.SPX_ALLOW_TRY_ON, false),
+    appId: parseOptionalPositiveInt(process.env.SPX_APP_ID, "SPX_APP_ID"),
+    appSecret: process.env.SPX_APP_SECRET,
+    baseUrl: env === "live" ? liveBaseUrl : testBaseUrl,
+    defaultCollectType: parseOneOf(process.env.SPX_DEFAULT_COLLECT_TYPE, 1, [1, 2], "SPX_DEFAULT_COLLECT_TYPE"),
+    defaultHeightCm: parsePositiveNumber(process.env.SPX_DEFAULT_HEIGHT_CM, 10, "SPX_DEFAULT_HEIGHT_CM"),
+    defaultLengthCm: parsePositiveNumber(process.env.SPX_DEFAULT_LENGTH_CM, 10, "SPX_DEFAULT_LENGTH_CM"),
+    defaultServiceType: parseOneOf(process.env.SPX_DEFAULT_SERVICE_TYPE, 1, [1, 2], "SPX_DEFAULT_SERVICE_TYPE"),
+    defaultWeightKg: parsePositiveNumber(process.env.SPX_DEFAULT_WEIGHT_KG, 0.5, "SPX_DEFAULT_WEIGHT_KG"),
+    defaultWidthCm: parsePositiveNumber(process.env.SPX_DEFAULT_WIDTH_CM, 10, "SPX_DEFAULT_WIDTH_CM"),
+    accountEncryptionKey:
+      process.env.SPX_ACCOUNT_ENCRYPTION_KEY ??
+      process.env.API_AUTH_SECRET ??
+      "development-only-change-me-spx-account-encryption-key",
+    enableCod: parseBoolean(process.env.SPX_ENABLE_COD, true),
+    env,
+    paymentRole: parseOneOf(process.env.SPX_PAYMENT_ROLE, 1, [1, 2], "SPX_PAYMENT_ROLE"),
+    senderCity: process.env.SPX_SENDER_CITY,
+    senderDetailAddress: process.env.SPX_SENDER_DETAIL_ADDRESS,
+    senderDistrict: process.env.SPX_SENDER_DISTRICT,
+    senderName: process.env.SPX_SENDER_NAME,
+    senderPhone: process.env.SPX_SENDER_PHONE,
+    senderState: process.env.SPX_SENDER_STATE,
+    userId: parseOptionalPositiveInt(process.env.SPX_USER_ID, "SPX_USER_ID"),
+    userSecret: process.env.SPX_USER_SECRET,
+  };
+}
+
+function parseOptionalPositiveInt(value: string | undefined, name: string): number | undefined {
+  if (!value) {
+    return undefined;
+  }
+  return parsePositiveInt(value, 0, name);
+}
+
+function parsePositiveNumber(value: string | undefined, fallback: number, name: string): number {
+  if (value === undefined) {
+    return fallback;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${name} value: ${value}`);
+  }
+  return parsed;
+}
+
+function parseOneOf<T extends number>(value: string | undefined, fallback: T, allowed: readonly T[], name: string): T {
+  if (value === undefined) {
+    return fallback;
+  }
+  const parsed = Number(value);
+  if (!allowed.includes(parsed as T)) {
+    throw new Error(`Invalid ${name} value: ${value}`);
+  }
+  return parsed as T;
 }
 
 function readIntegrationEndpoint(name: "BEST" | "PANCAKE" | "SHEET"): IntegrationEndpointConfig {

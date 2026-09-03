@@ -59,6 +59,7 @@ enum IntegrationName {
   pancake
   sheet
   best
+  spx
 }
 
 enum IntegrationAction {
@@ -249,6 +250,7 @@ model Order {
   items            OrderItem[]
   integrationJobs  IntegrationJob[]
   integrationLogs  IntegrationLog[]
+  shipments        ShippingShipment[]
 
   @@index([orderStatus, createdAt], map: "idx_orders_status_created")
   @@index([recipientPhone], map: "idx_orders_recipient_phone")
@@ -256,6 +258,70 @@ model Order {
   @@index([promotionPhoneHash], map: "idx_orders_promotion_phone_hash")
   @@index([eligibleCustomerId], map: "idx_orders_eligible_customer")
   @@map("orders")
+}
+
+model ShippingShipment {
+  id                   BigInt   @id @default(autoincrement()) @db.BigInt
+  orderId              BigInt   @map("order_id") @db.BigInt
+  provider             String   @db.VarChar(30)
+  trackingNo           String?  @map("tracking_no") @db.VarChar(100)
+  trackingLink         String?  @map("tracking_link")
+  batchNo              String?  @map("batch_no") @db.VarChar(100)
+  consignmentNo        String?  @map("consignment_no") @db.VarChar(100)
+  statusCode           String?  @map("status_code") @db.VarChar(30)
+  status               String?  @db.VarChar(100)
+  awbLink              String?  @map("awb_link")
+  awbExpiresAt         DateTime? @map("awb_expires_at") @db.Timestamp(6)
+  estimatedShippingFee BigInt?  @map("estimated_shipping_fee") @db.BigInt
+  actualShippingFee    BigInt?  @map("actual_shipping_fee") @db.BigInt
+  chargeableWeight     Decimal? @map("chargeable_weight") @db.Decimal(10, 3)
+  rawLastEvent         Json?    @map("raw_last_event")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  order  Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  events ShippingEvent[]
+
+  @@unique([provider, trackingNo], map: "uniq_shipping_shipments_provider_tracking")
+  @@index([orderId, provider], map: "idx_shipping_shipments_order_provider")
+  @@index([provider, statusCode], map: "idx_shipping_shipments_provider_status")
+  @@map("shipping_shipments")
+}
+
+model SpxAccount {
+  id                   BigInt    @id @default(autoincrement()) @db.BigInt
+  phone                String    @db.VarChar(32)
+  email                String?   @db.VarChar(64)
+  userId               BigInt    @unique @map("user_id") @db.BigInt
+  userSecretCiphertext String    @map("user_secret_ciphertext")
+  isActive             Boolean   @default(true) @map("is_active")
+  verifiedAt           DateTime? @map("verified_at") @db.Timestamp(6)
+  lastError            String?   @map("last_error")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamp(6)
+
+  @@index([isActive, updatedAt], map: "idx_spx_accounts_active_updated")
+  @@map("spx_accounts")
+}
+
+model ShippingEvent {
+  id              BigInt   @id @default(autoincrement()) @db.BigInt
+  shipmentId      BigInt?  @map("shipment_id") @db.BigInt
+  provider        String   @db.VarChar(30)
+  providerEventId String?  @map("provider_event_id") @db.VarChar(100)
+  trackingNo      String?  @map("tracking_no") @db.VarChar(100)
+  eventType       String   @map("event_type") @db.VarChar(50)
+  statusCode      String?  @map("status_code") @db.VarChar(30)
+  payload         Json
+  occurredAt      DateTime? @map("occurred_at") @db.Timestamp(6)
+  receivedAt      DateTime @default(now()) @map("received_at") @db.Timestamp(6)
+
+  shipment ShippingShipment? @relation(fields: [shipmentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerEventId], map: "uniq_shipping_events_provider_event")
+  @@index([trackingNo, eventType, occurredAt], map: "idx_shipping_events_tracking_type_time")
+  @@index([shipmentId], map: "idx_shipping_events_shipment")
+  @@map("shipping_events")
 }
 
 model OrderItem {

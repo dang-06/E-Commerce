@@ -1,22 +1,28 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Optional } from "@nestjs/common";
 import type { IntegrationName } from "@prisma/client";
 import { getConfig, type IntegrationEndpointConfig } from "../../config/app.config.js";
 import { BestExpressAdapter } from "./adapters/best-express.adapter.js";
 import { GoogleSheetsAdapter } from "./adapters/google-sheets.adapter.js";
 import { MockIntegrationAdapter } from "./adapters/mock-integration.adapter.js";
 import { PancakeAdapter } from "./adapters/pancake.adapter.js";
+import { SpxAdapter } from "./adapters/spx.adapter.js";
 import { GoogleSheetsClientService } from "./google-sheets-client.service.js";
 import type { IntegrationAdapter } from "./integration.types.js";
+import { SpxAccountService } from "./spx-account.service.js";
 
 @Injectable()
 export class IntegrationAdapterRegistry {
   private readonly adapters = new Map<IntegrationName, IntegrationAdapter>();
 
-  constructor(private readonly sheets?: GoogleSheetsClientService) {
+  constructor(
+    @Optional() private readonly sheets?: GoogleSheetsClientService,
+    @Optional() private readonly spxAccounts?: SpxAccountService,
+  ) {
     const config = getConfig().integrationEndpoints;
     this.adapters.set("sheet", this.build("sheet", config.sheet));
     this.adapters.set("pancake", this.build("pancake", config.pancake));
     this.adapters.set("best", this.build("best", config.best));
+    this.adapters.set("spx", new SpxAdapter(getConfig().spx, () => this.spxAccountCredentials()));
   }
 
   get(integration: IntegrationName): IntegrationAdapter {
@@ -33,6 +39,9 @@ export class IntegrationAdapterRegistry {
         return new MockIntegrationAdapter(integration);
       }
       return new GoogleSheetsAdapter(this.sheets);
+    }
+    if (integration === "spx") {
+      return new SpxAdapter(getConfig().spx, () => this.spxAccountCredentials());
     }
     if (!config.baseUrl || !config.createOrderPath) {
       return new MockIntegrationAdapter(integration);
@@ -52,5 +61,9 @@ export class IntegrationAdapterRegistry {
       return new PancakeAdapter(httpConfig);
     }
     return new BestExpressAdapter(httpConfig);
+  }
+
+  private spxAccountCredentials() {
+    return this.spxAccounts?.getActiveCredentials() ?? Promise.resolve(null);
   }
 }

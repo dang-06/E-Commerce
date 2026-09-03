@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Headers, NotFoundException, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -15,13 +15,18 @@ import {
   GoogleSheetConfigResponseDto,
   GoogleSheetConfigsResponseDto,
   IntegrationJobListItemResponseDto,
+  SpxAccountResponseDto,
+  SpxShipmentListItemResponseDto,
 } from "./dto/integration-response.dto.js";
+import { CreateSpxAccountDto } from "./dto/spx-account.dto.js";
 import {
   GoogleSheetConfigService,
   type GoogleSheetConfigResponse,
   type GoogleSheetConfigsResponse,
 } from "./google-sheet-config.service.js";
 import { PrismaIntegrationJobStore } from "./repositories/prisma-integration-job.store.js";
+import { SpxAccountService, type SpxAccountResponse } from "./spx-account.service.js";
+import { SpxShippingService, type SpxAwbResponse, type SpxShipmentListItem } from "./spx-shipping.service.js";
 import type { IntegrationJobListItem } from "./integration.types.js";
 
 @ApiTags("admin integrations")
@@ -32,6 +37,8 @@ export class IntegrationsController {
   constructor(
     private readonly store: PrismaIntegrationJobStore,
     private readonly googleSheetConfigs: GoogleSheetConfigService,
+    private readonly spxAccounts: SpxAccountService,
+    private readonly spxShipping: SpxShippingService,
   ) {}
 
   @Get()
@@ -61,6 +68,45 @@ export class IntegrationsController {
     return this.googleSheetConfigs.upsert(purpose, dto);
   }
 
+  @Get("spx/accounts")
+  @Roles("operator", "admin")
+  @ApiOkResponse({ type: [SpxAccountResponseDto] })
+  listSpxAccounts(): Promise<SpxAccountResponse[]> {
+    return this.spxAccounts.list();
+  }
+
+  @Post("spx/accounts")
+  @Roles("admin")
+  @ApiCreatedResponse({ type: SpxAccountResponseDto })
+  createSpxAccount(@Body() dto: CreateSpxAccountDto): Promise<SpxAccountResponse> {
+    return this.spxAccounts.createFromSpx(dto);
+  }
+
+  @Post("spx/accounts/:id/verify")
+  @Roles("operator", "admin")
+  @ApiParam({ name: "id", example: "1" })
+  @ApiCreatedResponse({ type: SpxAccountResponseDto })
+  verifySpxAccount(@Param("id") id: string): Promise<SpxAccountResponse> {
+    return this.spxAccounts.verify(id);
+  }
+
+  @Post("spx/accounts/:id/activate")
+  @Roles("admin")
+  @ApiParam({ name: "id", example: "1" })
+  @ApiCreatedResponse({ type: SpxAccountResponseDto })
+  activateSpxAccount(@Param("id") id: string): Promise<SpxAccountResponse> {
+    return this.spxAccounts.activate(id);
+  }
+
+  @Get("spx/shipments")
+  @Roles("operator", "admin")
+  @ApiQuery({ name: "limit", required: false, example: 100, description: "Max 200." })
+  @ApiOkResponse({ type: [SpxShipmentListItemResponseDto] })
+  listSpxShipments(@Query("limit") limit?: string): Promise<SpxShipmentListItem[]> {
+    const parsedLimit = Number(limit ?? 100);
+    return this.spxShipping.listShipments(Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : 100);
+  }
+
   @Post(":id/retry")
   @Roles("operator", "admin")
   @ApiParam({ name: "id", example: "1" })
@@ -71,5 +117,29 @@ export class IntegrationsController {
       throw new NotFoundException("Integration job not found");
     }
     return this.store.retryNow(id);
+  }
+
+  @Post("spx/shipments/:id/awb")
+  @Roles("operator", "admin")
+  @ApiParam({ name: "id", example: "1" })
+  @ApiCreatedResponse({ type: Object })
+  getSpxAwb(@Param("id") id: string): Promise<SpxAwbResponse> {
+    return this.spxShipping.getAwb(id);
+  }
+}
+
+@ApiTags("spx webhooks")
+@Controller("webhooks/spx")
+export class SpxWebhooksController {
+  constructor(private readonly spxShipping: SpxShippingService) {}
+
+  @Post(":type")
+  async receive(
+    @Param("type") type: string,
+    @Headers() headers: Record<string, string | string[] | undefined>,
+    @Body() body: unknown,
+  ): Promise<{ received: true }> {
+    await this.spxShipping.handleWebhook(type, headers, body);
+    return { received: true };
   }
 }

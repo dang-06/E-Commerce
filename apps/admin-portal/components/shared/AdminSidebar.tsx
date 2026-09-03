@@ -21,6 +21,7 @@ const navItems = [
   { label: 'Sản phẩm', href: '/admin/products', icon: Package },
   { label: 'Khách ưu đãi', href: '/admin/customers', icon: Users },
   { label: 'Đơn hàng', href: '/admin/orders', icon: ShoppingCart },
+  { label: 'Đồng bộ', href: '/admin/sync', icon: Activity },
   { label: 'Báo cáo', href: '/admin/reports', icon: BarChart3 },
   { label: 'Cấu hình', href: '/admin/settings', icon: Settings },
   { label: 'Nhật ký', href: '/admin/logs', icon: Activity },
