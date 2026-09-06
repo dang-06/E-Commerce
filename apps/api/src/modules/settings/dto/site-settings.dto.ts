@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsString, Matches, MaxLength } from "class-validator";
 
 const imagePathPattern = /^(https?:\/\/[^\s]+|\/[^\s]+)$/;
+const contactUrlPattern = /^(https?:\/\/[^\s]+|\/[^\s]+|mailto:[^\s@]+@[^\s@]+\.[^\s@]+|tel:\+?[0-9\s().-]+)$/;
 
 export class UpdateSiteSettingsDto {
   @ApiPropertyOptional({ example: "Tên thương hiệu", maxLength: 120, type: String })
@@ -51,6 +52,15 @@ export class UpdateSiteSettingsDto {
   @MaxLength(120)
   catalogTitle?: string;
 
+  @ApiPropertyOptional({ example: "https://example.com/contact", maxLength: 2048, type: String })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  @Matches(contactUrlPattern, {
+    message: "contactUrl must be an http(s) URL, mailto link, tel link, or an absolute public path",
+  })
+  contactUrl?: string;
+
   @ApiPropertyOptional({ example: "Tên thương hiệu", maxLength: 120, type: String })
   @IsOptional()
   @IsString()
@@ -85,6 +95,9 @@ export class SiteSettingsResponseDto {
 
   @ApiProperty({ example: "Sản phẩm nổi bật", type: String })
   catalogTitle!: string;
+
+  @ApiProperty({ example: "https://example.com/contact", type: String })
+  contactUrl!: string;
 
   @ApiProperty({ example: "Tên thương hiệu", type: String })
   logoText!: string;

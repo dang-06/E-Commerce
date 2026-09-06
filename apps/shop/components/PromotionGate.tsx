@@ -13,6 +13,7 @@ const emptySiteSettings: SiteSettings = {
   bannerSubtitle: "",
   bannerTitle: "",
   catalogTitle: "",
+  contactUrl: "tel:0901234567",
   logoImageUrl: null,
   logoText: "",
   updatedAt: "",

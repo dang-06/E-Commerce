@@ -17,6 +17,7 @@ interface BannerFormInput {
   bannerSubtitle: string;
   bannerTitle: string;
   catalogTitle: string;
+  contactUrl: string;
   logoImageUrl: string;
   logoText: string;
 }
@@ -55,6 +56,7 @@ export interface ProductValidationInput {
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const colorPattern = /^#[0-9a-f]{6}$/i;
 const phonePattern = /^(?:\+84|84|0)(?:3|5|7|8|9)\d{8}$/;
+const contactUrlPattern = /^(https?:\/\/[^\s]+|\/[^\s]+|mailto:[^\s@]+@[^\s@]+\.[^\s@]+|tel:\+?[0-9\s().-]+)$/;
 
 export function collectFieldErrorMessages(errors: FieldErrors): string[] {
   return Array.from(new Set(Object.values(errors).filter(Boolean)));
@@ -98,6 +100,10 @@ export function validateBannerForm(form: BannerFormInput): FieldErrors {
   requireText(errors, "bannerSubtitle", form.bannerSubtitle, "Vui lòng nhập mô tả banner.");
   requireText(errors, "bannerButtonText", form.bannerButtonText, "Vui lòng nhập text nút banner.");
   requireText(errors, "catalogTitle", form.catalogTitle, "Vui lòng nhập tiêu đề catalog.");
+  requireText(errors, "contactUrl", form.contactUrl, "Vui lòng nhập link Contact us.");
+  if (form.contactUrl.trim() && !contactUrlPattern.test(form.contactUrl.trim())) {
+    errors.contactUrl = "Link Contact us phải là https://, mailto:, tel: hoặc đường dẫn bắt đầu bằng /.";
+  }
   validateOptionalAssetUrl(errors, "logoImageUrl", form.logoImageUrl, "URL ảnh logo không hợp lệ.");
   validateOptionalAssetUrl(errors, "bannerImageUrl", form.bannerImageUrl, "URL ảnh banner không hợp lệ.");
 

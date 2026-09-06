@@ -78,6 +78,7 @@ export interface SiteSettings {
   bannerSubtitle: string;
   bannerTitle: string;
   catalogTitle: string;
+  contactUrl: string;
   logoImageUrl: string | null;
   logoText: string;
   updatedAt: Date;

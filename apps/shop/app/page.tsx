@@ -64,6 +64,7 @@ const emptySiteSettings: SiteSettings = {
   bannerSubtitle: "",
   bannerTitle: "",
   catalogTitle: "",
+  contactUrl: "tel:0901234567",
   logoImageUrl: null,
   logoText: "",
   updatedAt: "",
@@ -485,7 +486,7 @@ function ShopHeader({
         </button>
 
         <div className="lux-header-right">
-          <a className="lux-contact-link" href="tel:0901234567">
+          <a className="lux-contact-link" href={siteSettings.contactUrl || "tel:0901234567"} rel="noreferrer" target="_blank">
             Contact us
           </a>
           <button

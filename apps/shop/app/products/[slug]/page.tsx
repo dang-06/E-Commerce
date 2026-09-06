@@ -19,6 +19,7 @@ const emptySiteSettings: SiteSettings = {
   bannerSubtitle: "",
   bannerTitle: "",
   catalogTitle: "Sản phẩm",
+  contactUrl: "tel:0901234567",
   logoImageUrl: null,
   logoText: "",
   updatedAt: "",
@@ -407,7 +408,7 @@ function ProductRouteHeader({
         </Link>
 
         <div className="lux-header-right">
-          <a className="lux-contact-link" href="tel:0901234567">
+          <a className="lux-contact-link" href={siteSettings.contactUrl || "tel:0901234567"} rel="noreferrer" target="_blank">
             Contact us
           </a>
           <Link className="lux-cart-button" href="/?checkout=1" aria-label={`${cartQuantity} sản phẩm trong giỏ`}>

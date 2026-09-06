@@ -1,0 +1,2 @@
+ALTER TABLE "site_settings"
+ADD COLUMN "contact_url" TEXT NOT NULL DEFAULT 'tel:0901234567';

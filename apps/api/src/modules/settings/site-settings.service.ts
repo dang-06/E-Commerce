@@ -11,6 +11,7 @@ export interface SiteSettingsResponse {
   bannerSubtitle: string;
   bannerTitle: string;
   catalogTitle: string;
+  contactUrl: string;
   logoImageUrl: string | null;
   logoText: string;
   updatedAt: Date;
@@ -30,6 +31,7 @@ export class SiteSettingsService {
         bannerSubtitle: "",
         bannerTitle: "",
         catalogTitle: "",
+        contactUrl: "tel:0901234567",
         key: defaultSettingsKey,
         logoText: "",
       },
@@ -47,6 +49,7 @@ export class SiteSettingsService {
         ...(dto.bannerSubtitle !== undefined ? { bannerSubtitle: this.clean(dto.bannerSubtitle) } : {}),
         ...(dto.bannerTitle !== undefined ? { bannerTitle: this.clean(dto.bannerTitle) } : {}),
         ...(dto.catalogTitle !== undefined ? { catalogTitle: this.clean(dto.catalogTitle) } : {}),
+        ...(dto.contactUrl !== undefined ? { contactUrl: this.clean(dto.contactUrl) } : {}),
         ...(dto.logoImageUrl !== undefined ? { logoImageUrl: this.optionalText(dto.logoImageUrl) } : {}),
         ...(dto.logoText !== undefined ? { logoText: this.clean(dto.logoText) } : {}),
       },
@@ -56,6 +59,7 @@ export class SiteSettingsService {
         bannerSubtitle: "",
         bannerTitle: "",
         catalogTitle: "",
+        contactUrl: "tel:0901234567",
         key: defaultSettingsKey,
         logoText: "",
         ...(dto.bannerButtonText !== undefined ? { bannerButtonText: this.clean(dto.bannerButtonText) } : {}),
@@ -64,6 +68,7 @@ export class SiteSettingsService {
         ...(dto.bannerSubtitle !== undefined ? { bannerSubtitle: this.clean(dto.bannerSubtitle) } : {}),
         ...(dto.bannerTitle !== undefined ? { bannerTitle: this.clean(dto.bannerTitle) } : {}),
         ...(dto.catalogTitle !== undefined ? { catalogTitle: this.clean(dto.catalogTitle) } : {}),
+        ...(dto.contactUrl !== undefined ? { contactUrl: this.clean(dto.contactUrl) } : {}),
         ...(dto.logoImageUrl !== undefined ? { logoImageUrl: this.optionalText(dto.logoImageUrl) } : {}),
         ...(dto.logoText !== undefined ? { logoText: this.clean(dto.logoText) } : {}),
       },
@@ -90,6 +95,7 @@ export class SiteSettingsService {
     bannerSubtitle: string;
     bannerTitle: string;
     catalogTitle: string;
+    contactUrl: string;
     logoImageUrl: string | null;
     logoText: string;
     updatedAt: Date;
@@ -101,6 +107,7 @@ export class SiteSettingsService {
       bannerSubtitle: settings.bannerSubtitle,
       bannerTitle: settings.bannerTitle,
       catalogTitle: settings.catalogTitle,
+      contactUrl: settings.contactUrl,
       logoImageUrl: settings.logoImageUrl,
       logoText: settings.logoText,
       updatedAt: settings.updatedAt,

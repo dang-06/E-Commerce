@@ -29,6 +29,7 @@ interface BannerFormState {
   bannerSubtitle: string
   bannerTitle: string
   catalogTitle: string
+  contactUrl: string
   logoImageUrl: string
   logoText: string
 }
@@ -48,6 +49,7 @@ const emptyBannerForm: BannerFormState = {
   bannerSubtitle: '',
   bannerTitle: '',
   catalogTitle: '',
+  contactUrl: 'tel:0901234567',
   logoImageUrl: '',
   logoText: '',
 }
@@ -114,6 +116,7 @@ export default function SettingsPage() {
           bannerSubtitle: settings.bannerSubtitle,
           bannerTitle: settings.bannerTitle,
           catalogTitle: settings.catalogTitle,
+          contactUrl: settings.contactUrl,
           logoImageUrl: settings.logoImageUrl ?? '',
           logoText: settings.logoText,
         })
@@ -165,6 +168,7 @@ export default function SettingsPage() {
         bannerSubtitle: saved.bannerSubtitle,
         bannerTitle: saved.bannerTitle,
         catalogTitle: saved.catalogTitle,
+        contactUrl: saved.contactUrl,
         logoImageUrl: saved.logoImageUrl ?? '',
         logoText: saved.logoText,
       })
@@ -404,6 +408,20 @@ export default function SettingsPage() {
                   aria-describedby={bannerFieldErrors.bannerButtonText ? 'banner-button-error' : undefined}
                 />
                 <FieldError id="banner-button-error" message={bannerFieldErrors.bannerButtonText} />
+              </div>
+              <div>
+                <Label htmlFor="contact-url">Link Contact us</Label>
+                <Input
+                  id="contact-url"
+                  placeholder="https://... hoặc tel:0901234567"
+                  value={bannerForm.contactUrl}
+                  onChange={(event) => {
+                    setBannerForm({ ...bannerForm, contactUrl: event.target.value })
+                  }}
+                  aria-invalid={Boolean(bannerFieldErrors.contactUrl)}
+                  aria-describedby={bannerFieldErrors.contactUrl ? 'contact-url-error' : undefined}
+                />
+                <FieldError id="contact-url-error" message={bannerFieldErrors.contactUrl} />
               </div>
               <div>
                 <Label htmlFor="catalog-title">Tiêu đề catalog</Label>

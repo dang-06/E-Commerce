@@ -242,6 +242,7 @@ interface ApiSiteSettings {
   bannerSubtitle: string;
   bannerTitle: string;
   catalogTitle: string;
+  contactUrl: string;
   logoImageUrl: string | null;
   logoText: string;
   updatedAt: string;
@@ -634,6 +635,7 @@ export const siteSettingsService = {
       | "bannerSubtitle"
       | "bannerTitle"
       | "catalogTitle"
+      | "contactUrl"
       | "logoImageUrl"
       | "logoText"
     >,
@@ -970,6 +972,7 @@ function toSiteSettings(settings: ApiSiteSettings): SiteSettings {
     bannerSubtitle: settings.bannerSubtitle,
     bannerTitle: settings.bannerTitle,
     catalogTitle: settings.catalogTitle,
+    contactUrl: settings.contactUrl,
     logoImageUrl: settings.logoImageUrl,
     logoText: settings.logoText,
     updatedAt: new Date(settings.updatedAt),

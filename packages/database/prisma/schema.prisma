@@ -438,6 +438,7 @@ model SiteSettings {
   bannerButtonText String   @map("banner_button_text") @db.VarChar(80)
   bannerImageUrl   String?  @map("banner_image_url")
   catalogTitle     String   @map("catalog_title") @db.VarChar(120)
+  contactUrl       String   @default("tel:0901234567") @map("contact_url")
   logoText         String   @map("logo_text") @db.VarChar(120)
   logoImageUrl     String?  @map("logo_image_url")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)

@@ -22,9 +22,9 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "db:generate": "npm run db:generate -w packages/database",
-    "db:migrate": "npm run db:migrate -w packages/database",
-    "db:migrate:deploy": "npm run db:migrate:deploy -w packages/database",
+    "db:generate": "prisma generate --schema packages/database/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema packages/database/prisma/schema.prisma",
+    "db:migrate:deploy": "prisma migrate deploy --schema packages/database/prisma/schema.prisma",
     "db:seed": "npm run db:seed -w packages/database"
   },
   "devDependencies": {
