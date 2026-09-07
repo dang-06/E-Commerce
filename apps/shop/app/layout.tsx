@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { MetaPixel } from "../components/MetaPixel";
 import { PromotionGate } from "../components/PromotionGate";
 import "./globals.css";
 
@@ -15,10 +16,13 @@ export const viewport: Viewport = {
   colorScheme: "light",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>): React.ReactElement {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>): React.ReactElement {
   return (
     <html lang="vi">
       <body>
+        <MetaPixel />
         <PromotionGate>{children}</PromotionGate>
       </body>
     </html>

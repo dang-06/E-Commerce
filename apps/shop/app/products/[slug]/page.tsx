@@ -6,8 +6,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, ShoppingCart, Star } from "lucide-react";
 import { IntroVideoPlayer } from "../../../components/IntroVideoPlayer";
 import { fetchProductBySlug, fetchProducts, fetchSiteSettings } from "../../../lib/api";
-import { filterCartItemsForProducts, readCart, setCartQuantity, writeCart } from "../../../lib/cart";
+import {
+  filterCartItemsForProducts,
+  readCart,
+  setCartQuantity,
+  writeCart,
+} from "../../../lib/cart";
 import { formatVnd, parseVnd } from "../../../lib/money";
+import { trackViewContent } from "../../../lib/meta-pixel";
 import { visibleShopProducts } from "../../../lib/public-catalog";
 import { readPromotionSession } from "../../../lib/promotion-session";
 import type { CartItem, Product, PromotionSession, SiteSettings } from "../../../lib/types";
@@ -24,6 +30,8 @@ const emptySiteSettings: SiteSettings = {
   logoText: "",
   updatedAt: "",
 };
+
+let lastTrackedViewContentKey: string | null = null;
 
 export default function ProductRoutePage(): React.ReactElement {
   const params = useParams() as Record<string, unknown>;
@@ -45,10 +53,12 @@ export default function ProductRoutePage(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [cartNotice, setCartNotice] = useState<string | null>(null);
   const [promotionSession, setPromotionSession] = useState<PromotionSession | null>(null);
+  const [promotionSessionChecked, setPromotionSessionChecked] = useState(false);
 
   useEffect(() => {
     setCartItems(readCart(globalThis.localStorage));
     setPromotionSession(readPromotionSession(globalThis.localStorage));
+    setPromotionSessionChecked(true);
   }, []);
 
   useEffect(() => {
@@ -102,16 +112,46 @@ export default function ProductRoutePage(): React.ReactElement {
     };
   }, [slug]);
 
-  const selectedVariant = product?.colorVariants.find((variant) => variant.id === selectedVariantId) ?? null;
+  const selectedVariant =
+    product?.colorVariants.find((variant) => variant.id === selectedVariantId) ?? null;
   const galleryImages = product ? buildProductGallery(product, selectedVariant?.id ?? null) : [];
-  const imageUrl = selectedImageUrl ?? selectedVariant?.imageUrl ?? (product ? productImage(product) : null);
+  const imageUrl =
+    selectedImageUrl ?? selectedVariant?.imageUrl ?? (product ? productImage(product) : null);
   const relatedProducts = product
-    ? visibleShopProducts(products).filter((item) => item.id !== product.id).slice(0, 8)
+    ? visibleShopProducts(products)
+        .filter((item) => item.id !== product.id)
+        .slice(0, 8)
     : [];
   const cartQuantity = useMemo(
     () => cartItems.reduce((total, item) => total + item.quantity, 0),
     [cartItems],
   );
+  const listedPrice = product ? parseVnd(product.listedPrice) : 0;
+  const discount =
+    product && promotionSession?.eligible === true && product.isPromotionEligible
+      ? Math.min(parseVnd(product.discountAmount), listedPrice)
+      : 0;
+  const finalPrice = listedPrice - discount;
+
+  useEffect(() => {
+    if (!promotionSessionChecked || !product) {
+      return;
+    }
+
+    const trackingKey = `${slug}:${product.id}`;
+    if (lastTrackedViewContentKey === trackingKey) {
+      return;
+    }
+
+    lastTrackedViewContentKey = trackingKey;
+    trackViewContent({
+      content_ids: [product.id],
+      content_name: product.name,
+      content_type: "product",
+      currency: "VND",
+      value: finalPrice,
+    });
+  }, [finalPrice, product, promotionSessionChecked, slug]);
 
   function addSelectedQuantityToCart(): void {
     if (!product) {
@@ -159,17 +199,11 @@ export default function ProductRoutePage(): React.ReactElement {
     );
   }
 
-  const listedPrice = parseVnd(product.listedPrice);
   const detailRows =
     product.productAttributes.length > 0
       ? product.productAttributes
       : [{ label: "Mô tả", value: product.description ?? "Sản phẩm đang được cập nhật mô tả." }];
   const detailImageUrls = product.detailImageUrls.filter((item) => item.trim().length > 0);
-  const discount =
-    promotionSession?.eligible === true && product.isPromotionEligible
-      ? Math.min(parseVnd(product.discountAmount), listedPrice)
-      : 0;
-  const finalPrice = listedPrice - discount;
 
   return (
     <main className="app-shell">
@@ -334,7 +368,9 @@ export default function ProductRoutePage(): React.ReactElement {
               ))}
             </div>
           </section>
-          {product.description ? <p className="nik-detail-description">{product.description}</p> : null}
+          {product.description ? (
+            <p className="nik-detail-description">{product.description}</p>
+          ) : null}
           {detailImageUrls.length > 0 ? (
             <div className="nik-detail-images">
               {detailImageUrls.map((detailImageUrl, index) => (
@@ -408,10 +444,19 @@ function ProductRouteHeader({
         </Link>
 
         <div className="lux-header-right">
-          <a className="lux-contact-link" href={siteSettings.contactUrl || "tel:0901234567"} rel="noreferrer" target="_blank">
+          <a
+            className="lux-contact-link"
+            href={siteSettings.contactUrl || "tel:0901234567"}
+            rel="noreferrer"
+            target="_blank"
+          >
             Contact us
           </a>
-          <Link className="lux-cart-button" href="/?checkout=1" aria-label={`${cartQuantity} sản phẩm trong giỏ`}>
+          <Link
+            className="lux-cart-button"
+            href="/?checkout=1"
+            aria-label={`${cartQuantity} sản phẩm trong giỏ`}
+          >
             <ShoppingCart aria-hidden="true" size={23} />
             {cartQuantity > 0 ? <em>{cartQuantity}</em> : null}
           </Link>
@@ -445,7 +490,9 @@ function ReviewSection({ product }: { product: Product }): React.ReactElement | 
         <h3>Đánh giá sản phẩm</h3>
         <div className="nik-review-score">
           <ReviewStars rating={product.reviewRating ?? 0} />
-          {product.reviewRating !== null ? <strong>{product.reviewRating.toFixed(1)}</strong> : null}
+          {product.reviewRating !== null ? (
+            <strong>{product.reviewRating.toFixed(1)}</strong>
+          ) : null}
           <span>({product.reviewCount ?? 0} đánh giá)</span>
         </div>
       </div>
@@ -538,7 +585,9 @@ function buildProductGallery(
           },
         ]
       : []),
-    ...(product.imageUrl ? [{ id: "main", imageUrl: product.imageUrl, altText: product.name }] : []),
+    ...(product.imageUrl
+      ? [{ id: "main", imageUrl: product.imageUrl, altText: product.name }]
+      : []),
     ...product.images.map((image) => ({
       id: `image-${image.id}`,
       imageUrl: image.imageUrl,
@@ -568,7 +617,9 @@ function uniqueImages(
 }
 
 function productImage(product: Product): string | null {
-  return product.imageUrl ?? product.images[0]?.imageUrl ?? product.colorVariants[0]?.imageUrl ?? null;
+  return (
+    product.imageUrl ?? product.images[0]?.imageUrl ?? product.colorVariants[0]?.imageUrl ?? null
+  );
 }
 
 function displayBrandName(siteSettings: SiteSettings): string {

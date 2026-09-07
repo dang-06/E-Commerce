@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ChevronRight,
@@ -17,12 +17,7 @@ import { OrderSummary } from "../components/OrderSummary";
 import { IntroVideoPlayer } from "../components/IntroVideoPlayer";
 import { ProductCard } from "../components/ProductCard";
 import { RecipientFields } from "../components/RecipientFields";
-import {
-  createOrder,
-  fetchProducts,
-  fetchSiteSettings,
-  quoteOrder,
-} from "../lib/api";
+import { createOrder, fetchProducts, fetchSiteSettings, quoteOrder } from "../lib/api";
 import { readPromotionSession } from "../lib/promotion-session";
 import { noDistrictValue } from "../lib/vietnam-address";
 import {
@@ -32,6 +27,7 @@ import {
   type CartTotals,
 } from "../lib/pricing";
 import { filterCartItemsForProducts, readCart, setCartQuantity, writeCart } from "../lib/cart";
+import { trackInitiateCheckout, trackOrderCreatedConversions } from "../lib/meta-pixel";
 import { formatVnd, parseVnd } from "../lib/money";
 import { submitCheckout } from "../lib/checkout-flow";
 import { validateRecipientForm } from "../lib/validation";
@@ -70,6 +66,8 @@ const emptySiteSettings: SiteSettings = {
   updatedAt: "",
 };
 
+let lastTrackedInitiateCheckoutKey: string | null = null;
+
 export default function ShopPage(): React.ReactElement {
   const [step, setStep] = useState<Step>("intro");
   const [promotionSession, setPromotionSession] = useState<PromotionSession | null>(null);
@@ -90,6 +88,7 @@ export default function ShopPage(): React.ReactElement {
   const [searchTerm, setSearchTerm] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(emptySiteSettings);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     const storedCart = readCart(globalThis.localStorage);
@@ -97,7 +96,8 @@ export default function ShopPage(): React.ReactElement {
     setCartItems(storedCart);
     if (storedSession) {
       setPromotionSession(storedSession);
-      const shouldCheckout = new URLSearchParams(globalThis.location.search).get("checkout") === "1";
+      const shouldCheckout =
+        new URLSearchParams(globalThis.location.search).get("checkout") === "1";
       setStep(shouldCheckout && storedCart.length > 0 ? "checkout" : "catalog");
       void loadProducts();
     }
@@ -108,7 +108,9 @@ export default function ShopPage(): React.ReactElement {
       const storedSession = readPromotionSession(globalThis.localStorage);
       setPromotionSession(storedSession);
       if (storedSession) {
-        setStep((currentStep) => (currentStep === "intro" || currentStep === "checking" ? "catalog" : currentStep));
+        setStep((currentStep) =>
+          currentStep === "intro" || currentStep === "checking" ? "catalog" : currentStep,
+        );
         void loadProducts();
       }
     }
@@ -148,7 +150,8 @@ export default function ShopPage(): React.ReactElement {
     [cartItems, products],
   );
   const totals = useMemo(
-    () => calculateCartTotals(products, availableCartItems, promotionSession?.eligible === true, null),
+    () =>
+      calculateCartTotals(products, availableCartItems, promotionSession?.eligible === true, null),
     [availableCartItems, products, promotionSession],
   );
   const displayTotals = serverQuote ? totalsFromQuote(serverQuote) : totals;
@@ -166,6 +169,36 @@ export default function ShopPage(): React.ReactElement {
     setCheckoutIdempotencyKey(null);
     setServerQuote(null);
   }, [cartItems]);
+
+  useEffect(() => {
+    if (step !== "checkout" || totals.totalQuantity <= 0 || totals.payableAmount === null) {
+      return;
+    }
+
+    const contentIds = totals.lines.map((line) => line.product.id);
+    const contents = totals.lines.map((line) => ({
+      id: line.product.id,
+      item_price: line.finalUnitPrice,
+      quantity: line.quantity,
+    }));
+    const trackingKey = JSON.stringify({
+      contentIds,
+      quantities: contents.map((content) => content.quantity),
+      value: totals.payableAmount,
+    });
+    if (lastTrackedInitiateCheckoutKey === trackingKey) {
+      return;
+    }
+
+    lastTrackedInitiateCheckoutKey = trackingKey;
+    trackInitiateCheckout({
+      content_ids: contentIds,
+      contents,
+      currency: "VND",
+      num_items: totals.totalQuantity,
+      value: totals.payableAmount,
+    });
+  }, [step, totals]);
 
   async function loadProducts(): Promise<void> {
     setProductsLoading(true);
@@ -220,6 +253,10 @@ export default function ShopPage(): React.ReactElement {
   }
 
   async function reviewOrder(): Promise<void> {
+    if (submittingRef.current) {
+      return;
+    }
+
     const validation = validateRecipientForm(recipient);
     setRecipientErrors(validation.errors);
     if (!validation.valid) {
@@ -230,6 +267,7 @@ export default function ShopPage(): React.ReactElement {
       return;
     }
 
+    submittingRef.current = true;
     setSubmitting(true);
     setOrderError(null);
     const idempotencyKey = checkoutIdempotencyKey ?? crypto.randomUUID();
@@ -245,35 +283,47 @@ export default function ShopPage(): React.ReactElement {
     } catch {
       setOrderError("Không thể lấy báo giá chính thức. Vui lòng thử lại.");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   }
 
   async function placeOrder(): Promise<void> {
+    if (submittingRef.current) {
+      return;
+    }
+
     if (!checkoutIdempotencyKey) {
       setOrderError("Vui lòng tải lại báo giá trước khi đặt hàng.");
       return;
     }
+    submittingRef.current = true;
     setSubmitting(true);
     setOrderError(null);
-    const result = await submitCheckout({
-      cartItems: availableCartItems,
-      createOrder,
-      idempotencyKey: checkoutIdempotencyKey,
-      products,
-      recipient,
-      session: promotionSession,
-    });
-    setSubmitting(false);
+    try {
+      const result = await submitCheckout({
+        cartItems: availableCartItems,
+        createOrder,
+        idempotencyKey: checkoutIdempotencyKey,
+        products,
+        recipient,
+        session: promotionSession,
+      });
 
-    if (!result.ok || !result.order) {
-      setOrderError(result.error ?? "Không thể tạo đơn. Vui lòng thử lại.");
-      return;
+      if (!result.ok || !result.order) {
+        setOrderError(result.error ?? "Không thể tạo đơn. Vui lòng thử lại.");
+        return;
+      }
+
+      trackOrderCreatedConversions(result.order, availableCartItems);
+
+      setOrder(result.order);
+      setCartItems([]);
+      setStep("success");
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
     }
-
-    setOrder(result.order);
-    setCartItems([]);
-    setStep("success");
   }
 
   return (
@@ -486,7 +536,12 @@ function ShopHeader({
         </button>
 
         <div className="lux-header-right">
-          <a className="lux-contact-link" href={siteSettings.contactUrl || "tel:0901234567"} rel="noreferrer" target="_blank">
+          <a
+            className="lux-contact-link"
+            href={siteSettings.contactUrl || "tel:0901234567"}
+            rel="noreferrer"
+            target="_blank"
+          >
             Contact us
           </a>
           <button
@@ -587,10 +642,7 @@ function ShopHome({
         >
           <div className="home-story-track">
             {storyImages.map((item) => (
-              <Link
-                key={item.product.id}
-                href={`/products/${item.product.slug}`}
-              >
+              <Link key={item.product.id} href={`/products/${item.product.slug}`}>
                 <img src={item.image} alt={item.name} />
               </Link>
             ))}
@@ -628,11 +680,7 @@ function ShopHome({
         ) : null}
         <div className="product-list">
           {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              promotionUnlocked={promotionUnlocked}
-            />
+            <ProductCard key={product.id} product={product} promotionUnlocked={promotionUnlocked} />
           ))}
         </div>
         {orderError ? <p className="status error">{orderError}</p> : null}
